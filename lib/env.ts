@@ -8,8 +8,23 @@ const read = (name: string) => {
   return value ? value : undefined;
 };
 
+/**
+ * 배포 환경변수에는 "example.com" 처럼 프로토콜 없이 넣기 쉽다.
+ * 그대로 new URL() 에 넘기면 예외가 나고 빌드가 통째로 깨지므로 여기서 한 번 보정한다.
+ */
+function normalizeSiteUrl(value: string | undefined) {
+  const fallback = "http://localhost:3001";
+  if (!value) return fallback;
+  const withProtocol = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+  try {
+    return new URL(withProtocol).origin;
+  } catch {
+    return fallback;
+  }
+}
+
 export const env = {
-  siteUrl: read("NEXT_PUBLIC_SITE_URL") ?? "http://localhost:3001",
+  siteUrl: normalizeSiteUrl(read("NEXT_PUBLIC_SITE_URL")),
   sazuApiKey: read("SAZU_API_KEY"),
   anthropicApiKey: read("ANTHROPIC_API_KEY"),
   anthropicModel: read("ANTHROPIC_MODEL"),

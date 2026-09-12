@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import tokens from "@/design/tokens.json";
+import { env } from "@/lib/env";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://unmyeongdaero.com"),
+  metadataBase: new URL(env.siteUrl),
   title: {
     default: "운명대로 — 현대인을 위한 가장 명쾌하고 솔직한 운명 리포트",
     template: "%s | 운명대로",
