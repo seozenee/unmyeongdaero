@@ -44,12 +44,15 @@ interface StageProps {
 export function Stage({ guide, place, camera, figure, assetKey, still, sfx, children, footer, onBack, onTap, sound, onClose }: StageProps) {
   const asset = getWebtoonAsset(guide.id, assetKey);
 
-  // 스테이지가 떠 있는 동안 뒤쪽 페이지가 스크롤되지 않게 잠근다
+  // 스테이지가 떠 있는 동안 뒤쪽 페이지 스크롤을 잠그고, 아래 내비게이션을 숨긴다.
+  // (내비는 반투명이라 덮어 두기만 하면 스테이지 버튼 뒤로 비쳐 보인다)
   useEffect(() => {
-    const previous = document.body.style.overflow;
+    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    document.body.dataset.stageOpen = "true";
     return () => {
-      document.body.style.overflow = previous;
+      document.body.style.overflow = previousOverflow;
+      delete document.body.dataset.stageOpen;
     };
   }, []);
 
