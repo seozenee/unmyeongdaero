@@ -241,7 +241,7 @@ export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice 
       <p className="text-center font-label-sm text-label-sm text-outline">구독 결제 없음 · 영구 소장 단건 열람권</p>
 
       {mock && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 motion-safe:animate-fade-in" role="dialog" aria-modal>
+        <div className="fixed inset-0 z-[60] mx-auto flex w-full max-w-md items-end justify-center bg-black/60 motion-safe:animate-fade-in" role="dialog" aria-modal>
           <div className="w-full max-w-md rounded-t-2xl bg-surface-container-high p-space-lg pb-safe motion-safe:animate-fade-up">
             <span className="rounded-full bg-tertiary/15 px-2 py-0.5 font-label-sm text-label-sm text-tertiary">개발용 모의 결제창</span>
             <h2 className="mt-space-sm font-headline-md text-headline-md text-on-surface">{mock.orderName}</h2>

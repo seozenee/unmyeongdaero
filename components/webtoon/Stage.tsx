@@ -54,7 +54,7 @@ export function Stage({ guide, place, camera, figure, assetKey, still, sfx, chil
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden bg-surface-container-lowest">
+    <div className="fixed inset-0 z-[60] mx-auto flex w-full max-w-md flex-col overflow-hidden bg-surface-container-lowest lg:shadow-[0_0_80px_rgba(0,0,0,0.55)] lg:ring-1 lg:ring-outline-variant/30">
       {/* 장면 */}
       <div key={`${place}-${assetKey ?? camera}`} className="absolute inset-0 motion-safe:animate-fade-in">
         {asset ? <WebtoonMedia asset={asset} still={still} /> : <SceneBackdrop theme={guide.id} camera={camera} place={place} />}
