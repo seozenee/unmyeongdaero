@@ -123,7 +123,6 @@ revoke all on function public.refund_consult_turn(uuid, uuid) from public, anon,
 create or replace function public.touch_updated_at()
 returns trigger
 language plpgsql
-set search_path = public
 as $$
 begin
   new.updated_at = now();

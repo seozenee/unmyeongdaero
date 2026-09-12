@@ -16,12 +16,7 @@ export async function GET(request: Request) {
     callback.searchParams.set("next", next);
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "kakao",
-      options: {
-        redirectTo: callback.toString(),
-        // 요청 범위를 명시하지 않으면 Supabase 가 account_email 까지 요구한다.
-        // 카카오 이메일 동의는 비즈니스 앱 전환이 필요하고 서비스에도 쓰지 않으므로 빼둔다.
-        scopes: "profile_nickname profile_image",
-      },
+      options: { redirectTo: callback.toString() },
     });
     if (error || !data.url) {
       console.error("[auth] kakao signInWithOAuth 실패", error);
