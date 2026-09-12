@@ -3,7 +3,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import type { AppUser } from "@/lib/auth/session";
 import { getRepository, type Payment } from "@/lib/db";
-import { env, isProduction, modes } from "@/lib/env";
+import { env, isFreeAccess, isProduction, modes } from "@/lib/env";
 import { AppError } from "@/lib/errors";
 import { CONSULT_TURN_LIMIT, getReport, type ReportProduct } from "@/lib/reports/catalog";
 import { cancelPortOnePayment, getPortOnePaymentState } from "./portone";
@@ -118,7 +118,7 @@ export async function confirmPayment(paymentId: string, options: { userId?: stri
   }
 
   if (payment.provider === "mock") {
-    if (isProduction) throw new AppError(400, "INVALID_PROVIDER", "사용할 수 없는 결제 방식이에요.");
+    if (isProduction && !isFreeAccess) throw new AppError(400, "INVALID_PROVIDER", "사용할 수 없는 결제 방식이에요.");
     return { status: "pending" };
   }
 
@@ -147,7 +147,7 @@ export async function confirmPayment(paymentId: string, options: { userId?: stri
 
 /** 개발 대체 모드 결제 처리 */
 export async function settleMockPayment(user: AppUser, paymentId: string, outcome: "paid" | "cancelled") {
-  if (isProduction) throw new AppError(404, "NOT_FOUND", "Not Found");
+  if (isProduction && !isFreeAccess) throw new AppError(404, "NOT_FOUND", "Not Found");
   const repo = getRepository();
   const payment = await repo.getPayment(paymentId);
   if (!payment || payment.userId !== user.id || payment.provider !== "mock") {

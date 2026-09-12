@@ -43,6 +43,13 @@ export const isProduction = process.env.NODE_ENV === "production";
 /** 랜딩 전용 임시 배포. 백엔드 없이 마케팅 화면만 띄우고, 구매·로그인 경로는 미들웨어가 막는다. */
 export const isLandingOnly = process.env.LANDING_ONLY === "1";
 
+/**
+ * 결제 없이 전 기능을 열어 두는 시험 모드.
+ * 실제 결제창 대신 모의 승인으로 소장 권한을 준다 — 즉 상품이 공짜가 된다.
+ * 실고객을 받기 전에 반드시 꺼야 한다. 화면에도 시험 모드 띠를 띄워 눈에 띄게 한다.
+ */
+export const isFreeAccess = process.env.FREE_ACCESS === "1";
+
 const supabaseReady = Boolean(env.supabaseUrl && env.supabaseAnonKey && env.supabaseServiceRoleKey);
 const portoneReady = Boolean(
   env.portoneStoreId && env.portoneChannelKey && env.portoneApiSecret && env.portoneWebhookSecret,
@@ -69,7 +76,10 @@ export const modes = {
   data: (): DataMode =>
     pick(supabaseReady, "supabase", "local", "Supabase", ["SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"]),
   payment: (): PaymentMode =>
-    pick(portoneReady, "portone", "mock", "PortOne", [
+    // 무료 시험 모드에서는 PortOne 키가 있어도 모의 결제로 보낸다
+    isFreeAccess
+      ? "mock"
+      : pick(portoneReady, "portone", "mock", "PortOne", [
       "PORTONE_STORE_ID",
       "PORTONE_CHANNEL_KEY",
       "PORTONE_API_SECRET",
