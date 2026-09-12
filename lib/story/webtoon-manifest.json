@@ -1,0 +1,100 @@
+{
+  "seoha": {
+    "intro-0": {
+      "image": "/webtoon/seoha/intro-0.webp",
+      "video": "/webtoon/seoha/intro-0.mp4"
+    },
+    "intro-1": {
+      "image": "/webtoon/seoha/intro-1.webp",
+      "video": "/webtoon/seoha/intro-1.mp4"
+    },
+    "intro-2": {
+      "image": "/webtoon/seoha/intro-2.webp",
+      "video": "/webtoon/seoha/intro-2.mp4"
+    },
+    "intro-3": {
+      "image": "/webtoon/seoha/intro-3.webp",
+      "video": "/webtoon/seoha/intro-3.mp4"
+    },
+    "intro-4": {
+      "image": "/webtoon/seoha/intro-4.webp",
+      "video": "/webtoon/seoha/intro-4.mp4"
+    },
+    "intro-5": {
+      "image": "/webtoon/seoha/intro-5.webp",
+      "video": "/webtoon/seoha/intro-5.mp4"
+    },
+    "panel-brush": {
+      "image": "/webtoon/seoha/panel-brush.webp",
+      "video": "/webtoon/seoha/panel-brush.mp4"
+    },
+    "panel-second": {
+      "image": "/webtoon/seoha/panel-second.webp",
+      "video": "/webtoon/seoha/panel-second.mp4"
+    },
+    "panel-unfold": {
+      "image": "/webtoon/seoha/panel-unfold.webp",
+      "video": "/webtoon/seoha/panel-unfold.mp4"
+    },
+    "report-cover": {
+      "image": "/webtoon/seoha/report-cover.webp",
+      "video": "/webtoon/seoha/report-cover.mp4"
+    }
+  },
+  "yunseul": {
+    "intro-0": {
+      "image": "/webtoon/yunseul/intro-0.webp",
+      "video": "/webtoon/yunseul/intro-0.mp4"
+    },
+    "intro-1": {
+      "image": "/webtoon/yunseul/intro-1.webp",
+      "video": "/webtoon/yunseul/intro-1.mp4"
+    },
+    "intro-2": {
+      "image": "/webtoon/yunseul/intro-2.webp",
+      "video": "/webtoon/yunseul/intro-2.mp4"
+    },
+    "intro-3": {
+      "image": "/webtoon/yunseul/intro-3.webp",
+      "video": "/webtoon/yunseul/intro-3.mp4"
+    },
+    "intro-4": {
+      "image": "/webtoon/yunseul/intro-4.webp",
+      "video": "/webtoon/yunseul/intro-4.mp4"
+    },
+    "intro-5": {
+      "image": "/webtoon/yunseul/intro-5.webp",
+      "video": "/webtoon/yunseul/intro-5.mp4"
+    },
+    "panel-brush": {
+      "image": "/webtoon/yunseul/panel-brush.webp",
+      "video": "/webtoon/yunseul/panel-brush.mp4"
+    },
+    "panel-second": {
+      "image": "/webtoon/yunseul/panel-second.webp"
+    },
+    "panel-unfold": {
+      "image": "/webtoon/yunseul/panel-unfold.webp"
+    }
+  },
+  "doham": {
+    "intro-0": {
+      "image": "/webtoon/doham/intro-0.webp"
+    },
+    "intro-1": {
+      "image": "/webtoon/doham/intro-1.webp"
+    },
+    "intro-2": {
+      "image": "/webtoon/doham/intro-2.webp"
+    },
+    "intro-5": {
+      "image": "/webtoon/doham/intro-5.webp"
+    },
+    "panel-brush": {
+      "image": "/webtoon/doham/panel-brush.webp"
+    },
+    "report-cover": {
+      "image": "/webtoon/doham/report-cover.webp"
+    }
+  }
+}

@@ -1,0 +1,247 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* design/code.html <style> 이식 — 색상은 하드코딩 대신 토큰 유틸리티로 적용 */
+@layer base {
+  html,
+  body {
+    @apply m-0 w-full bg-surface p-0 text-on-surface;
+  }
+
+  body {
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+    /* DESIGN.md: 한글 음절 단위 줄바꿈 방지 */
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  main > :first-child {
+    margin-top: 0 !important;
+  }
+
+  main > :last-child {
+    margin-bottom: 0 !important;
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* ─ PDF · 인쇄 ────────────────────────────────────────────────────────────────
+   화면은 다크 테마지만 종이는 흰 바탕이다. 브라우저는 인쇄할 때 배경을 빼므로
+   그대로 두면 밝은 글자만 남아 읽을 수 없다. 인쇄 매체에서는 토큰의 반전 색
+   (inverse-surface / inverse-on-surface)과 흰 바탕에서도 읽히는 container 계열로
+   갈아끼운다. 색값은 직접 적지 않고 theme() 로 design/tokens.json 에서 가져온다. */
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm 15mm;
+  }
+
+  html,
+  body {
+    /* 흰색은 브랜드 색이 아니라 종이 그 자체다 */
+    background: #fff !important;
+    color: theme("colors.inverse-on-surface") !important;
+  }
+
+  /* 앱 셸 벗기기 — 화면용 고정 헤더/하단바/좁은 폭을 없앤다 */
+  body > header,
+  body > nav {
+    display: none !important;
+  }
+
+  main {
+    max-width: none !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #fff !important;
+  }
+
+  /* 면 — 카드/패널만 옅은 회색으로. bg-surface 를 통째로 잡으면 body·main 까지 칠해져
+     종이 바탕이 회색이 되므로 container 계열만 고른다. */
+  [class*="bg-surface-container"] {
+    background-color: theme("colors.inverse-surface") !important;
+    box-shadow: none !important;
+  }
+
+  /* 흰 카드에 테두리를 두르면 페이지 경계를 넘을 때 세로선이 끝없이 이어진다.
+     위아래 실선 대신 배경만 살짝 구분한다. */
+  [class*="bg-surface-container-lowest"],
+  [class*="bg-surface-container-low"] {
+    background-color: #fff !important;
+    border: 0 !important;
+    border-top: 1px solid theme("colors.on-surface-variant") !important;
+    border-bottom: 1px solid theme("colors.on-surface-variant") !important;
+    border-radius: 0 !important;
+  }
+
+  /* 종이 바탕은 언제나 흰색 */
+  html,
+  body,
+  main,
+  article,
+  article > header,
+  article > footer {
+    background-color: #fff !important;
+    background-image: none !important;
+  }
+
+  /* 글자 — 본문은 진한 먹, 보조는 흐린 먹 */
+  [class*="text-on-surface"] {
+    color: theme("colors.inverse-on-surface") !important;
+  }
+
+  [class*="text-on-surface-variant"],
+  [class*="text-outline"] {
+    color: theme("colors.outline-variant") !important;
+  }
+
+  [class*="text-tertiary"] {
+    color: theme("colors.on-tertiary-fixed-variant") !important;
+  }
+
+  /* 섹션 리드 문장 등 강조 본문은 종이에서 대비가 필요하므로 먹으로 */
+  p[class*="text-primary"] {
+    color: theme("colors.inverse-on-surface") !important;
+    font-weight: 600;
+  }
+
+  [class*="text-primary"] {
+    color: theme("colors.on-primary-fixed-variant") !important;
+  }
+
+  [class*="text-secondary"] {
+    color: theme("colors.on-secondary-fixed-variant") !important;
+  }
+
+  /* 점·막대처럼 작고 불투명해야 하는 색면만 선명하게 남긴다 */
+  .rounded-full:not([class*="px-"]),
+  [class*="h-1.5"],
+  [class*="w-1.5"] {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* 반투명 배지(키워드 칩 등)는 종이에서 색면을 걷어내고 테두리로 표현한다.
+     불투명 진한 색으로 깔면 글자가 배경에 먹힌다. */
+  [class*="bg-primary/"],
+  [class*="bg-secondary/"],
+  [class*="bg-tertiary/"],
+  [class*="bg-error"] {
+    background-color: transparent !important;
+    border: 1px solid theme("colors.on-surface-variant") !important;
+    color: theme("colors.inverse-on-surface") !important;
+  }
+
+  /* 불투명 색면(작은 점·막대)은 토큰의 진한 색으로 */
+  .bg-primary {
+    background-color: theme("colors.on-primary-fixed-variant") !important;
+  }
+
+  .bg-secondary {
+    background-color: theme("colors.on-secondary-fixed-variant") !important;
+  }
+
+  .bg-tertiary {
+    background-color: theme("colors.on-tertiary-fixed-variant") !important;
+  }
+
+  /* "일간"·"지금" 같은 글자 배지는 색면 위 흰 글자가 종이에서 사라진다.
+     테두리와 먹 글자로 바꿔 읽히게 한다. */
+  .bg-primary[class*="px-"],
+  .bg-secondary[class*="px-"],
+  .bg-tertiary[class*="px-"] {
+    background-color: transparent !important;
+    border: 1px solid theme("colors.on-surface-variant") !important;
+    color: theme("colors.inverse-on-surface") !important;
+  }
+
+  [class*="border-"],
+  [class*="ring-"] {
+    border-color: theme("colors.on-surface-variant") !important;
+    --tw-ring-color: theme("colors.on-surface-variant") !important;
+  }
+
+  /* 아이콘 폰트는 종이에서 의미를 더하지 못하고 빈 네모로 찍히기도 한다 */
+  .material-symbols-outlined {
+    display: none !important;
+  }
+
+  /* 링크 밑줄·URL 노출 없이 */
+  a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+
+  /* 가로 스크롤 영역(대운 흐름)은 종이에서 접어 보여 준다 */
+  .no-scrollbar,
+  [class*="overflow-x-auto"] {
+    overflow: visible !important;
+  }
+
+  [class*="overflow-x-auto"] {
+    flex-wrap: wrap !important;
+  }
+
+  /* recharts 는 인쇄 시 컨테이너를 다시 재는데, 높이를 못 잡으면 사라진다 */
+  .recharts-responsive-container,
+  .recharts-wrapper {
+    width: 100% !important;
+    height: 220px !important;
+  }
+
+  /* 페이지 경계에서 잘리면 안 되는 것들 */
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+
+  /* 잘리면 곤란한 '작은' 덩어리만 묶는다. 긴 블록까지 묶으면 들어가지 못한 덩어리가
+     통째로 다음 쪽으로 밀려 큰 여백이 생긴다. */
+  aside,
+  dl,
+  .recharts-responsive-container {
+    break-inside: avoid;
+  }
+
+  li {
+    break-inside: avoid;
+    orphans: 2;
+    widows: 2;
+  }
+
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* 접힌 용어 풀이는 인쇄 직전 JS 로 펼치지만, 혹시 몰라 한 번 더 */
+  details[open] > *,
+  details > summary ~ * {
+    display: revert !important;
+  }
+}

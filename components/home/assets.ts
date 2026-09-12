@@ -1,0 +1,15 @@
+// design/code.html 에 들어있던 Stitch 호스팅 이미지.
+// TODO(배포 전): Stitch 임시 URL 은 만료될 수 있으므로 자체 스토리지(public/ 또는 Supabase Storage)로 교체.
+// 로고는 components/ui/Logo.tsx 로 옮겼다(외부 URL 만료 방지).
+export const STITCH_ASSETS = {
+  highlightReunion:
+    "https://lh3.googleusercontent.com/aida-public/AB6AXuD7Y9BZUgKaBGly4AqjjCUE7PrQ9oASjzW1iP_30LMQEendAIfgw70CPoCMVqop4lchTupiLbVcgrJN_6pRyorUVHZ2FTS2sxCrsOD5m25oEhKf1FM9oFPGa0UsC3wzWApT52E3rFj2mLBoM7YFLuIICm2Uchp6--4bUdp9Rx7lOpq7yzU1i6oRnVEQZC1V185WBxrhPHf_jY8YrGe_1hIwL7u3sBSqy9Rq41VEvfRsFsSFPcRUjzwfsw",
+  thumbReunion:
+    "https://lh3.googleusercontent.com/aida-public/AB6AXuA68wdVwewDgLI4evJwX0ZqfBpxcAVdUICDZwalCYjyedU41wMcrxQ9JXCidUUNytno4boYW9c-tUK7tqxcvOW6FEEqnMX4yEveSFW80Zir2sKaKKECfSpx5WuU0NwYkB4vOErCHSKGl9zxEGo5idLSTH26GG9vnZEvjbWlxPi7LRk0My1ZmnqscroNxQbZKXkx7g-WjpX0_GcrSPTrycXTH1IPEEvR6EzGlRVBf-R7wIW20Xodl8K2UA",
+  thumbLove:
+    "https://lh3.googleusercontent.com/aida-public/AB6AXuCzV1KfNI75XRo5NuKbkIB2HJ2F1jtCsnPifZuAQi9CzX_Esf2tubnB3gC2A7VfSOcfOQNCOqQha8orP8vvVDjQvcMzqljHvwVd3lFBEJKA3jui7IfePbRrnOMMqjrW98-ChNJ2Cq_LrizZf_k_u-OJ3cq00s_FvNPJoa27rp-soK2QrrRf5JFaePwZ0EdlvyRlvD7OuswlbLk7ZVpK_hfNSHYV8fehHly_R3wjZ--uUsBRfo3CsoS5dA",
+  thumbCompatibility:
+    "https://lh3.googleusercontent.com/aida-public/AB6AXuDTRVaSdSAkW2a-6JHB4cY2w3F_iplNke1VVJDUGh28y6sFnaa2suNJNnoMk9YzoEZe5EfEb9lW9xk5NMSDwr_7gqPxGFcP2qtqloMurXriaR3k985IuSPQj5DAdQgSUehExLIKXSw-lfDPi541nqb_ETL4yW_m9m1hACs-EluTCv7Kpc3c4kkwwKGhNwaIVDkbVeK8xlAwveKppCijcZvvCIfyMgxp2ucaibjk2vd2CcN5bj_aXp-K4w",
+  thumbLife:
+    "https://lh3.googleusercontent.com/aida-public/AB6AXuB_oT9bnb5X5PvOtxb3nj5qGiia2GY3f5Rgk5OsuH0qH95XtX5uNBZ127o6eq80ZBCuZLxGxuYIdFIkJxkJwVu2NRyguGzmQa_fq9Ow8EL2MDMuoL1iV0vjhLIgh7yfwejDS-l6avJUNZ3qnj_3IOgECPmKnPfjlkBfWcAi2XBdjsBhuMXpevimPlYrJLIXl2IOQk6_-bscMsgC2dwQgTOlkSgaXeFfCpBHRLfe9RU6wxUgD0AofcGJMg",
+} as const;
