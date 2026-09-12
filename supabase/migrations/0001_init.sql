@@ -166,3 +166,26 @@ create policy "consult_messages: 본인 세션 조회" on public.consult_message
          and s.user_id = (select auth.uid())
     )
   );
+
+-- ─── 역할별 접근 권한 ────────────────────────────────────────────────────────
+-- RLS 는 "누가 어떤 행을 보는가"를 정하고, GRANT 는 "테이블에 접근할 수 있는가"를 정한다.
+-- 둘은 별개라서 GRANT 가 없으면 service_role 도 permission denied 를 받는다.
+
+-- 서버(service_role)가 모든 읽기·쓰기를 담당한다. RLS 는 이 역할을 우회한다.
+grant usage on schema public to service_role;
+grant all privileges on all tables in schema public to service_role;
+grant all privileges on all sequences in schema public to service_role;
+grant execute on all functions in schema public to service_role;
+
+-- 로그인 사용자는 읽기만 가능하고, 어떤 행을 보는지는 위의 RLS 정책이 정한다.
+grant usage on schema public to anon, authenticated;
+grant select on public.readings, public.payments, public.purchases,
+                public.consult_sessions, public.consult_messages to authenticated;
+
+-- 상품 카탈로그는 비로그인도 볼 수 있어야 한다.
+grant select on public.reports to anon, authenticated;
+
+-- 앞으로 추가될 테이블·함수에도 같은 기본값을 적용한다.
+alter default privileges in schema public grant all on tables to service_role;
+alter default privileges in schema public grant all on sequences to service_role;
+alter default privileges in schema public grant execute on functions to service_role;
