@@ -7,7 +7,7 @@ export async function AppHeader() {
   const user = await getCurrentUser();
 
   return (
-    <header className="pt-safe fixed inset-x-0 top-0 z-50 bg-surface/85 backdrop-blur-xl">
+    <header className="pt-safe fixed inset-x-0 top-0 z-50 bg-surface/85 backdrop-blur-xl lg:mx-auto lg:max-w-md lg:rounded-b-xl">
       <div className="mx-auto flex h-16 max-w-md items-center justify-between px-margin">
         <Link href="/" className="flex items-center gap-space-sm">
           <Logo />

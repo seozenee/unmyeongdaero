@@ -19,7 +19,7 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="pb-safe fixed inset-x-0 bottom-0 z-50 bg-surface/90 backdrop-blur-xl">
+    <nav className="pb-safe fixed inset-x-0 bottom-0 z-50 bg-surface/90 backdrop-blur-xl lg:mx-auto lg:max-w-md lg:rounded-t-xl">
       <div className="mx-auto flex h-16 max-w-md items-center justify-around px-gutter">
         {NAV_ITEMS.map((item) => {
           const active = isActive(pathname, item.href);
