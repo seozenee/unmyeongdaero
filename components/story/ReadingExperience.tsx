@@ -63,20 +63,33 @@ export function ReadingExperience(props: ReadingExperienceProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const loadingLine = useLoadingLines(guide.name);
 
-  /** 인쇄(PDF 저장) 직전 준비: 접힌 부록을 펼치고, PDF 기본 파일명이 보고서 제목이 되게 한다 */
-  const printReport = useCallback(() => {
-    const previousTitle = document.title;
-    const closed = Array.from(document.querySelectorAll<HTMLDetailsElement>("details:not([open])"));
-    closed.forEach((element) => {
-      element.open = true;
-    });
-    document.title = `${props.title} · 운명대로`;
-    window.print();
-    document.title = previousTitle;
-    closed.forEach((element) => {
-      element.open = false;
-    });
-  }, [props.title]);
+  /**
+   * PDF 내려받기.
+   *
+   * 브라우저 인쇄가 아니라 서버에서 구운 파일을 받는다. 인쇄는 페이지 경계를 제어할 수 없어
+   * 표가 반으로 잘리고, 모바일 카카오톡 브라우저에서는 아예 인쇄창이 뜨지 않는다.
+   */
+  const [downloading, setDownloading] = useState(false);
+  const downloadPdf = useCallback(async () => {
+    setDownloading(true);
+    try {
+      const response = await fetch(`/api/readings/${props.readingId}/pdf`, { cache: "no-store" });
+      if (!response.ok) throw new Error(String(response.status));
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${props.title}.pdf`;
+      link.click();
+      // 곧바로 지우면 내려받기가 시작되기 전에 취소되는 브라우저가 있다
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    } catch {
+      setFailure("PDF 를 만드는 중 문제가 생겼어요. 잠시 뒤 다시 시도해 주세요.");
+    } finally {
+      setDownloading(false);
+    }
+  }, [props.readingId, props.title]);
 
   const refreshStatus = useCallback(async () => {
     const response = await fetch(`/api/readings/${props.readingId}`, { cache: "no-store" });
@@ -157,8 +170,14 @@ export function ReadingExperience(props: ReadingExperienceProps) {
             <Icon name="forum" className="text-[18px]" /> 대화로 다시 보기
           </button>
           <div className="flex items-center gap-space-md">
-            <button type="button" onClick={printReport} className="flex items-center gap-1 font-label-md text-label-md text-on-surface-variant">
-              <Icon name="download" className="text-[18px]" /> PDF 저장
+            <button
+              type="button"
+              onClick={downloadPdf}
+              disabled={downloading}
+              className="flex items-center gap-1 font-label-md text-label-md text-on-surface-variant disabled:opacity-60"
+            >
+              <Icon name={downloading ? "hourglass_top" : "download"} className="text-[18px]" />
+              {downloading ? "만드는 중…" : "PDF 내려받기"}
             </button>
             <Link href="/library" className="flex items-center gap-1 font-label-md text-label-md text-on-surface-variant">
               <Icon name="auto_stories" className="text-[18px]" /> 보관함
