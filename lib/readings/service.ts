@@ -8,8 +8,8 @@ import { getRepository, type BirthProfile, type Reading, type StoredSazu } from 
 import { modes } from "@/lib/env";
 import { AppError } from "@/lib/errors";
 import { getReport, type ReportProduct } from "@/lib/reports/catalog";
+import { buildManseTopics } from "@/lib/manse";
 import { SazuApiError } from "@/lib/sazu/errors";
-import { fetchSazuForProfiles, fetchSazuForReport } from "@/lib/sazu/readings";
 import { buildReportSystemPrompt, buildReportUserPrompt } from "@/lib/story/prompts";
 import { isCompleteReport, storyReportSchema, type StoryReport } from "@/lib/story/report";
 import { softenDeep } from "@/lib/story/sanitize";
@@ -17,23 +17,17 @@ import { buildTemplateReport } from "@/lib/story/report-template";
 import { hasLive, startLive, streamLive } from "./live";
 import { readingDraftSchema, validateDraftForReport } from "./schema";
 
-const SANDBOX_MESSAGE =
-  "지금은 체험용 분석 키가 연결되어 있어 샘플 명식으로만 풀이할 수 있어요. 입력 칸 위의 샘플 명식을 골라 주세요.";
-
-/** 결제 전에 manse 로 명식이 계산되는지 확인한다(잘못된 날짜·샌드박스 불일치로 결제 후 실패하는 일을 막음) */
-async function verifyProfile(profile: BirthProfile, target: "subject" | "partner"): Promise<StoredSazu> {
+/**
+ * 결제 전에 명식이 실제로 계산되는지 확인한다.
+ * 잘못된 날짜(2월 30일, 존재하지 않는 윤달)로 결제까지 마친 뒤 실패하는 일을 막는다.
+ */
+function verifyProfile(profile: BirthProfile, target: "subject" | "partner"): StoredSazu {
   try {
-    return await fetchSazuForProfiles([], profile, null);
+    return buildManseTopics([], profile, null);
   } catch (error) {
-    if (!(error instanceof SazuApiError)) throw error;
     const who = target === "partner" ? "상대방 정보: " : "";
-    if (error.code === "SAMPLE_PROFILE_REQUIRED") {
-      throw new AppError(400, error.code, `${who}${SANDBOX_MESSAGE}`, { target });
-    }
-    if (error.clientStatus === 400) {
-      throw new AppError(400, error.code, `${who}${error.userMessage}`, { target, fieldErrors: error.fieldErrors });
-    }
-    throw error;
+    console.error(`[manse] ${target} 명식 계산 실패`, error);
+    throw new AppError(400, "MANSE_FAILED", `${who}생년월일시를 다시 확인해 주세요.`, { target });
   }
 }
 
@@ -54,10 +48,8 @@ export async function createDraftReading(user: AppUser, input: unknown) {
   }
 
   const partner = report.partner === "none" ? null : parsed.data.partner;
-  const [manse] = await Promise.all([
-    verifyProfile(parsed.data.subject, "subject"),
-    partner ? verifyProfile(partner, "partner") : Promise.resolve(null),
-  ]);
+  const manse = verifyProfile(parsed.data.subject, "subject");
+  if (partner) verifyProfile(partner, "partner");
 
   const reading = await repo.createReading({
     userId: user.id,
@@ -128,7 +120,8 @@ async function runGeneration(reading: Reading, report: ReportProduct, live: Retu
   try {
     let sazu: StoredSazu = reading.sazu ?? {};
     if (report.topics.some((topic) => !sazu[topic]) || !sazu.manse) {
-      sazu = { ...sazu, ...(await fetchSazuForReport(report, reading.subject, reading.partner)) };
+      // 초안 때 저장해 둔 건 manse 한 토픽뿐이다. 나머지는 여기서 마저 계산한다.
+      sazu = { ...sazu, ...buildManseTopics(report.topics, reading.subject, reading.partner) };
       await repo.updateReading(reading.id, { sazu });
     }
 

@@ -185,9 +185,45 @@ export function computeWeolun(pillars: FourPillars, year: number, month: number,
   };
 }
 
+// ─── 일진 ────────────────────────────────────────────────────────────────────
+
+export interface Iljin extends LuckPillar {
+  date: string;
+  /** 오늘 들어온 기운이 일간에게 어떻게 닿는가 */
+  toDayMaster: { stemSipseong: TenGod; branchSipseong: TenGod };
+  ilju: { ganji: string };
+  summary: string;
+}
+
+/** 그 날의 일주 */
+function dayGanZhi(date: Date): [Stem, Branch] {
+  const ganzhi = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate())
+    .getLunar()
+    .getDayInGanZhiExact();
+  return [STEM_KO[ganzhi[0]!]!, BRANCH_KO[ganzhi[1]!]!];
+}
+
+/** 오늘 하루의 운 — 무료 '오늘의 운세'가 여기서 나온다 */
+export function computeIljin(pillars: FourPillars, now = new Date()): Iljin {
+  const [gan, ji] = dayGanZhi(now);
+  const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const base = luckPillar(pillars, gan, ji, `${date} 일진`);
+  const met = base.hapChungRelations[0];
+  return {
+    ...base,
+    date,
+    ilju: { ganji: base.ganji },
+    toDayMaster: { stemSipseong: base.sipseongRelation.gan, branchSipseong: base.sipseongRelation.ji },
+    summary: `오늘은 ${base.ganji} 일진이 들어오는 날이다. ${base.interpretation}.${
+      met ? ` 원국의 ${met.targetPosition}와 ${met.type}으로 만나, ${met.meaning}.` : ""
+    }`,
+  };
+}
+
 // ─── 한 벌로 묶기 ────────────────────────────────────────────────────────────
 
 export interface LuckResult {
+  iljin: Iljin;
   seun: { previousSeun: Seun; currentSeun: Seun; nextSeun: Seun };
   weolun: {
     currentWeolun: Weolun;
@@ -211,6 +247,7 @@ export function computeLuck(pillars: FourPillars, birthYear: number, now = new D
   }
 
   return {
+    iljin: computeIljin(pillars, now),
     seun: {
       previousSeun: computeSeun(pillars, birthYear, year - 1),
       currentSeun: computeSeun(pillars, birthYear, year),
