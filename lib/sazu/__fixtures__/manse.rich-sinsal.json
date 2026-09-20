@@ -1,0 +1,954 @@
+{
+  "success": true,
+  "data": {
+    "topic": "manse",
+    "guide": {
+      "purpose": "생년월일시의 사주 명식 — 원국 4기둥(십성·12운성·지장간 포함), 오행 분포, 신강/신약, 대운, 신살(유료). 만세력 표 한 벌을 만드는 재료.",
+      "howToUse": [
+        "data.modules 는 계산된 사실 근거입니다 — 여기에 없는 사실을 지어내지 마세요.",
+        "data.modules 의 키 순서가 해석 순서입니다 — 원국(fourPillars)부터 그 순서대로 읽고, 같은 순서로 풀이를 구성하면 자연스럽습니다.",
+        "prose·note 필드는 판정 결론이 담긴 문장 재료입니다 — 요약과 톤 변환만으로 풀이 문장을 만들 수 있습니다.",
+        "data.glossary 는 이 응답에 나온 명리 용어의 뜻입니다 — 용어를 풀어 쓸 때 이 뜻을 기준으로 삼고, 다르게 정의하지 마세요. 독자가 모를 만한 말을 쓸 때는 그 자리에서 한 번 풀어 주세요.",
+        "twelveFortune.level 은 12단계 안의 순번이지 점수가 아닙니다 — 문장에는 숫자 대신 season(봄·여름·가을·겨울)과 phase 를 쓰세요."
+      ]
+    },
+    "glossary": {
+      "일간": "사주 여덟 글자 가운데 본인을 나타내는 글자. 모든 판단의 기준점이 된다.",
+      "일지": "태어난 날의 아래 글자. 배우자·가장 가까운 관계의 자리로 본다.",
+      "비견": "나와 어깨를 나란히 하는 기운. 자립과 경쟁을 함께 뜻한다.",
+      "겁재": "나와 같되 결이 다른 기운. 협력도 다툼도 될 수 있다.",
+      "식신": "내가 밖으로 내보내는 기운. 표현·먹고사는 일·여유를 뜻한다.",
+      "상관": "내보내는 기운 중 날이 선 쪽. 재능과 반발이 함께 있다.",
+      "편재": "넓게 흐르는 재물. 큰 기회와 변동을 함께 뜻한다.",
+      "정재": "꾸준히 쌓이는 재물. 성실한 대가를 뜻한다.",
+      "편관": "나를 누르는 기운 중 거친 쪽. 압박이자 돌파력이다.",
+      "정관": "나를 다스리는 기운. 질서·직책·책임을 뜻한다.",
+      "편인": "나를 돕는 기운 중 치우친 쪽. 독특한 관점과 사색을 뜻한다.",
+      "정인": "나를 바르게 돕는 기운. 배움·보호·후원을 뜻한다.",
+      "장생": "갓 태어난 때. 시작과 배움에 힘이 붙는다.",
+      "목욕": "자라며 흔들리는 때. 시행착오가 따른다.",
+      "관대": "이제 막 자리를 잡아 가는 때. 나설 준비가 된다.",
+      "건록": "제 몫을 하는 때. 안정과 성취가 함께 온다.",
+      "제왕": "기운이 가장 찬 때. 벌여 놓은 일이 앞으로 나간다.",
+      "쇠": "기세가 한풀 꺾이는 때. 확장보다 관리가 낫다.",
+      "병": "힘이 약해지는 때. 무리하면 탈이 난다.",
+      "사": "기운이 멎는 때. 마무리와 정리에 어울린다.",
+      "묘": "갈무리되는 때. 드러나지 않게 쌓인다.",
+      "절": "끊기고 비는 때. 다음을 위한 공백이다.",
+      "태": "새로 배는 때. 아직 형태가 없다.",
+      "양": "자라기를 기다리는 때. 안에서 채워진다.",
+      "신강": "일간의 힘이 강한 구조. 밀어붙이는 쪽이 맞는다.",
+      "신약": "일간의 힘이 약한 구조. 받쳐 주고 기대는 쪽이 맞는다.",
+      "중화": "일간의 힘이 치우치지 않은 구조.",
+      "대운": "10년 단위로 바뀌는 큰 흐름.",
+      "합": "두 글자가 묶여 새로운 기운을 이루거나 서로의 작용을 붙드는 관계.",
+      "충": "두 글자가 정면으로 부딪히는 관계. 변화와 이동을 부른다.",
+      "형": "서로를 갉는 관계. 마찰이 오래 간다.",
+      "파": "깨뜨리는 관계. 흐름이 끊긴다.",
+      "해": "해치는 관계. 잔 걸림이 생긴다.",
+      "원진": "까닭 없이 껄끄러운 관계.",
+      "재성": "재물과 관련된 기운. 편재와 정재를 아울러 이른다.",
+      "재고": "재물이 모이는 창고에 해당하는 글자. 이 글자가 열리는 시기에 재물이 드러난다고 본다.",
+      "귀인": "도움과 인연으로 읽는 표식.",
+      "신살": "사주에 붙는 특정한 표식. 좋고 나쁨으로 가르기보다 각 이름이 가리키는 뜻으로 읽는다.",
+      "천덕귀인": "하늘이 돕는다고 보는 표식. 재난이 비껴간다고 읽는다.",
+      "월덕귀인": "달이 돕는다고 보는 표식. 주변의 도움이 끊이지 않는다고 읽는다.",
+      "천관귀인": "공적인 자리·관직에 인연이 있다고 보는 표식.",
+      "천주귀인": "먹고사는 일이 끊기지 않는다고 보는 표식.",
+      "문창귀인": "글과 배움에 밝다고 보는 표식.",
+      "문곡귀인": "글·예술의 재주가 있다고 보는 표식.",
+      "학당귀인": "배움의 자리가 열려 있다고 보는 표식. 공부가 몸에 붙는다고 읽는다.",
+      "관귀학관": "관직·조직 안에서의 배움과 승진에 인연이 있다고 보는 표식.",
+      "재고귀인": "재물을 담아 두는 창고를 만난다고 보는 표식.",
+      "암록": "드러나지 않는 후원. 남모르게 돕는 손이 있다고 본다.",
+      "금여": "편안한 자리와 좋은 인연을 뜻하는 표식. 배우자 복으로 읽기도 한다.",
+      "천문성": "깊이 파고드는 기질. 학문·종교·역술과 인연이 있다고 본다.",
+      "겁살": "빼앗기기 쉬운 자리. 내 뜻과 무관하게 잃는 일이 생긴다고 본다.",
+      "천살": "사람 힘으로 어쩌지 못하는 자리. 위에서 내려오는 변수로 읽는다.",
+      "지살": "옮기고 움직이는 자리. 이사·출장·활동 반경의 확장으로 읽는다.",
+      "년살": "꾸미고 끌어당기는 자리. 도화살과 같은 것을 가리킨다.",
+      "망신살": "드러나고 들키는 자리. 감추던 것이 밖으로 나온다고 본다.",
+      "장성살": "앞에 나서는 자리. 주도권과 책임이 함께 온다고 읽는다.",
+      "역마살": "움직이는 자리. 이동·여행·변화가 잦다고 본다.",
+      "화개살": "거두어 안으로 들이는 자리. 예술·종교·고독으로 읽는다.",
+      "도화살": "사람을 끌어당기는 매력. 인기와 구설을 함께 본다.",
+      "양인살": "지나치게 날이 선 힘. 추진력이 크지만 다치기도 쉽다고 본다.",
+      "백호살": "피를 보는 일과 연결 짓는 표식. 사고·수술로 읽는다.",
+      "현침살": "바늘처럼 뾰족한 기운. 말이 날카롭고 예리한 손재주로도 읽는다.",
+      "유하살": "한자리에 머물지 못하고 흘러가는 표식.",
+      "귀문살": "예민하고 남다른 감각. 신경이 곤두서기 쉽다고 본다.",
+      "원진살": "까닭 없이 어긋나는 관계. 미워하면서도 끊지 못한다고 읽는다.",
+      "비인살": "양인살의 짝이 되는 표식. 날 선 힘이 안으로 향한다고 본다.",
+      "급각살": "다리와 뼈를 다치기 쉽다고 보는 표식.",
+      "낙정관살": "발을 헛디디는 표식. 물·구덩이처럼 빠지는 일로 읽는다."
+    },
+    "input": {
+      "birthYear": 1993,
+      "birthMonth": 11,
+      "birthDay": 19,
+      "birthHour": 10,
+      "birthMinute": 0,
+      "isLunar": false,
+      "isFemale": true,
+      "birthCity": "서울",
+      "isInternationalAge": true,
+      "correctedHour": 9,
+      "correctedMinute": 58
+    },
+    "timezone": {
+      "city": "서울",
+      "utcOffset": 540,
+      "longitude": 126.98,
+      "mode": "convention",
+      "longitudeCorrectionMinutes": -2,
+      "equationOfTimeMinutes": null,
+      "correctionMinutes": -2,
+      "cityResolved": true
+    },
+    "modules": {
+      "fourPillars": {
+        "year": {
+          "full": "계유",
+          "sky": "계",
+          "earth": "유",
+          "skyElement": "수",
+          "earthElement": "금",
+          "skyFull": "계수",
+          "earthFull": "유금",
+          "sippiSeong": "정인",
+          "twelveStage": "태",
+          "naeeum": "검봉금",
+          "jiJangGan": {
+            "residue": {
+              "stem": "경",
+              "days": 10
+            },
+            "middle": null,
+            "main": {
+              "stem": "신",
+              "days": 20
+            }
+          },
+          "twelveFortuneInterpretation": {
+            "keyword": "순수와 이상주의",
+            "energy": "어머니 뱃속의 씨앗. 아무것도 모르는 아기.",
+            "level": 3,
+            "season": "겨울",
+            "phase": "쉬며 다음을 준비하는 때 — 드러나지 않아도 안에서 채워진다",
+            "positionMeaning": "어린 시절 허약한 체질, 건강 관리 필요"
+          },
+          "earthSippiSeong": "정관"
+        },
+        "month": {
+          "full": "계해",
+          "sky": "계",
+          "earth": "해",
+          "skyElement": "수",
+          "earthElement": "수",
+          "skyFull": "계수",
+          "earthFull": "해수",
+          "sippiSeong": "정인",
+          "twelveStage": "장생",
+          "naeeum": "대해수",
+          "jiJangGan": {
+            "residue": {
+              "stem": "무",
+              "days": 7
+            },
+            "middle": {
+              "stem": "갑",
+              "days": 7
+            },
+            "main": {
+              "stem": "임",
+              "days": 16
+            }
+          },
+          "twelveFortuneInterpretation": {
+            "keyword": "성장과 발전",
+            "energy": "태아가 세상에 나와 성장하는 기운. 청신하고 담백한 성격.",
+            "level": 9,
+            "season": "봄",
+            "phase": "자라는 때 — 시작과 배움에 힘이 붙는다",
+            "positionMeaning": "고귀한 인품과 사회적 존경"
+          },
+          "earthSippiSeong": "정인"
+        },
+        "day": {
+          "full": "갑진",
+          "sky": "갑",
+          "earth": "진",
+          "skyElement": "목",
+          "earthElement": "토",
+          "skyFull": "갑목",
+          "earthFull": "진토",
+          "sippiSeong": "비견",
+          "twelveStage": "쇠",
+          "naeeum": "복등화",
+          "jiJangGan": {
+            "residue": {
+              "stem": "을",
+              "days": 9
+            },
+            "middle": {
+              "stem": "계",
+              "days": 3
+            },
+            "main": {
+              "stem": "무",
+              "days": 18
+            }
+          },
+          "twelveFortuneInterpretation": {
+            "keyword": "친절과 여유",
+            "energy": "50대 초로의 기운. 해가 서산으로 지는 고독함.",
+            "level": 8,
+            "season": "가을",
+            "phase": "기세가 꺾이는 때 — 벌이기보다 거두고 정리한다",
+            "positionMeaning": "안정적이고 신뢰할 수 있는 성격, 좋은 결혼"
+          },
+          "earthSippiSeong": "편재"
+        },
+        "hour": {
+          "full": "기사",
+          "sky": "기",
+          "earth": "사",
+          "skyElement": "토",
+          "earthElement": "화",
+          "skyFull": "기토",
+          "earthFull": "사화",
+          "sippiSeong": "정재",
+          "twelveStage": "병",
+          "naeeum": "대림목",
+          "jiJangGan": {
+            "residue": {
+              "stem": "무",
+              "days": 7
+            },
+            "middle": {
+              "stem": "경",
+              "days": 7
+            },
+            "main": {
+              "stem": "병",
+              "days": 16
+            }
+          },
+          "twelveFortuneInterpretation": {
+            "keyword": "역마와 분주함",
+            "energy": "병에 걸린 시기. 움직임이 약해지는 기운.",
+            "level": 4,
+            "season": "가을",
+            "phase": "기세가 꺾이는 때 — 벌이기보다 거두고 정리한다",
+            "positionMeaning": "자녀 건강 관리 필요, 조용한 말년"
+          },
+          "earthSippiSeong": "상관"
+        }
+      },
+      "elements": {
+        "wood": {
+          "name": "목",
+          "total": {
+            "count": 1,
+            "percentage": 12.5
+          },
+          "skyOnly": {
+            "count": 1,
+            "percentage": 25
+          },
+          "earthOnly": {
+            "count": 0,
+            "percentage": 0
+          }
+        },
+        "fire": {
+          "name": "화",
+          "total": {
+            "count": 1,
+            "percentage": 12.5
+          },
+          "skyOnly": {
+            "count": 0,
+            "percentage": 0
+          },
+          "earthOnly": {
+            "count": 1,
+            "percentage": 25
+          }
+        },
+        "earth": {
+          "name": "토",
+          "total": {
+            "count": 2,
+            "percentage": 25
+          },
+          "skyOnly": {
+            "count": 1,
+            "percentage": 25
+          },
+          "earthOnly": {
+            "count": 1,
+            "percentage": 25
+          }
+        },
+        "metal": {
+          "name": "금",
+          "total": {
+            "count": 1,
+            "percentage": 12.5
+          },
+          "skyOnly": {
+            "count": 0,
+            "percentage": 0
+          },
+          "earthOnly": {
+            "count": 1,
+            "percentage": 25
+          }
+        },
+        "water": {
+          "name": "수",
+          "total": {
+            "count": 3,
+            "percentage": 37.5
+          },
+          "skyOnly": {
+            "count": 2,
+            "percentage": 50
+          },
+          "earthOnly": {
+            "count": 1,
+            "percentage": 25
+          }
+        }
+      },
+      "sinStrength": {
+        "isStrong": false,
+        "strength": "중화",
+        "score": 53,
+        "description": "중화(53점) - 득력: 1/3개",
+        "bigyeopCount": 0,
+        "inseongCount": 2,
+        "deukryeong": true,
+        "deukji": false,
+        "deukse": false,
+        "analysis": "중화(中和) 사주로 균형이 잘 잡혀 있습니다. 일간 갑목은 주변 환경과 조화롭게 어우러지며 상황에 따라 능동적으로 대처할 수 있는 유연한 기질을 지닙니다."
+      },
+      "sinsal": {
+        "angels": [
+          {
+            "name": "암록",
+            "pillars": [
+              "월지"
+            ],
+            "description": "남들이 모르는 복록. 겉으로 드러나지 않지만 중요한 지원이나 기회."
+          },
+          {
+            "name": "월덕귀인",
+            "pillars": [
+              "일간"
+            ],
+            "description": "달이 덕을 내린 귀한 사람. 사회적 성공 관련."
+          },
+          {
+            "name": "문창귀인",
+            "pillars": [
+              "시지"
+            ],
+            "description": "학문과 글쓰기의 별. 총명하고 학업 성적이 우수하며 시험운이 좋다."
+          },
+          {
+            "name": "화개살",
+            "pillars": [
+              "일지"
+            ],
+            "description": "왕이 쓰던 화려한 일산(日傘). 세속을 떠나 화려함을 덮는 이중적 의미."
+          },
+          {
+            "name": "역마살",
+            "pillars": [
+              "월지"
+            ],
+            "description": "이동, 변동, 분주함을 의미. 활동력과 변화 적응력이 뛰어남."
+          },
+          {
+            "name": "도화살",
+            "pillars": [
+              "년지"
+            ],
+            "description": "이성에 대한 매력. 복숭아꽃처럼 이성을 끌어들이는 힘."
+          },
+          {
+            "name": "학당귀인",
+            "pillars": [
+              "월지"
+            ],
+            "description": "학문의 전당에 해당하는 귀인. 학업 성취와 지식 탐구에 뛰어남."
+          },
+          {
+            "name": "천관귀인",
+            "pillars": [
+              "년지"
+            ],
+            "description": "관직/조직에서 윗사람이 도움을 주는 귀인."
+          },
+          {
+            "name": "천문성",
+            "pillars": [
+              "월지"
+            ],
+            "description": "하늘의 문을 여는 별. 학문과 지식 탐구에 특별한 인연."
+          },
+          {
+            "name": "천주귀인",
+            "pillars": [
+              "시지"
+            ],
+            "description": "하늘의 부엌을 가진 귀인. 평생 의식주에 부족함이 없는 삶."
+          },
+          {
+            "name": "관귀학관",
+            "pillars": [
+              "시지"
+            ],
+            "description": "관직과 학문의 별. 배움이 벼슬로 이어지고 조직 안에서 빠르게 올라간다."
+          },
+          {
+            "name": "재고귀인",
+            "pillars": [
+              "일지"
+            ],
+            "description": "재물의 창고를 가진 귀인. 40대 이후 돈이 몰리는 대기만성형 재물 사주."
+          },
+          {
+            "name": "금여",
+            "pillars": [
+              "일지"
+            ],
+            "description": "금으로 만든 수레. 배우자 복과 안락한 환경을 뜻하는 길신."
+          },
+          {
+            "name": "문곡귀인",
+            "pillars": [
+              "월지"
+            ],
+            "description": "글과 가락(음악)의 귀인. 예술적 감성이 뛰어난 소유자."
+          }
+        ],
+        "devils": [
+          {
+            "name": "원진살",
+            "pillars": [
+              "월지"
+            ],
+            "description": "까닭 없는 미움. 이유를 대기 어려운 원망과 권태가 가까운 사이에서 생긴다."
+          },
+          {
+            "name": "귀문살",
+            "pillars": [
+              "월지"
+            ],
+            "description": "귀신의 문. 신경이 예민하고 직관이 날카로우며 집착이 강하다."
+          },
+          {
+            "name": "백호살",
+            "pillars": [
+              "일주"
+            ],
+            "description": "피를 보는 살. 사고·수술·혈광지재(血光之災)와 관련된다."
+          },
+          {
+            "name": "현침살",
+            "pillars": [
+              "일주"
+            ],
+            "description": "바늘을 매달아 놓은 듯한 형상. 섬세함/정밀함/예리한 감각."
+          },
+          {
+            "name": "급각살",
+            "pillars": [
+              "일지"
+            ],
+            "description": "다리를 다치는 살. 뼈·관절·수족의 손상과 낙상."
+          },
+          {
+            "name": "비인살",
+            "pillars": [
+              "년지"
+            ],
+            "description": "날아가는 칼날. 양인살의 대충(對沖) 위치. 예기치 못한 사고와 재난."
+          },
+          {
+            "name": "유하살",
+            "pillars": [
+              "년지"
+            ],
+            "description": "흐르는 노을. 다재다능하지만 한곳에 정착하지 못하고 떠도는 기운."
+          },
+          {
+            "name": "낙정관살",
+            "pillars": [
+              "시지"
+            ],
+            "description": "우물에 빠지는 살. 물·구덩이·함정에 관련된 사고와 실족."
+          }
+        ],
+        "twelve": [
+          {
+            "name": "년살",
+            "pillars": [
+              "년지"
+            ],
+            "description": "도화살과 동일 위치. 이성 관계와 매력에 관한 살. 인기와 사교성."
+          },
+          {
+            "name": "망신살",
+            "pillars": [
+              "월지"
+            ],
+            "description": "망신을 당하는 살. 주색으로 인해 구설수. 이목을 끄는 능력."
+          },
+          {
+            "name": "화개살",
+            "pillars": [
+              "일지"
+            ],
+            "description": "예술, 종교, 고독. 독특한 개성과 예술성. 고독을 즐김."
+          },
+          {
+            "name": "겁살",
+            "pillars": [
+              "시지"
+            ],
+            "description": "외부의 방해꾼. 도난, 손재, 불의의 재액과 교통사고."
+          },
+          {
+            "name": "장성살",
+            "pillars": [
+              "년지"
+            ],
+            "description": "장군의 별. 리더십과 권위를 상징. 특정 분야에서 일가를 이룸."
+          },
+          {
+            "name": "역마살",
+            "pillars": [
+              "월지"
+            ],
+            "description": "이동, 변동, 분주함. 스스로의 동기에 의한 이동수."
+          },
+          {
+            "name": "천살",
+            "pillars": [
+              "일지"
+            ],
+            "description": "불의의 천재지변. 인간이 극복하기 힘든 자연재해적 요소."
+          },
+          {
+            "name": "지살",
+            "pillars": [
+              "시지"
+            ],
+            "description": "자의적이고 계획적인 이동(이사, 여행, 유학, 승진)."
+          }
+        ],
+        "twelveMap": {
+          "년살": [
+            "년지"
+          ],
+          "망신살": [
+            "월지"
+          ],
+          "화개살": [
+            "일지"
+          ],
+          "겁살": [
+            "시지"
+          ],
+          "장성살": [
+            "년지"
+          ],
+          "역마살": [
+            "월지"
+          ],
+          "천살": [
+            "일지"
+          ],
+          "지살": [
+            "시지"
+          ]
+        },
+        "byPillar": {
+          "year": {
+            "twelve": "장성살",
+            "angels": [
+              "도화살",
+              "천관귀인"
+            ],
+            "devils": [
+              "비인살",
+              "유하살"
+            ]
+          },
+          "month": {
+            "twelve": "역마살",
+            "angels": [
+              "암록",
+              "역마살",
+              "학당귀인",
+              "천문성",
+              "문곡귀인"
+            ],
+            "devils": [
+              "원진살",
+              "귀문살"
+            ]
+          },
+          "day": {
+            "twelve": "천살",
+            "angels": [
+              "월덕귀인",
+              "화개살",
+              "재고귀인",
+              "금여"
+            ],
+            "devils": [
+              "백호살",
+              "현침살",
+              "급각살"
+            ]
+          },
+          "hour": {
+            "twelve": "지살",
+            "angels": [
+              "문창귀인",
+              "천주귀인",
+              "관귀학관"
+            ],
+            "devils": [
+              "낙정관살"
+            ]
+          }
+        }
+      },
+      "decadeFortune": {
+        "direction": "순행",
+        "startAge": 6,
+        "startDateTime": "1999년 11월 28일 13:53",
+        "basisTermsName": "대설",
+        "basisDuration": "18일 01:43분",
+        "list": [
+          {
+            "index": 0,
+            "startAge": 6,
+            "full": "갑자",
+            "sky": "갑",
+            "earth": "자",
+            "skyElement": "목",
+            "earthElement": "수",
+            "skyFull": "갑목",
+            "earthFull": "자수",
+            "sipseong": {
+              "gan": "비견",
+              "ganCategory": "비겁성"
+            },
+            "twelveFortune": {
+              "name": "목욕",
+              "keyword": "호기심과 변덕",
+              "level": 7,
+              "season": "봄",
+              "phase": "자라는 때 — 시작과 배움에 힘이 붙는다"
+            }
+          },
+          {
+            "index": 1,
+            "startAge": 16,
+            "full": "을축",
+            "sky": "을",
+            "earth": "축",
+            "skyElement": "목",
+            "earthElement": "토",
+            "skyFull": "을목",
+            "earthFull": "축토",
+            "sipseong": {
+              "gan": "겁재",
+              "ganCategory": "비겁성"
+            },
+            "twelveFortune": {
+              "name": "관대",
+              "keyword": "자존심과 추진력",
+              "level": 10,
+              "season": "봄",
+              "phase": "자라는 때 — 시작과 배움에 힘이 붙는다"
+            }
+          },
+          {
+            "index": 2,
+            "startAge": 26,
+            "full": "병인",
+            "sky": "병",
+            "earth": "인",
+            "skyElement": "화",
+            "earthElement": "목",
+            "skyFull": "병화",
+            "earthFull": "인목",
+            "sipseong": {
+              "gan": "식신",
+              "ganCategory": "식상성"
+            },
+            "twelveFortune": {
+              "name": "건록",
+              "keyword": "자수성가와 독립",
+              "level": 11,
+              "season": "여름",
+              "phase": "힘이 가장 찬 때 — 벌여 놓은 일이 앞으로 나간다"
+            }
+          },
+          {
+            "index": 3,
+            "startAge": 36,
+            "full": "정묘",
+            "sky": "정",
+            "earth": "묘",
+            "skyElement": "화",
+            "earthElement": "목",
+            "skyFull": "정화",
+            "earthFull": "묘목",
+            "sipseong": {
+              "gan": "상관",
+              "ganCategory": "식상성"
+            },
+            "twelveFortune": {
+              "name": "제왕",
+              "keyword": "절정과 고립",
+              "level": 12,
+              "season": "여름",
+              "phase": "힘이 가장 찬 때 — 벌여 놓은 일이 앞으로 나간다"
+            }
+          },
+          {
+            "index": 4,
+            "startAge": 46,
+            "full": "무진",
+            "sky": "무",
+            "earth": "진",
+            "skyElement": "토",
+            "earthElement": "토",
+            "skyFull": "무토",
+            "earthFull": "진토",
+            "sipseong": {
+              "gan": "편재",
+              "ganCategory": "재성"
+            },
+            "twelveFortune": {
+              "name": "쇠",
+              "keyword": "친절과 여유",
+              "level": 8,
+              "season": "가을",
+              "phase": "기세가 꺾이는 때 — 벌이기보다 거두고 정리한다"
+            }
+          },
+          {
+            "index": 5,
+            "startAge": 56,
+            "full": "기사",
+            "sky": "기",
+            "earth": "사",
+            "skyElement": "토",
+            "earthElement": "화",
+            "skyFull": "기토",
+            "earthFull": "사화",
+            "sipseong": {
+              "gan": "정재",
+              "ganCategory": "재성"
+            },
+            "twelveFortune": {
+              "name": "병",
+              "keyword": "역마와 분주함",
+              "level": 4,
+              "season": "가을",
+              "phase": "기세가 꺾이는 때 — 벌이기보다 거두고 정리한다"
+            }
+          },
+          {
+            "index": 6,
+            "startAge": 66,
+            "full": "경오",
+            "sky": "경",
+            "earth": "오",
+            "skyElement": "금",
+            "earthElement": "화",
+            "skyFull": "경금",
+            "earthFull": "오화",
+            "sipseong": {
+              "gan": "편관",
+              "ganCategory": "관성"
+            },
+            "twelveFortune": {
+              "name": "사",
+              "keyword": "사색과 지혜",
+              "level": 2,
+              "season": "가을",
+              "phase": "기세가 꺾이는 때 — 벌이기보다 거두고 정리한다"
+            }
+          },
+          {
+            "index": 7,
+            "startAge": 76,
+            "full": "신미",
+            "sky": "신",
+            "earth": "미",
+            "skyElement": "금",
+            "earthElement": "토",
+            "skyFull": "신금",
+            "earthFull": "미토",
+            "sipseong": {
+              "gan": "정관",
+              "ganCategory": "관성"
+            },
+            "twelveFortune": {
+              "name": "묘",
+              "keyword": "저축과 대기만성",
+              "level": 5,
+              "season": "겨울",
+              "phase": "쉬며 다음을 준비하는 때 — 드러나지 않아도 안에서 채워진다"
+            }
+          },
+          {
+            "index": 8,
+            "startAge": 86,
+            "full": "임신",
+            "sky": "임",
+            "earth": "신",
+            "skyElement": "수",
+            "earthElement": "금",
+            "skyFull": "임수",
+            "earthFull": "신금",
+            "sipseong": {
+              "gan": "편인",
+              "ganCategory": "인성"
+            },
+            "twelveFortune": {
+              "name": "절",
+              "keyword": "전환과 반전",
+              "level": 1,
+              "season": "겨울",
+              "phase": "쉬며 다음을 준비하는 때 — 드러나지 않아도 안에서 채워진다"
+            }
+          },
+          {
+            "index": 9,
+            "startAge": 96,
+            "full": "계유",
+            "sky": "계",
+            "earth": "유",
+            "skyElement": "수",
+            "earthElement": "금",
+            "skyFull": "계수",
+            "earthFull": "유금",
+            "sipseong": {
+              "gan": "정인",
+              "ganCategory": "인성"
+            },
+            "twelveFortune": {
+              "name": "태",
+              "keyword": "순수와 이상주의",
+              "level": 3,
+              "season": "겨울",
+              "phase": "쉬며 다음을 준비하는 때 — 드러나지 않아도 안에서 채워진다"
+            }
+          },
+          {
+            "index": 10,
+            "startAge": 106,
+            "full": "갑술",
+            "sky": "갑",
+            "earth": "술",
+            "skyElement": "목",
+            "earthElement": "토",
+            "skyFull": "갑목",
+            "earthFull": "술토",
+            "sipseong": {
+              "gan": "비견",
+              "ganCategory": "비겁성"
+            },
+            "twelveFortune": {
+              "name": "양",
+              "keyword": "온유와 상속",
+              "level": 6,
+              "season": "겨울",
+              "phase": "쉬며 다음을 준비하는 때 — 드러나지 않아도 안에서 채워진다"
+            }
+          },
+          {
+            "index": 11,
+            "startAge": 116,
+            "full": "을해",
+            "sky": "을",
+            "earth": "해",
+            "skyElement": "목",
+            "earthElement": "수",
+            "skyFull": "을목",
+            "earthFull": "해수",
+            "sipseong": {
+              "gan": "겁재",
+              "ganCategory": "비겁성"
+            },
+            "twelveFortune": {
+              "name": "장생",
+              "keyword": "성장과 발전",
+              "level": 9,
+              "season": "봄",
+              "phase": "자라는 때 — 시작과 배움에 힘이 붙는다"
+            }
+          },
+          {
+            "index": 12,
+            "startAge": 126,
+            "full": "병자",
+            "sky": "병",
+            "earth": "자",
+            "skyElement": "화",
+            "earthElement": "수",
+            "skyFull": "병화",
+            "earthFull": "자수",
+            "sipseong": {
+              "gan": "식신",
+              "ganCategory": "식상성"
+            },
+            "twelveFortune": {
+              "name": "목욕",
+              "keyword": "호기심과 변덕",
+              "level": 7,
+              "season": "봄",
+              "phase": "자라는 때 — 시작과 배움에 힘이 붙는다"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "meta": {
+    "responseMs": 1.38,
+    "topic": "manse",
+    "modules": [
+      "fourPillars",
+      "elements",
+      "sinStrength",
+      "sinsal",
+      "decadeFortune"
+    ],
+    "cached": false,
+    "tier": "free",
+    "sample": true,
+    "sampleProfile": "rich-sinsal",
+    "sampleNotice": "이 응답은 동결된 샘플 데이터입니다 (샘플 5 — 신살 풍부 · 여, 운세 기준 2026-07-15 — year/month/date 입력과 무관하게 고정). Pro 와 동일한 구조로, 통합·렌더 검증용입니다.",
+    "upgrade": {
+      "message": "실제 생년월일 계산은 Pro 플랜에서 제공됩니다.",
+      "url": "https://www.sazu.app/manse-api/dashboard/billing"
+    }
+  },
+  "_meta": {
+    "responseId": "mu9cmtzp-042f88f9-5f0a5d25",
+    "t": 1789880496469
+  }
+}
