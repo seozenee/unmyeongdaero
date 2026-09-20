@@ -15,6 +15,7 @@ import { isCompleteReport, storyReportSchema, type StoryReport } from "@/lib/sto
 import { softenDeep } from "@/lib/story/sanitize";
 import { buildTemplateReport } from "@/lib/story/report-template";
 import { hasLive, startLive, streamLive } from "./live";
+import { notifyReading } from "./notify";
 import { readingDraftSchema, validateDraftForReport } from "./schema";
 
 /**
@@ -57,6 +58,7 @@ export async function createDraftReading(user: AppUser, input: unknown) {
     subject: parsed.data.subject,
     partner,
     answers: parsed.data.answers,
+    notifyPhone: parsed.data.notifyPhone,
   });
   await repo.updateReading(reading.id, { sazu: manse });
 
@@ -117,6 +119,8 @@ async function streamJsonSlowly(value: unknown, onDelta: (delta: string) => void
 
 async function runGeneration(reading: Reading, report: ReportProduct, live: ReturnType<typeof startLive>) {
   const repo = getRepository();
+  // 알림은 곁가지다 — 여기서 기다리지 않고, 실패해도 생성에 영향을 주지 않는다
+  void notifyReading(reading, report, "reading-started");
   try {
     let sazu: StoredSazu = reading.sazu ?? {};
     if (report.topics.some((topic) => !sazu[topic]) || !sazu.manse) {
@@ -133,13 +137,20 @@ async function runGeneration(reading: Reading, report: ReportProduct, live: Retu
       await streamJsonSlowly(result, live.push);
     }
 
+    const generatedAt = new Date().toISOString();
     await repo.updateReading(reading.id, {
       script: result,
       status: "ready",
       error: null,
-      generatedAt: new Date().toISOString(),
+      generatedAt,
     });
     live.succeed();
+
+    // PDF 를 굽고 카톡으로 알린다. 화면을 이미 닫은 사람도 결과를 받게 하는 것이 목적이므로,
+    // 스트림을 닫은 뒤에 한다. 오래 걸려도 사용자를 기다리게 하지 않는다.
+    await notifyReading({ ...reading, script: result, generatedAt }, report, "reading-ready").catch((error) =>
+      console.error(`[reading ${reading.id}] 완료 알림 실패`, error),
+    );
   } catch (error) {
     console.error(`[reading ${reading.id}] 생성 실패`, error);
     const message =

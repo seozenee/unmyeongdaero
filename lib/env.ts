@@ -36,6 +36,13 @@ export const env = {
   portoneApiSecret: read("PORTONE_API_SECRET"),
   portoneWebhookSecret: read("PORTONE_WEBHOOK_SECRET"),
   devSessionSecret: read("DEV_SESSION_SECRET") ?? "sazudaero-local-dev-only",
+  // 알림톡 — 솔라피 계정과 카카오 비즈니스 채널·템플릿
+  solapiApiKey: read("SOLAPI_API_KEY"),
+  solapiApiSecret: read("SOLAPI_API_SECRET"),
+  solapiSender: read("SOLAPI_SENDER"),
+  kakaoPfId: read("KAKAO_PF_ID"),
+  kakaoTemplateStarted: read("KAKAO_TEMPLATE_STARTED"),
+  kakaoTemplateReady: read("KAKAO_TEMPLATE_READY"),
 };
 
 export const isProduction = process.env.NODE_ENV === "production";

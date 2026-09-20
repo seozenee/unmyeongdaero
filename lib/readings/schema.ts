@@ -15,11 +15,28 @@ export const birthProfileSchema = z.object({
   birthCity: z.string().trim().min(1).max(40),
 });
 
+/**
+ * 알림톡 받을 번호. 적지 않아도 된다.
+ *
+ * 하이픈·공백·국가번호를 걷어 내고 휴대전화 형태인지만 본다. 010-1234-5678 도,
+ * +82 10 1234 5678 도 같은 값으로 저장된다.
+ */
+export const notifyPhoneSchema = z
+  .string()
+  .trim()
+  .transform((value) => value.replace(/[^0-9]/g, ""))
+  .transform((digits) => (digits.startsWith("82") ? `0${digits.slice(2)}` : digits))
+  .refine((digits) => digits === "" || /^01[0-9]{8,9}$/.test(digits), "휴대전화 번호를 다시 확인해 주세요.")
+  .transform((digits) => digits || null)
+  .nullable()
+  .default(null);
+
 export const readingDraftSchema = z.object({
   slug: z.string().min(1),
   subject: birthProfileSchema,
   partner: birthProfileSchema.nullable().default(null),
   answers: z.record(z.string(), z.string().trim().max(1000)).default({}),
+  notifyPhone: notifyPhoneSchema,
 });
 
 export type ReadingDraftInput = z.input<typeof readingDraftSchema>;

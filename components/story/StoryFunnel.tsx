@@ -102,6 +102,8 @@ export function StoryFunnel({ report, sandbox }: { report: ReportProduct; sandbo
   const [partner, setPartner] = useState<BirthProfile | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [detail, setDetail] = useState("");
+  // 알림톡 받을 번호. 적지 않아도 되고, 적으면 다 쓴 뒤 카톡으로 알려 준다.
+  const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const step: FunnelStep | undefined = steps[cursor];
@@ -166,6 +168,7 @@ export function StoryFunnel({ report, sandbox }: { report: ReportProduct; sandbo
       subject,
       partner,
       answers: { ...answers, ...(detail.trim() ? { detail: detail.trim() } : {}) },
+      notifyPhone: phone.trim() || null,
     };
 
     try {
@@ -336,6 +339,25 @@ export function StoryFunnel({ report, sandbox }: { report: ReportProduct; sandbo
             {report.originalPrice && <span className="font-body-sm text-body-sm text-outline line-through">{formatKRW(report.originalPrice)}</span>}
             <span className="ml-auto font-label-sm text-label-sm text-outline">{report.chapters.length}장 보고서 · 영구 소장</span>
           </div>
+          <label className="flex flex-col gap-1.5">
+            <span className="font-label-sm text-label-sm text-on-surface-variant">
+              휴대전화 번호 <span className="text-outline">· 선택</span>
+            </span>
+            <input
+              type="tel"
+              inputMode="numeric"
+              autoComplete="tel"
+              value={phone}
+              maxLength={13}
+              placeholder="010-0000-0000"
+              onChange={(event) => setPhone(event.target.value)}
+              className="w-full rounded-lg border border-outline-variant/60 bg-surface-container-lowest px-space-sm py-2.5 font-body-md text-body-md text-on-surface outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/60"
+            />
+            <span className="font-label-sm text-label-sm text-outline">
+              적어 두시면 풀이가 다 쓰이는 대로 카카오톡으로 알려 드려요. PDF 도 함께 보내 드립니다.
+              번호는 이 알림에만 쓰고 광고는 보내지 않아요.
+            </span>
+          </label>
           <StageAction tone="confirm" disabled={submitting} onClick={submit}>
             {submitting ? "명식을 확인하고 있어요…" : step.label}
             {!submitting && <Icon name="arrow_forward" className="text-[18px]" />}

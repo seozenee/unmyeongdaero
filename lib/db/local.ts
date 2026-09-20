@@ -72,9 +72,10 @@ export function createLocalRepository(): Repository {
     createReading: (input) =>
       write((data) => {
         const timestamp = now();
+        const { notifyPhone, ...rest } = input;
         const reading: Reading = {
           id: randomUUID(),
-          ...input,
+          ...rest,
           status: "draft",
           sazu: null,
           script: null,
@@ -82,12 +83,21 @@ export function createLocalRepository(): Repository {
           createdAt: timestamp,
           updatedAt: timestamp,
           generatedAt: null,
+          notifyPhone: notifyPhone ?? null,
+          notifyConsentAt: notifyPhone ? timestamp : null,
+          notifiedKind: null,
+          pdfPath: null,
+          pdfToken: null,
+          pdfCreatedAt: null,
         };
         data.readings.push(reading);
         return reading;
       }),
 
     getReading: (id) => read((data) => data.readings.find((reading) => reading.id === id) ?? null),
+
+    getReadingByPdfToken: (token) =>
+      read((data) => data.readings.find((reading) => reading.pdfToken === token) ?? null),
 
     updateReading: (id, patch) =>
       write((data) => {

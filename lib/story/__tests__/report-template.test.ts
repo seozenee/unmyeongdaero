@@ -48,6 +48,12 @@ function readingFor(slug: string, withPartner: boolean): Reading {
     createdAt: "2026-09-11T00:00:00.000Z",
     updatedAt: "2026-09-11T00:00:00.000Z",
     generatedAt: null,
+    notifyPhone: null,
+    notifyConsentAt: null,
+    notifiedKind: null,
+    pdfPath: null,
+    pdfToken: null,
+    pdfCreatedAt: null,
   };
 }
 

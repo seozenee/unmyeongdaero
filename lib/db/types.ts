@@ -45,6 +45,17 @@ export interface Reading {
   createdAt: string;
   updatedAt: string;
   generatedAt: string | null;
+  /** 알림톡 받을 번호. 하이픈 없는 숫자만 */
+  notifyPhone: string | null;
+  /** 번호를 받아 둔 시점(= 수집 동의 시각) */
+  notifyConsentAt: string | null;
+  /** 마지막으로 보낸 알림 — 같은 알림을 두 번 보내지 않으려고 둔다 */
+  notifiedKind: string | null;
+  /** 구운 PDF 의 스토리지 경로 */
+  pdfPath: string | null;
+  /** /r/{token} 의 token */
+  pdfToken: string | null;
+  pdfCreatedAt: string | null;
 }
 
 export type PaymentProvider = "portone" | "mock";
@@ -103,12 +114,22 @@ export interface Repository {
     subject: BirthProfile;
     partner: BirthProfile | null;
     answers: Record<string, string>;
+    notifyPhone?: string | null;
   }): Promise<Reading>;
   getReading(id: string): Promise<Reading | null>;
   updateReading(
     id: string,
-    patch: Partial<Pick<Reading, "status" | "sazu" | "script" | "error" | "generatedAt">>,
+    patch: Partial<
+      Pick<
+        Reading,
+        | "status" | "sazu" | "script" | "error" | "generatedAt"
+        | "notifyPhone" | "notifyConsentAt" | "notifiedKind"
+        | "pdfPath" | "pdfToken" | "pdfCreatedAt"
+      >
+    >,
   ): Promise<void>;
+  /** 카톡 버튼이 열어 주는 짧은 주소로 풀이를 찾는다 */
+  getReadingByPdfToken(token: string): Promise<Reading | null>;
   /** 현재 상태가 from 중 하나일 때만 to 로 바꾼다(중복 생성 방지). 바꿨으면 true */
   transitionReading(id: string, from: ReadingStatus[], to: ReadingStatus): Promise<boolean>;
 

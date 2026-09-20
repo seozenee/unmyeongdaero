@@ -40,6 +40,12 @@ const toReading = (row: Row): Reading => ({
   createdAt: row.created_at,
   updatedAt: row.updated_at,
   generatedAt: row.generated_at,
+  notifyPhone: row.notify_phone ?? null,
+  notifyConsentAt: row.notify_consent_at ?? null,
+  notifiedKind: row.notified_kind ?? null,
+  pdfPath: row.pdf_path ?? null,
+  pdfToken: row.pdf_token ?? null,
+  pdfCreatedAt: row.pdf_created_at ?? null,
 });
 
 const toPayment = (row: Row): Payment => ({
@@ -102,6 +108,8 @@ export function createSupabaseRepository(): Repository {
             subject: input.subject,
             partner: input.partner,
             answers: input.answers,
+            notify_phone: input.notifyPhone ?? null,
+            notify_consent_at: input.notifyPhone ? new Date().toISOString() : null,
           })
           .select()
           .single(),
@@ -126,10 +134,24 @@ export function createSupabaseRepository(): Repository {
             ...(patch.script !== undefined && { script: patch.script }),
             ...(patch.error !== undefined && { error: patch.error }),
             ...(patch.generatedAt !== undefined && { generated_at: patch.generatedAt }),
+            ...(patch.notifyPhone !== undefined && { notify_phone: patch.notifyPhone }),
+            ...(patch.notifyConsentAt !== undefined && { notify_consent_at: patch.notifyConsentAt }),
+            ...(patch.notifiedKind !== undefined && { notified_kind: patch.notifiedKind }),
+            ...(patch.pdfPath !== undefined && { pdf_path: patch.pdfPath }),
+            ...(patch.pdfToken !== undefined && { pdf_token: patch.pdfToken }),
+            ...(patch.pdfCreatedAt !== undefined && { pdf_created_at: patch.pdfCreatedAt }),
           })
           .eq("id", id),
         "updateReading",
       );
+    },
+
+    async getReadingByPdfToken(token) {
+      const row = unwrap(
+        await db().from("readings").select().eq("pdf_token", token).maybeSingle(),
+        "getReadingByPdfToken",
+      );
+      return row ? toReading(row) : null;
     },
 
     async transitionReading(id, from, to) {
