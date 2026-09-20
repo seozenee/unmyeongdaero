@@ -70,6 +70,14 @@ export const THREE_HARMONY: ReadonlyArray<{ branches: readonly Branch[]; element
   { branches: ["사", "유", "축"], element: "금" },
 ];
 
+/** 지지 방합 — 같은 계절의 세 글자가 모인다 */
+export const DIRECTIONAL_HARMONY: ReadonlyArray<{ branches: readonly Branch[]; element: Element; season: string }> = [
+  { branches: ["인", "묘", "진"], element: "목", season: "봄" },
+  { branches: ["사", "오", "미"], element: "화", season: "여름" },
+  { branches: ["신", "유", "술"], element: "금", season: "가을" },
+  { branches: ["해", "자", "축"], element: "수", season: "겨울" },
+];
+
 /** 지지 육합 */
 export const SIX_HARMONY: ReadonlyArray<readonly [Branch, Branch]> = [
   ["자", "축"], ["인", "해"], ["묘", "술"], ["진", "유"], ["사", "신"], ["오", "미"],
