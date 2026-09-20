@@ -3,19 +3,10 @@
 import { useEffect } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { SfxText } from "@/components/webtoon/ComicText";
-import { GuideFigure } from "@/components/webtoon/GuideFigure";
-import { SceneBackdrop } from "@/components/webtoon/SceneBackdrop";
 import { getWebtoonAsset, WebtoonMedia } from "@/components/webtoon/WebtoonMedia";
 import { cn } from "@/lib/cn";
 import type { Guide } from "@/lib/story/guides";
 import type { Camera, FigurePose, Place } from "@/lib/story/webtoon";
-
-/** 캐릭터가 화면에 서는 자리 */
-const FIGURE: Record<Exclude<FigurePose, "none">, string> = {
-  silhouette: "bottom-0 h-[46%] brightness-[0.22] saturate-0 opacity-90",
-  reveal: "bottom-0 h-[62%] motion-safe:animate-rise-in",
-  close: "bottom-0 h-[78%] motion-safe:animate-fade-in",
-};
 
 interface StageProps {
   guide: Guide;
@@ -60,12 +51,7 @@ export function Stage({ guide, place, camera, figure, assetKey, still, sfx, chil
     <div className="fixed inset-0 z-[60] mx-auto flex w-full max-w-md flex-col overflow-hidden bg-surface-container-lowest lg:shadow-[0_0_80px_rgba(0,0,0,0.55)] lg:ring-1 lg:ring-outline-variant/30">
       {/* 장면 */}
       <div key={`${place}-${assetKey ?? camera}`} className="absolute inset-0 motion-safe:animate-fade-in">
-        {asset ? <WebtoonMedia asset={asset} still={still} /> : <SceneBackdrop theme={guide.id} camera={camera} place={place} />}
-        {!asset && figure !== "none" && (
-          <div className={cn("absolute left-1/2 -translate-x-1/2", FIGURE[figure])}>
-            <GuideFigure guide={guide} />
-          </div>
-        )}
+        {asset && <WebtoonMedia asset={asset} still={still} />}
         {/* 글자가 읽히도록 위아래를 어둡게 */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-surface-container-lowest/45" />
         <div className="pointer-events-none absolute inset-0 shadow-[inset_0_0_90px_rgba(0,0,0,0.55)]" />

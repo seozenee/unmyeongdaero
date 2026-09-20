@@ -6,8 +6,6 @@ import { FourPillarsChart } from "@/components/saju/FourPillarsChart";
 import { GuideAvatar } from "@/components/story/GuideAvatar";
 import { Reveal } from "@/components/report/Reveal";
 import { Icon } from "@/components/ui/Icon";
-import { GuideFigure } from "@/components/webtoon/GuideFigure";
-import { SceneBackdrop } from "@/components/webtoon/SceneBackdrop";
 import { getWebtoonAsset, WebtoonMedia } from "@/components/webtoon/WebtoonMedia";
 import { cn } from "@/lib/cn";
 import type { BasisFact } from "@/lib/saju/basis";
@@ -86,15 +84,8 @@ export function ReportDocument(props: ReportDocumentProps) {
 
       {/* 표지 */}
       <header className="relative -mx-margin h-[26rem] overflow-hidden print:hidden">
-        {getWebtoonAsset(guide.id, "report-cover") ? (
+        {getWebtoonAsset(guide.id, "report-cover") && (
           <WebtoonMedia asset={getWebtoonAsset(guide.id, "report-cover")!} still />
-        ) : (
-          <>
-            <SceneBackdrop theme={guide.id} camera="wide" />
-            <div className="absolute -right-6 bottom-0 h-[78%] opacity-90">
-              <GuideFigure guide={guide} />
-            </div>
-          </>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/70 to-surface/10" />
         <div className="absolute inset-x-0 top-0 flex items-center justify-between px-margin pt-space-md">

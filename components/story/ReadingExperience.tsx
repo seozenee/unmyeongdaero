@@ -7,8 +7,6 @@ import { ReportDocument, type ReportPanels } from "@/components/report/ReportDoc
 import { GuideBubble, NarrationLine, TypingIndicator } from "@/components/story/Bubbles";
 import { Icon } from "@/components/ui/Icon";
 import { CaptionBox, SfxText } from "@/components/webtoon/ComicText";
-import { GuideFigure } from "@/components/webtoon/GuideFigure";
-import { SceneBackdrop } from "@/components/webtoon/SceneBackdrop";
 import { getWebtoonAsset, WebtoonMedia } from "@/components/webtoon/WebtoonMedia";
 import type { ReadingStatus } from "@/lib/db/types";
 import type { BasisFact } from "@/lib/saju/basis";
@@ -189,16 +187,7 @@ export function ReadingExperience(props: ReadingExperienceProps) {
     <div className="flex w-full flex-col gap-space-md pb-space-xl" onClick={() => setSkipSignal((value) => value + 1)}>
       {/* 장면 띠 */}
       <section className="relative -mx-margin h-52 overflow-hidden">
-        {stripAsset ? (
-          <WebtoonMedia asset={stripAsset} />
-        ) : (
-          <>
-            <SceneBackdrop theme={guide.id} camera="push" />
-            <div className="absolute bottom-0 right-4 h-[92%] motion-safe:animate-fade-in">
-              <GuideFigure guide={guide} />
-            </div>
-          </>
-        )}
+        {stripAsset && <WebtoonMedia asset={stripAsset} />}
         <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent" />
         <div className="absolute bottom-space-md left-margin flex max-w-[62%] flex-col gap-1">
           <span className="font-label-sm text-label-sm text-secondary">{props.categoryLabel}</span>
@@ -259,7 +248,7 @@ export function ReadingExperience(props: ReadingExperienceProps) {
       {briefingShown && !failure && (
         finalReport ? (
           <section className="relative -mx-margin mt-space-md aspect-[4/3] overflow-hidden motion-safe:animate-fade-up">
-            {coverAsset ? <WebtoonMedia asset={coverAsset} /> : <SceneBackdrop theme={guide.id} camera="wide" />}
+            {coverAsset && <WebtoonMedia asset={coverAsset} />}
             <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/50 to-transparent" />
             <div className="absolute right-margin top-space-lg">
               <SfxText rotate={-12}>촤르륵</SfxText>

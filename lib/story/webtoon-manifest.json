@@ -75,6 +75,9 @@
     },
     "panel-unfold": {
       "image": "/webtoon/yunseul/panel-unfold.webp"
+    },
+    "report-cover": {
+      "image": "/webtoon/yunseul/report-cover.webp"
     }
   },
   "doham": {
@@ -95,6 +98,18 @@
     },
     "report-cover": {
       "image": "/webtoon/doham/report-cover.webp"
+    },
+    "intro-3": {
+      "image": "/webtoon/doham/intro-3.webp"
+    },
+    "intro-4": {
+      "image": "/webtoon/doham/intro-4.webp"
+    },
+    "panel-second": {
+      "image": "/webtoon/doham/panel-second.webp"
+    },
+    "panel-unfold": {
+      "image": "/webtoon/doham/panel-unfold.webp"
     }
   }
 }

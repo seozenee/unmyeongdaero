@@ -1,33 +1,38 @@
+// 안내자 아이콘. 생성된 정면 초상(intro-5)의 얼굴 부분을 원형으로 잘라 쓴다.
+import { getWebtoonAsset } from "@/components/webtoon/WebtoonMedia";
 import { cn } from "@/lib/cn";
 import type { Guide } from "@/lib/story/guides";
 
 const ACCENT = {
-  primary: { ring: "ring-primary/50", glow: "from-primary/35", text: "text-primary" },
-  secondary: { ring: "ring-secondary/50", glow: "from-secondary/35", text: "text-secondary" },
-  tertiary: { ring: "ring-tertiary/50", glow: "from-tertiary/35", text: "text-tertiary" },
+  primary: "ring-primary/50",
+  secondary: "ring-secondary/50",
+  tertiary: "ring-tertiary/50",
 } as const;
 
 const SIZE = {
-  sm: "h-8 w-8 text-[15px]",
-  md: "h-10 w-10 text-headline-md",
-  lg: "h-16 w-16 text-headline-lg-mobile",
+  sm: "h-8 w-8",
+  md: "h-10 w-10",
+  lg: "h-16 w-16",
 } as const;
 
-/** 초상화 대신 안내자의 인장 글자와 기운(그라데이션)으로 표현한다. 캐릭터 일러스트가 생기면 여기서 교체. */
 export function GuideAvatar({ guide, size = "md", className }: { guide: Guide; size?: keyof typeof SIZE; className?: string }) {
-  const accent = ACCENT[guide.accent];
+  const portrait = getWebtoonAsset(guide.id, "intro-5");
+
   return (
     <div
       aria-hidden
       className={cn(
         "relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-container-highest ring-1",
-        accent.ring,
+        ACCENT[guide.accent],
         SIZE[size],
         className,
       )}
     >
-      <div className={cn("absolute inset-0 bg-gradient-to-br to-transparent", accent.glow)} />
-      <span className={cn("relative font-headline-md font-bold leading-none", accent.text)}>{guide.seal}</span>
+      {portrait && (
+        // 얼굴이 이미지 위쪽에 있어 object-top 으로 맞춘다
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={portrait.image} alt="" loading="lazy" decoding="async" className="h-full w-full scale-[1.9] object-cover object-top" />
+      )}
     </div>
   );
 }
