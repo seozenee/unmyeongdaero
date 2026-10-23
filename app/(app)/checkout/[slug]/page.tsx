@@ -106,6 +106,19 @@ export default async function CheckoutPage({
         </div>
         <ul className="flex flex-col gap-2 font-body-sm text-body-sm text-on-surface-variant">
           <li>· 매달 나가는 자동 결제가 없는 <strong className="text-on-surface">1회 결제</strong>예요.</li>
+          {/* 서비스 제공기간은 전자상거래법 표시사항이자 카드사 심사 확인 항목이다.
+              '영구 소장'은 열람 편의이지 제공기간이 아니므로 둘을 나눠 적는다. */}
+          {report.kind === "consult" ? (
+            <li>
+              · <strong className="text-on-surface">제공기간</strong> · 결제 즉시 상담 세션이 열리고, 개설일로부터 30일
+              동안 이용할 수 있어요.
+            </li>
+          ) : (
+            <li>
+              · <strong className="text-on-surface">제공기간</strong> · 결제 즉시 풀이 생성이 시작돼 보통 1~2분 안에,
+              늦어도 24시간 안에 받아 보실 수 있어요.
+            </li>
+          )}
           {report.kind === "consult" ? (
             <li>
               · 결제 1회로 <strong className="text-on-surface">질문 {CONSULT_TURN_LIMIT}개</strong>까지 자유롭게 대화하고, 기록은 보관함에 남아요.
