@@ -10,34 +10,22 @@
 | `결제경로_운명대로.pptx` | 메일에 첨부할 결제경로 파일 |
 | `captures/` | PPT 에 들어갈 화면 캡처 (찍는 법은 그 안의 README) |
 
-## 남은 순서
+## 지금 상태
 
-1. **토스페이먼츠 개발자센터에서 API 키를 받는다**
-   내 개발정보 → API 키. 결제창형(자체창)이므로 `test_ck_` / `test_sk_` 를 쓴다.
-   테스트 키로 연동해도 카드사 심사가 가능하다.
+캡처 11장과 PPT 12장이 모두 준비됐습니다. **회신만 하면 됩니다.**
 
-2. **Vercel 환경변수에 넣는다** — 반드시 **Sensitive 가 아닌 일반 값**으로
-   ```
-   NEXT_PUBLIC_TOSS_CLIENT_KEY=test_ck_...
-   TOSS_SECRET_KEY=test_sk_...
-   ```
+1. `계약심사_회신.md` 의 본문을 복사해 토스페이먼츠 계약 담당자에게 회신
+2. `결제경로_운명대로.pptx` 첨부
 
-3. **Supabase 에 마이그레이션을 돌린다**
-   `supabase/migrations/0003_toss_payments.sql` (결제 provider 제약 넓히기)
+계약이 끝난 뒤에 할 일:
 
-4. **배포한다** — `FREE_ACCESS` 는 반드시 **지운다**. 켜져 있으면 실제 결제창이 아니라
-   모의 결제창이 열려 심사가 통과하지 못한다.
+- Vercel 환경변수의 토스 키를 **라이브 키**(`live_ck_` / `live_sk_`)로 교체
+- 캡처를 다시 찍을 필요는 없습니다(테스트 결제창으로도 심사가 가능합니다)
 
-5. **캡처를 찍는다** — `captures/README.md` 의 목록대로. 북마크바를 끄고 도메인과
-   PC 시계가 함께 보이게.
-
-6. **PPT 를 만든다**
-   ```
-   node scripts/build-payment-path.mjs
-   ```
-
-7. **회신한다** — `계약심사_회신.md` 본문 + PPT 첨부.
-   본문의 대괄호 표시(테스트 키/라이브 키)를 보내기 전에 택일한다.
+캡처를 다시 만들려면 `captures/` 의 파일을 바꾸고:
+```
+node scripts/build-payment-path.mjs
+```
 
 ## 심사용 계정
 

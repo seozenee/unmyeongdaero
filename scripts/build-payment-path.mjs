@@ -6,8 +6,8 @@
 //
 //   node scripts/build-payment-path.mjs
 //
-// 캡처는 docs/토스페이먼츠/captures/ 에 아래 이름으로 둔다. 없는 캡처는 빈 자리로 표시되어
-// 무엇이 빠졌는지 바로 보인다.
+// 캡처는 docs/토스페이먼츠/captures/ 에 아래 STEPS 의 file 이름으로 둔다.
+// 없는 캡처는 빈 자리로 표시되어 무엇이 빠졌는지 바로 보인다.
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -46,39 +46,44 @@ const STEPS = [
     file: "04-로그인.png",
   },
   {
-    badge: "⑤ 상품 선택 (1/5)",
-    caption: "첫 화면에서 판매 중인 리포트 상품을 고릅니다.",
-    file: "05-상품목록.png",
+    badge: "⑤ 상품 선택 (1/4)",
+    caption: "첫 화면에서 판매 중인 리포트를 고릅니다. 상품명·구성·금액이 함께 표시됩니다.",
+    file: "05-상품선택.png",
   },
   {
-    badge: "⑤ 상품 상세 (2/5)",
-    caption: "상품명·구성·금액과 서비스 제공기간을 확인합니다.",
-    file: "06-상품상세.png",
+    badge: "⑤ 정보 입력 (2/4)",
+    caption: "고른 상품으로 들어가 풀이에 필요한 생년월일시를 입력합니다.",
+    file: "06-상품진입.png",
   },
   {
-    badge: "⑤ 정보 입력 (3/5)",
-    caption: "풀이에 필요한 생년월일시를 입력합니다.",
-    file: "07-정보입력.png",
-  },
-  {
-    badge: "⑤ 만세력 확인 (4/5)",
+    badge: "⑤ 만세력 확인 (3/4)",
     caption: "입력한 정보로 계산한 사주 명식을 먼저 보여 드리고, 맞는지 확인받은 뒤 결제로 넘어갑니다.",
-    file: "08-만세력확인.png",
+    file: "07-만세력확인.png",
   },
   {
-    badge: "⑤ 주문 확인 (5/5)",
+    badge: "⑤ 주문 확인 (4/4)",
     caption: "상품명·금액·결제수단·청약철회 제한 동의를 확인하고 결제를 요청합니다.",
-    file: "09-주문확인.png",
+    file: "08-주문확인.png",
   },
   {
-    badge: "⑥ 카드 결제경로 (1/2)",
-    caption: "토스페이먼츠 결제창이 열리고 카드사를 선택합니다.",
-    file: "10-결제창.png",
+    badge: "⑥ 카드 결제경로 (1/4)",
+    caption: "토스페이먼츠 결제창이 열립니다. 상품명과 결제 금액이 함께 표시됩니다.",
+    file: "09-결제창-수단선택.png",
   },
   {
-    badge: "⑥ 카드 결제경로 (2/2)",
-    caption: "카드사 인증 화면까지의 흐름입니다.",
-    file: "11-카드사인증.png",
+    badge: "⑥ 카드 결제경로 (2/4)",
+    caption: "계좌이체를 고른 경우의 결제창입니다.",
+    file: "10-결제창-계좌이체.png",
+  },
+  {
+    badge: "⑥ 카드 결제경로 (3/4)",
+    caption: "휴대폰 결제를 고른 경우의 약관 동의 화면입니다.",
+    file: "11-결제창-휴대폰.png",
+  },
+  {
+    badge: "⑥ 카드 결제경로 (4/4)",
+    caption: "비씨카드(페이북) 인증 화면입니다.",
+    file: "12-카드사인증.png",
   },
 ];
 
