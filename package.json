@@ -20,7 +20,8 @@
     "tokens": "node scripts/extract-design-tokens.mjs",
     "tokens:check": "node scripts/extract-design-tokens.mjs --check",
     "pdf:preview": "PDF_PREVIEW=1 vitest run lib/pdf/__tests__/render.test.ts",
-    "account:review": "tsx --env-file=.env.local scripts/create-review-account.mts"
+    "account:review": "tsx --env-file=.env.local scripts/create-review-account.mts",
+    "notify:status": "tsx --env-file=.env.local scripts/notify-status.mts"
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.100",
