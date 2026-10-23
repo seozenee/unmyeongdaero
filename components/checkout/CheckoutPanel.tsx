@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Icon } from "@/components/ui/Icon";
+import { cn } from "@/lib/cn";
 import { formatKRW } from "@/lib/format";
 
 type ConfirmResult =
@@ -42,9 +43,24 @@ interface CheckoutPanelProps {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/**
+ * 고를 수 있는 결제수단.
+ *
+ * 토스페이먼츠와 계약한 수단만 둔다. 계약하지 않은 수단을 띄우면 구매자가 고른 뒤에
+ * 결제창에서 막히므로, 여기 없는 것은 아예 보여 주지 않는다.
+ */
+const METHODS = [
+  { id: "CARD", label: "신용·체크카드", icon: "credit_card" },
+  { id: "TRANSFER", label: "계좌이체", icon: "account_balance" },
+  { id: "MOBILE_PHONE", label: "휴대폰", icon: "smartphone" },
+] as const;
+
+type PaymentMethod = (typeof METHODS)[number]["id"];
+
 export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice = null }: CheckoutPanelProps) {
   const router = useRouter();
   const [agreed, setAgreed] = useState(false);
+  const [method, setMethod] = useState<PaymentMethod>("CARD");
   const [busy, setBusy] = useState<null | "preparing" | "paying" | "confirming">(null);
   const [notice, setNotice] = useState<Notice | null>(initialNotice);
   const [mock, setMock] = useState<Extract<CheckoutStart, { kind: "mock" }> | null>(null);
@@ -158,16 +174,23 @@ export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice 
       const payment = tossPayments.payment({ customerKey: start.customerKey });
 
       // 리다이렉트 방식이라 여기서 돌아오지 않는다. 결과는 successUrl(/checkout/complete)에서 이어진다.
-      await payment.requestPayment({
-        method: "CARD",
-        amount: { currency: "KRW", value: start.totalAmount },
+      const common = {
+        amount: { currency: "KRW" as const, value: start.totalAmount },
         orderId: start.paymentId,
         orderName: start.orderName,
         customerName: start.customerName ?? undefined,
         successUrl: start.successUrl,
         failUrl: start.failUrl,
-        card: { useEscrow: false, flowMode: "DEFAULT", useCardPoint: false, useAppCardOnly: false },
-      });
+      };
+      await (method === "CARD"
+        ? payment.requestPayment({
+            ...common,
+            method: "CARD",
+            card: { useEscrow: false, flowMode: "DEFAULT", useCardPoint: false, useAppCardOnly: false },
+          })
+        : method === "TRANSFER"
+          ? payment.requestPayment({ ...common, method: "TRANSFER", transfer: { cashReceipt: { type: "소득공제" } } })
+          : payment.requestPayment({ ...common, method: "MOBILE_PHONE" }));
     } catch (error) {
       // 구매자가 결제창을 닫은 것도 여기로 온다 — 실패로 기록하되 조용히 넘긴다
       console.error(error);
@@ -203,6 +226,8 @@ export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice 
 
   const busyLabel = { preparing: "결제를 준비하고 있어요…", paying: "결제창에서 진행해 주세요…", confirming: "결제를 확인하고 있어요…" };
 
+  const selected = METHODS.find((item) => item.id === method)!;
+
   return (
     <div className="flex flex-col gap-space-sm">
       {notice && (
@@ -226,6 +251,32 @@ export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice 
         </div>
       )}
 
+      <fieldset className="flex flex-col gap-space-sm">
+        <legend className="mb-space-sm font-label-md text-label-md text-on-surface">결제수단</legend>
+        <div className="grid grid-cols-3 gap-space-xs">
+          {METHODS.map((item) => {
+            const active = item.id === method;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setMethod(item.id)}
+                className={cn(
+                  "flex flex-col items-center gap-1 rounded-lg px-space-xs py-space-sm font-label-sm text-label-sm transition-colors",
+                  active
+                    ? "bg-surface-container-highest text-on-surface ring-1 ring-primary"
+                    : "bg-surface-container-low text-on-surface-variant ring-1 ring-outline-variant/40 hover:text-on-surface",
+                )}
+              >
+                <Icon name={item.icon} className="text-[20px]" />
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
+
       <label className="flex items-start gap-space-sm rounded-lg bg-surface-container-low p-space-sm font-body-sm text-body-sm text-on-surface-variant">
         <input type="checkbox" className="mt-1 accent-secondary" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
         <span>
@@ -240,7 +291,7 @@ export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice 
         disabled={busy !== null}
         className="mt-space-xs flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-secondary-container to-secondary py-3.5 font-label-md text-label-md text-on-secondary shadow-lg shadow-secondary-container/30 transition-transform active:scale-[0.98] disabled:opacity-60"
       >
-        <span>{busy ? busyLabel[busy] : `${formatKRW(price)} · ${ctaLabel}`}</span>
+        <span>{busy ? busyLabel[busy] : `${formatKRW(price)} · ${selected.label}로 ${ctaLabel}`}</span>
         {!busy && <Icon name="arrow_forward" className="text-[18px]" />}
       </button>
       <p className="text-center font-label-sm text-label-sm text-outline">구독 결제 없음 · 영구 소장 단건 열람권</p>
