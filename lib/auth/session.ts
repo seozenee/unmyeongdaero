@@ -10,6 +10,8 @@ export interface AppUser {
   displayName: string | null;
   avatarUrl: string | null;
   provider: "kakao" | "email" | "dev";
+  /** 운영자 판별에 쓴다. 카카오 로그인은 이메일 동의를 받지 못하면 비어 있다 */
+  email: string | null;
 }
 
 // ─── 개발 대체 로그인 (Supabase 미설정 + 비프로덕션에서만) ─────────────────────
@@ -52,11 +54,14 @@ export async function getCurrentUser(): Promise<AppUser | null> {
         meta.name ?? meta.full_name ?? meta.preferred_username ?? (provider === "email" ? (user.email ?? null) : null),
       avatarUrl: meta.avatar_url ?? meta.picture ?? null,
       provider,
+      email: user.email ?? null,
     };
   }
 
   const userId = readDevSession(cookies().get(DEV_SESSION_COOKIE)?.value);
-  return userId ? { id: userId, displayName: "개발용 사용자", avatarUrl: null, provider: "dev" } : null;
+  return userId
+    ? { id: userId, displayName: "개발용 사용자", avatarUrl: null, provider: "dev", email: "dev@localhost" }
+    : null;
 }
 
 /** 오픈 리다이렉트 방지: 같은 사이트 내부 경로만 허용 */
