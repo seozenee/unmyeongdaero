@@ -5,7 +5,7 @@ import { useState } from "react";
 import { BirthForm } from "@/components/story/BirthForm";
 import type { BirthProfile } from "@/lib/db/types";
 
-export function ConsultStart({ sandbox, initialSubject }: { sandbox: boolean; initialSubject: BirthProfile | null }) {
+export function ConsultStart({ initialSubject }: { initialSubject: BirthProfile | null }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -42,7 +42,6 @@ export function ConsultStart({ sandbox, initialSubject }: { sandbox: boolean; in
       <BirthForm
         title="새 상담에 쓸 나의 명식"
         submitLabel={busy ? "명식을 확인하고 있어요…" : "이 명식으로 상담 결제하기"}
-        sandbox={sandbox}
         initial={initialSubject ?? undefined}
         onSubmit={start}
       />

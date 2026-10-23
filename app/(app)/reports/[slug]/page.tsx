@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { StoryFunnel } from "@/components/story/StoryFunnel";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getRepository } from "@/lib/db";
-import { isSazuSandbox } from "@/lib/env";
+import { } from "@/lib/env";
 import { getReport } from "@/lib/reports/catalog";
 
 export const dynamic = "force-dynamic";
@@ -22,5 +22,5 @@ export default async function ReportStoryPage({ params }: { params: { slug: stri
     redirect(`/reports/${report.slug}/read`);
   }
 
-  return <StoryFunnel report={report} sandbox={isSazuSandbox()} />;
+  return <StoryFunnel report={report} />;
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { FreeInsightFlow } from "@/components/free/FreeInsightFlow";
-import { isSazuSandbox } from "@/lib/env";
+import { } from "@/lib/env";
 
 const CONTENT: Record<string, { title: string; description: string }> = {
   today: { title: "오늘의 무료 운세 & 나의 만세력 명식", description: "내 생년월일시로 세운 여덟 글자 기운 표와, 오늘 일진이 내 사주에 어떻게 작용하는지 알려 드려요." },
@@ -17,5 +17,5 @@ export function generateMetadata({ params }: { params: { kind: string } }): Meta
 export default function FreeInsightPage({ params }: { params: { kind: string } }) {
   const content = CONTENT[params.kind];
   if (!content) notFound();
-  return <FreeInsightFlow kind={params.kind} title={content.title} description={content.description} sandbox={isSazuSandbox()} />;
+  return <FreeInsightFlow kind={params.kind} title={content.title} description={content.description} />;
 }

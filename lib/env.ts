@@ -25,7 +25,6 @@ function normalizeSiteUrl(value: string | undefined) {
 
 export const env = {
   siteUrl: normalizeSiteUrl(read("NEXT_PUBLIC_SITE_URL")),
-  sazuApiKey: read("SAZU_API_KEY"),
   anthropicApiKey: read("ANTHROPIC_API_KEY"),
   anthropicModel: read("ANTHROPIC_MODEL"),
   supabaseUrl: read("SUPABASE_URL"),
@@ -88,4 +87,3 @@ export const modes = {
 };
 
 /** sazu Free 키는 5개 샘플 프로필만 계산하는 샌드박스로 동작한다 */
-export const isSazuSandbox = () => Boolean(env.sazuApiKey?.startsWith("sazu_free_"));

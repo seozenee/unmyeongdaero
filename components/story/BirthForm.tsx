@@ -11,8 +11,6 @@ interface BirthFormProps {
   title: string;
   submitLabel?: string;
   initial?: Partial<BirthProfile>;
-  /** sazu Free 샌드박스면 샘플 명식 칩을 보여준다 */
-  sandbox?: boolean;
   onSubmit: (profile: BirthProfile) => void;
   onSkip?: () => void;
 }
@@ -59,7 +57,7 @@ function Segmented<T extends string>({
   );
 }
 
-export function BirthForm({ title, submitLabel = "다 적었어요", initial, sandbox, onSubmit, onSkip }: BirthFormProps) {
+export function BirthForm({ title, submitLabel = "다 적었어요", initial, onSubmit, onSkip }: BirthFormProps) {
   const id = useId();
   const [name, setName] = useState(initial?.name ?? "");
   const [year, setYear] = useState(initial?.birthYear ?? 1995);
@@ -117,26 +115,7 @@ export function BirthForm({ title, submitLabel = "다 적었어요", initial, sa
         <Icon name="edit_note" className="text-[20px] text-outline" />
       </div>
 
-      {sandbox && (
-        <div className="flex flex-col gap-space-xs rounded-lg bg-tertiary/10 p-space-sm">
-          <span className="font-label-sm text-label-sm text-tertiary">
-            체험용 분석 키 연결 중 · 아래 샘플 명식으로만 풀이할 수 있어요
-          </span>
-          <div className="no-scrollbar -mx-space-sm flex gap-space-xs overflow-x-auto px-space-sm">
-            {SAZU_SAMPLE_PROFILES.map((sample) => (
-              <button
-                key={sample.id}
-                type="button"
-                onClick={() => fillSample(sample.profile)}
-                className="shrink-0 rounded-full bg-surface-container-highest px-space-sm py-1 font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface"
-              >
-                {sample.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
+      
       <label className="flex flex-col gap-1" htmlFor={`${id}-name`}>
         <span className="font-label-sm text-label-sm text-on-surface-variant">이름</span>
         <input

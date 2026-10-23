@@ -26,7 +26,7 @@ const UPSELL: Record<string, { href: string; label: string }> = {
   mbti: { href: "/reports/life", label: "타고난 그릇을 깊이 보고 싶다면 · 평생 사주 보고서" },
 };
 
-export function FreeInsightFlow({ kind, title, description, sandbox }: { kind: string; title: string; description: string; sandbox: boolean }) {
+export function FreeInsightFlow({ kind, title, description }: { kind: string; title: string; description: string }) {
   const guide = getGuide("seoha");
   const [result, setResult] = useState<FreeInsightResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +69,7 @@ export function FreeInsightFlow({ kind, title, description, sandbox }: { kind: s
         <>
           <p className="font-body-md text-body-md text-on-surface-variant">{description}</p>
           {error && <p className="rounded-lg bg-error-container/30 p-space-sm font-body-sm text-body-sm text-on-surface">{error}</p>}
-          <BirthForm title="나의 정보" submitLabel={busy ? "명식을 펼치고 있어요…" : "무료로 보기"} sandbox={sandbox} onSubmit={submit} />
+          <BirthForm title="나의 정보" submitLabel={busy ? "명식을 펼치고 있어요…" : "무료로 보기"} onSubmit={submit} />
         </>
       ) : (
         <>

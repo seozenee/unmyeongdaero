@@ -85,7 +85,7 @@ function SheetCard({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function StoryFunnel({ report, sandbox }: { report: ReportProduct; sandbox: boolean }) {
+export function StoryFunnel({ report }: { report: ReportProduct }) {
   const router = useRouter();
   const guide = getGuide(report.guide);
   const steps = useMemo(() => buildFunnel(report), [report]);
@@ -284,7 +284,6 @@ export function StoryFunnel({ report, sandbox }: { report: ReportProduct; sandbo
           <BirthForm
             key={`${step.target}-${cursor}`}
             title={birthTitle(report, step.target)}
-            sandbox={sandbox}
             initial={(step.target === "subject" ? subject : partner) ?? undefined}
             onSkip={
               step.optional
