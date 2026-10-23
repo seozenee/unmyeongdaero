@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { DecadeTimeline } from "@/components/saju/DecadeTimeline";
 import { FiveElementsRadar } from "@/components/saju/FiveElementsRadar";
 import { FourPillarsChart } from "@/components/saju/FourPillarsChart";
 import { Icon } from "@/components/ui/Icon";
-import { cn } from "@/lib/cn";
 import type { ElementCounts, FourPillarsInput } from "@/lib/saju/modules";
 import type { DecadeItem } from "@/lib/saju/modules";
 
@@ -135,42 +133,20 @@ function Block({ title, caption, children }: { title: string; caption: string; c
 }
 
 /**
- * 화면에 들어올 때 한 번 떠오른다.
+ * 한 덩어리씩 차례로 떠오른다.
  *
- * 애니메이션을 끄고 쓰는 사람에게는 처음부터 보이게 둔다 — 움직임이 없다고 내용이 없어지면 안 된다.
+ * 화면에 들어올 때 띄우는 방식(IntersectionObserver)은 쓰지 않는다. 스크롤을 내리지 않으면
+ * 끝까지 안 보이는데, 이 화면은 "내 사주가 맞는지" 확인하는 자리라 안 보이면 확인이 안 된다.
+ * 그래서 들어오자마자 순서대로 올라오게만 한다.
+ *
+ * 애니메이션을 끄고 쓰는 사람에게는 처음부터 보인다 — 움직임이 없다고 내용이 없어지면 안 된다.
  */
 function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [shown, setShown] = useState(false);
-
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setShown(true);
-      return;
-    }
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setShown(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "-10% 0px" },
-    );
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-
   return (
     <div
-      ref={ref}
-      style={{ transitionDelay: `${delay}ms` }}
-      className={cn(
-        "transition-[opacity,transform] duration-500 ease-out motion-reduce:transition-none",
-        shown ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0 motion-reduce:translate-y-0 motion-reduce:opacity-100",
-      )}
+      style={{ animationDelay: `${delay}ms` }}
+      // fade-up 은 fill-mode 가 both 라, 지연되는 동안에도 0% 상태(투명)로 기다린다
+      className="motion-safe:animate-fade-up"
     >
       {children}
     </div>

@@ -92,7 +92,24 @@ export default async function MansePage({
     .filter((name): name is string => Boolean(name));
   if (sinsal.length > 0) facts.push({ label: "신살", value: sinsal.join(", "), hint: GLOSSARY.신살 });
 
-  const basis = ((at(modules, "basis") as string[] | undefined) ?? []).filter((line) => typeof line === "string");
+  // 계산 기준을 사람이 읽을 문장으로 옮긴다. 진태양시 보정처럼 "왜 이 글자가 나왔는지"를
+  // 설명해 주는 값이라, 명식이 예상과 다를 때 확인할 수 있어야 한다.
+  const raw = (at(modules, "basis") ?? {}) as {
+    solarDate?: string;
+    clockTime?: string | null;
+    trueSolarTime?: string | null;
+    solarTimeOffsetMinutes?: number;
+    city?: string;
+    dayChangedByNightZi?: boolean;
+  };
+  const basis = [
+    raw.solarDate ? `양력 ${raw.solarDate}${raw.clockTime ? ` ${raw.clockTime}` : " (시간 미상)"} 기준` : null,
+    raw.trueSolarTime && typeof raw.solarTimeOffsetMinutes === "number"
+      ? `${raw.city ?? "서울"} 진태양시 ${raw.solarTimeOffsetMinutes}분 보정 → ${raw.trueSolarTime}`
+      : null,
+    raw.dayChangedByNightZi ? "23시 이후 출생이라 야자시로 보아 다음 날로 넘겼습니다" : null,
+    "연주·월주는 절기로, 일주·시주는 현지 시각으로 가릅니다",
+  ].filter((line): line is string => Boolean(line));
 
   return (
     <div className="flex w-full flex-col gap-space-lg py-space-md">

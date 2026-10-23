@@ -34,21 +34,23 @@ export function ManseConfirm({
   const [moving, setMoving] = useState(false);
 
   return (
-    <div className="pb-safe sticky bottom-0 z-20 -mx-margin mt-space-md bg-gradient-to-t from-surface via-surface to-transparent px-margin pb-space-md pt-space-lg">
-      <div className="flex flex-col gap-space-sm rounded-xl bg-surface-container-lowest/95 p-space-md shadow-2xl ring-1 ring-outline-variant/40 backdrop-blur-xl">
-        <div className="flex flex-col gap-0.5">
-          <span className="font-label-sm text-label-sm text-secondary">{categoryLabel}</span>
-          <p className="font-label-md text-label-md text-on-surface">{title}</p>
-        </div>
-
-        <div className="flex items-baseline gap-2">
-          <span className="font-price-display text-price-display text-secondary">{formatKRW(price)}</span>
-          {originalPrice && (
-            <span className="font-body-sm text-body-sm text-outline line-through">{formatKRW(originalPrice)}</span>
-          )}
-          <span className="ml-auto font-label-sm text-label-sm text-outline">
-            {chapterCount}장 보고서 · 영구 소장
-          </span>
+    // 하단 내비게이션(h-16) 위에 얹는다. bottom-0 으로 두면 내비 뒤로 들어가 버튼이 가려진다.
+    <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] z-20 -mx-margin mt-space-md bg-gradient-to-t from-surface via-surface to-transparent px-margin pb-space-sm pt-space-lg">
+      <div className="flex flex-col gap-space-sm rounded-xl bg-surface-container-lowest/95 p-space-md shadow-2xl ring-1 ring-outline-variant/40 backdrop-blur-xl motion-safe:animate-fade-up">
+        {/* 상품과 금액을 한 줄에 — 아래 칸이 두꺼우면 정작 확인해야 할 명식이 가려진다 */}
+        <div className="flex items-baseline gap-space-sm">
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-label-md text-label-md text-on-surface">{title}</p>
+            <p className="font-label-sm text-label-sm text-outline">
+              {categoryLabel} · {chapterCount}장 · 영구 소장
+            </p>
+          </div>
+          <div className="flex shrink-0 items-baseline gap-1.5">
+            {originalPrice && (
+              <span className="font-label-sm text-label-sm text-outline line-through">{formatKRW(originalPrice)}</span>
+            )}
+            <span className="font-price-display text-price-display text-secondary">{formatKRW(price)}</span>
+          </div>
         </div>
 
         <button
@@ -58,15 +60,16 @@ export function ManseConfirm({
             setMoving(true);
             router.push(`/checkout/${slug}?reading=${readingId}`);
           }}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-on-surface py-3.5 font-label-md text-label-md text-surface shadow-lg transition-transform active:scale-[0.99] disabled:opacity-60"
+          className="group flex w-full items-center justify-center gap-2 rounded-lg bg-on-surface py-3.5 font-label-md text-label-md text-surface shadow-lg transition-[transform,opacity] active:scale-[0.99] disabled:opacity-60"
         >
-          {moving ? "결제 화면으로 가는 중…" : "이 명식으로 풀이 받기"}
-          {!moving && <Icon name="arrow_forward" className="text-[18px]" />}
+          {moving ? "결제 화면으로 가는 중…" : "이 명식이 맞아요 · 풀이 받기"}
+          {!moving && (
+            <Icon
+              name="arrow_forward"
+              className="text-[18px] transition-transform duration-200 group-hover:translate-x-0.5"
+            />
+          )}
         </button>
-
-        <p className="text-center font-label-sm text-label-sm text-outline">
-          위 만세력이 맞는지 확인하신 뒤 눌러 주세요. 결제 후에는 이 명식으로 풀이가 만들어져요.
-        </p>
       </div>
     </div>
   );

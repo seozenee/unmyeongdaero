@@ -3,7 +3,7 @@ import "server-only";
 import { getRepository, type Reading } from "@/lib/db";
 import { env } from "@/lib/env";
 import { notify, type NotifyKind } from "@/lib/notify";
-import { ensureReadingPdf, pdfShareUrl } from "@/lib/pdf/store";
+import { ensureReadingPdf, ensureShareToken, pdfShareUrl, readingShareUrl } from "@/lib/pdf/store";
 import type { ReportProduct } from "@/lib/reports/catalog";
 
 const ISSUED = new Intl.DateTimeFormat("ko-KR", {
@@ -25,9 +25,10 @@ export async function notifyReading(reading: Reading, report: ReportProduct, kin
   if (!reading.notifyPhone) return;
   if (reading.notifiedKind === kind) return;
 
-  const links: Partial<Record<"report" | "pdf", string>> = {
-    report: `${env.siteUrl}/reports/${report.slug}/read`,
-  };
+  // 알림톡 버튼의 링크는 템플릿에 박혀 있어 상품마다 바꿀 수 없다.
+  // 그래서 코드 하나만 변수로 두고(/v/{코드}, /r/{코드}), 어디로 갈지는 서버가 정한다.
+  // 코드는 PDF 를 구울 때 함께 발급되므로, 없으면 여기서 먼저 만들어 둔다.
+  const links: Partial<Record<"report" | "pdf", string>> = {};
 
   const variables: Record<string, string> = {
     "#{이름}": reading.subject.name,
@@ -39,12 +40,21 @@ export async function notifyReading(reading: Reading, report: ReportProduct, kin
     variables["#{발행일}"] = ISSUED.format(reading.generatedAt ? new Date(reading.generatedAt) : new Date());
     try {
       const stored = await ensureReadingPdf(reading);
-      if (stored) links.pdf = pdfShareUrl(stored.token);
+      if (stored) {
+        links.report = readingShareUrl(stored.token);
+        links.pdf = pdfShareUrl(stored.token);
+      }
     } catch (error) {
       // PDF 를 못 구워도 "완성됐다"는 알림 자체는 보낸다. 보고서 화면에서 다시 받을 수 있다.
       console.error(`[notify] PDF 준비 실패 (reading ${reading.id})`, error);
     }
+  } else {
+    // 시작 알림에는 PDF 가 아직 없다. 코드만 미리 발급해 「진행 상황 보기」를 걸어 둔다.
+    const token = await ensureShareToken(reading);
+    if (token) links.report = readingShareUrl(token);
   }
+
+  // 코드를 못 만들었으면 버튼 없이 보낸다 — 알림이 가는 편이 안 가는 것보다 낫다
 
   const result = await notify({ kind, to: reading.notifyPhone, variables, links });
   if (result.sent) {

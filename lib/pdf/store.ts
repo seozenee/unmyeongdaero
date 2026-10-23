@@ -70,5 +70,23 @@ export async function signedPdfUrl(reading: Reading, seconds = 60 * 10): Promise
   return data?.signedUrl ?? null;
 }
 
-/** 카톡 버튼에 넣는, 만료되지 않는 주소 */
+/** 카톡 「PDF 받기」 버튼이 여는 주소. 만료되지 않는다 */
 export const pdfShareUrl = (token: string) => `${env.siteUrl}/r/${token}`;
+
+/** 카톡 「보고서 열기」 버튼이 여는 주소. 같은 코드를 쓴다 */
+export const readingShareUrl = (token: string) => `${env.siteUrl}/v/${token}`;
+
+/**
+ * 공유 코드만 먼저 발급한다.
+ *
+ * PDF 는 풀이가 다 쓰인 뒤에야 구울 수 있지만, 시작 알림의 「진행 상황 보기」 버튼은
+ * 그보다 먼저 필요하다. 코드는 PDF 와 같은 것을 쓰므로 여기서 미리 만들어 둔다.
+ */
+export async function ensureShareToken(reading: Reading): Promise<string | null> {
+  if (reading.pdfToken) return reading.pdfToken;
+  if (modes.data() !== "supabase") return null;
+
+  const token = randomBytes(24).toString("base64url");
+  await getRepository().updateReading(reading.id, { pdfToken: token });
+  return token;
+}
