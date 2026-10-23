@@ -6,10 +6,10 @@
 // "왜 카톡이 안 오지" 를 찾기 전에 여기서 먼저 확인할 수 있게 둔다.
 import { SolapiMessageService } from "solapi";
 
+// 발신번호는 쓰지 않는다. 대체 문자를 끄기로 했기 때문이다(lib/notify/solapi.ts 참고).
 const NEEDED: Array<[string, string]> = [
   ["SOLAPI_API_KEY", "솔라피 API 키"],
   ["SOLAPI_API_SECRET", "솔라피 시크릿"],
-  ["SOLAPI_SENDER", "등록한 발신번호 (하이픈 없이)"],
   ["KAKAO_PF_ID", "연동한 카카오 채널의 pfId"],
   ["KAKAO_TEMPLATE_STARTED", "템플릿① 운명대로_풀이시작 ID"],
   ["KAKAO_TEMPLATE_READY", "템플릿② 운명대로_풀이완성 ID"],

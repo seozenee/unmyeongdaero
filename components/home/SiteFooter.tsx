@@ -38,8 +38,14 @@ export function SiteFooter() {
         <Link className="hover:text-on-surface" href="/refund">
           환불규정 안내
         </Link>
-        <a className="hover:text-on-surface" href="mailto:help@unmyeongdaero.com">
-          1:1 문의
+        {/* 카카오톡 채널 '운명대로' (@unmyeongdaero) 의 채팅 주소 */}
+        <a
+          className="hover:text-on-surface"
+          href="https://pf.kakao.com/_YwTaX/chat"
+          target="_blank"
+          rel="noreferrer"
+        >
+          카카오톡 1:1 문의
         </a>
       </div>
 
