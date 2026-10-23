@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // 랜딩 전용 임시 배포(LANDING_ONLY=1)에서 막을 경로.
 // 상품 상세·무료 콘텐츠·약관은 백엔드 없이도 돌아가므로 열어 둔다.
-const LANDING_BLOCKED = ["/checkout", "/library", "/consult", "/login", "/auth", "/dev"];
+const LANDING_BLOCKED = ["/checkout", "/library", "/consult", "/login", "/auth", "/dev", "/readings", "/r"];
 const LANDING_BLOCKED_API = ["/api/readings", "/api/consult", "/api/payments", "/api/saju"];
 
 // Supabase 세션 쿠키 갱신. Supabase 미설정(개발 대체 모드)이면 아무것도 하지 않는다.

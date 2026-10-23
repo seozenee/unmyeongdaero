@@ -9,7 +9,7 @@ export interface AppUser {
   id: string;
   displayName: string | null;
   avatarUrl: string | null;
-  provider: "kakao" | "dev";
+  provider: "kakao" | "email" | "dev";
 }
 
 // ─── 개발 대체 로그인 (Supabase 미설정 + 비프로덕션에서만) ─────────────────────
@@ -44,11 +44,14 @@ export async function getCurrentUser(): Promise<AppUser | null> {
     } = await supabase.auth.getUser();
     if (!user) return null;
     const meta = user.user_metadata ?? {};
+    // 카카오로 들어왔는지 이메일로 들어왔는지는 Supabase 가 기록해 둔다
+    const provider = user.app_metadata?.provider === "email" ? "email" : "kakao";
     return {
       id: user.id,
-      displayName: meta.name ?? meta.full_name ?? meta.preferred_username ?? null,
+      displayName:
+        meta.name ?? meta.full_name ?? meta.preferred_username ?? (provider === "email" ? (user.email ?? null) : null),
       avatarUrl: meta.avatar_url ?? meta.picture ?? null,
-      provider: "kakao",
+      provider,
     };
   }
 

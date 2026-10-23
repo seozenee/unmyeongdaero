@@ -1,38 +1,36 @@
-import { env } from "@/lib/env";
 import { AppError, jsonError } from "@/lib/errors";
-import { isWebhookVerificationError, verifyPortOneWebhook } from "@/lib/payments/portone";
 import { confirmPayment } from "@/lib/payments/service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// POST /api/payments/webhook — PortOne V2 웹훅. 서명 검증 → 결제 재조회 → 구매 기록(멱등).
-// 2xx 가 아니면 PortOne 이 지수 백오프로 최대 5회 재시도한다.
+/**
+ * POST /api/payments/webhook — 토스페이먼츠 결제 상태 변경 알림.
+ *
+ * 토스 웹훅에는 서명이 없다. 그래서 몸통의 내용은 "주문번호 하나"만 꺼내 쓰고,
+ * 실제 상태는 토스에 다시 물어서 판단한다. 남이 가짜 웹훅을 쏴도 우리가 조회한 결과가
+ * 'DONE' 이 아니면 아무 일도 일어나지 않는다. 서명 검증보다 이쪽이 확실하다.
+ *
+ * 결제 승인 자체는 완료 화면에서 이미 끝난다. 이 웹훅은 그 길이 끊겼을 때
+ * (창을 닫았거나 네트워크가 끊겼거나) 뒤늦게 구매를 열어 주는 보험이다.
+ */
 export async function POST(request: Request) {
-  if (!env.portoneWebhookSecret) return jsonError(404, "NOT_FOUND", "Not Found");
+  const body = (await request.json().catch(() => null)) as
+    | { eventType?: string; data?: { orderId?: string; status?: string } }
+    | null;
 
-  const body = await request.text();
-  let webhook;
+  const orderId = body?.data?.orderId;
+  if (!orderId) return new Response(null, { status: 200 });
+
   try {
-    webhook = await verifyPortOneWebhook(body, request.headers);
+    // paymentKey 를 넘기지 않으므로 승인이 아니라 '조회'로 간다.
+    // 이미 승인된 결제만 구매로 이어진다.
+    await confirmPayment(orderId);
   } catch (error) {
-    if (isWebhookVerificationError(error)) return jsonError(400, "INVALID_SIGNATURE", "웹훅 서명이 올바르지 않습니다.");
-    console.error("[webhook] 검증 중 오류", error);
+    // 우리 주문이 아니면 재시도해도 소용없다
+    if (error instanceof AppError && error.status === 404) return new Response(null, { status: 200 });
+    console.error(`[webhook] ${orderId} 처리 실패`, error);
     return jsonError(500, "WEBHOOK_ERROR", "웹훅 처리 실패");
-  }
-
-  const type = "type" in webhook ? String(webhook.type) : "";
-  const paymentId = "data" in webhook ? (webhook.data as { paymentId?: string } | undefined)?.paymentId : undefined;
-
-  if (type.startsWith("Transaction.") && paymentId) {
-    try {
-      await confirmPayment(paymentId);
-    } catch (error) {
-      // 우리 주문이 아닌 결제(다른 채널 등)는 재시도할 필요가 없다
-      if (error instanceof AppError && error.status === 404) return new Response(null, { status: 200 });
-      console.error(`[webhook] ${type} ${paymentId} 처리 실패`, error);
-      return jsonError(500, "WEBHOOK_ERROR", "웹훅 처리 실패");
-    }
   }
 
   return new Response(null, { status: 200 });

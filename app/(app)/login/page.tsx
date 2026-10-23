@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { EmailLoginForm } from "@/components/auth/EmailLoginForm";
 import { GuideAvatar } from "@/components/story/GuideAvatar";
 import { getCurrentUser, safeNextPath } from "@/lib/auth/session";
 import { modes } from "@/lib/env";
@@ -12,6 +13,12 @@ export const dynamic = "force-dynamic";
 const ERROR_MESSAGES: Record<string, string> = {
   oauth: "카카오 로그인을 시작하지 못했어요. 잠시 후 다시 시도해 주세요.",
   callback: "로그인을 마무리하지 못했어요. 다시 시도해 주세요.",
+  empty: "이메일과 비밀번호를 모두 적어 주세요.",
+  weak: "비밀번호는 8자 이상으로 적어 주세요.",
+  credentials: "이메일이나 비밀번호가 맞지 않아요.",
+  signup: "가입하지 못했어요. 이미 쓰고 계신 이메일인지 확인해 주세요.",
+  confirm: "보내 드린 확인 메일의 링크를 눌러 주세요.",
+  unavailable: "지금은 이메일 로그인을 쓸 수 없어요.",
 };
 
 export default async function LoginPage({ searchParams }: { searchParams: { next?: string; error?: string } }) {
@@ -63,6 +70,17 @@ export default async function LoginPage({ searchParams }: { searchParams: { next
             <p className="font-label-sm text-label-sm text-outline">
               Supabase 가 연결되지 않은 개발 환경이라 카카오 로그인 대신 임시 계정을 씁니다.
             </p>
+          </>
+        )}
+
+        {kakao && (
+          <>
+            <div className="flex items-center gap-space-sm py-space-xs">
+              <span className="h-px flex-1 bg-outline-variant/40" />
+              <span className="font-label-sm text-label-sm text-outline">또는</span>
+              <span className="h-px flex-1 bg-outline-variant/40" />
+            </div>
+            <EmailLoginForm next={next} />
           </>
         )}
       </div>

@@ -12,10 +12,13 @@ type State =
 
 export function PaymentRedirectHandler({
   paymentId,
+  paymentKey,
   code,
   message,
 }: {
   paymentId: string | null;
+  /** 토스가 돌려준 결제 키. 이 값이 있어야 승인을 낼 수 있다 */
+  paymentKey: string | null;
   code: string | null;
   message: string | null;
 }) {
@@ -36,7 +39,11 @@ export function PaymentRedirectHandler({
         const response = await fetch("/api/payments/complete", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ paymentId, clientError: code ? { code, message } : undefined }),
+          body: JSON.stringify({
+            paymentId,
+            paymentKey: paymentKey ?? undefined,
+            clientError: code ? { code, message } : undefined,
+          }),
         }).catch(() => null);
         const body = response ? await response.json().catch(() => null) : null;
 
@@ -61,7 +68,7 @@ export function PaymentRedirectHandler({
       }
       setState({ kind: "pending" });
     })();
-  }, [paymentId, code, message, router]);
+  }, [paymentId, paymentKey, code, message, router]);
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-space-md text-center">

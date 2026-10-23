@@ -18,7 +18,7 @@ export default function PrivacyPage() {
       <p>사주 계산과 리포트·상담 생성, 구매 내역과 보관함 제공, 고객 문의 대응.</p>
       <h2>3. 처리 위탁</h2>
       <ul>
-        <li>Supabase(데이터 보관·인증), PortOne 및 PG사(결제), sazu.app(명리 계산), Anthropic(AI 풀이 생성), Vercel(호스팅)</li>
+        <li>Supabase(데이터 보관·인증), 토스페이먼츠(결제), 솔라피(알림톡 발송), Anthropic(AI 풀이 생성), Vercel(호스팅)</li>
       </ul>
       <h2>4. 보관 기간</h2>
       <p>회원 탈퇴 시까지 보관하며, 전자상거래법에 따른 거래 기록은 5년간 보관합니다.</p>

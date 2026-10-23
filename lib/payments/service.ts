@@ -6,18 +6,22 @@ import { getRepository, type Payment } from "@/lib/db";
 import { env, isFreeAccess, isProduction, modes } from "@/lib/env";
 import { AppError } from "@/lib/errors";
 import { CONSULT_TURN_LIMIT, getReport, type ReportProduct } from "@/lib/reports/catalog";
-import { cancelPortOnePayment, getPortOnePaymentState } from "./portone";
+import { cancelTossPayment, confirmTossPayment, getTossPaymentState } from "./toss";
 
 export type CheckoutStart =
   | { kind: "already-purchased"; redirect: string }
   | {
-      kind: "portone";
+      kind: "toss";
+      /** 우리 주문번호이자 토스의 orderId */
       paymentId: string;
-      storeId: string;
-      channelKey: string;
+      clientKey: string;
+      /** 구매자 식별값. 같은 사람이 다시 와도 같은 값이어야 간편결제가 기억된다 */
+      customerKey: string;
       orderName: string;
       totalAmount: number;
-      redirectUrl: string;
+      customerName: string | null;
+      successUrl: string;
+      failUrl: string;
     }
   | { kind: "mock"; paymentId: string; orderName: string; totalAmount: number };
 
@@ -60,17 +64,27 @@ export async function startCheckout(user: AppUser, slug: string, readingId: stri
     amount: report.price,
   });
 
-  const orderName = `운명대로 · ${report.categoryLabel}`;
+  // 결제창과 카드사 전표에 찍히는 이름이다. 무엇을 샀는지 알아볼 수 있어야 한다.
+  const orderName = `운명대로 ${report.title}`.slice(0, 100);
   if (provider === "mock") return { kind: "mock", paymentId, orderName, totalAmount: report.price };
 
+  const complete = new URL("/checkout/complete", env.siteUrl);
+  complete.searchParams.set("slug", report.slug);
+
+  const fail = new URL("/checkout/complete", env.siteUrl);
+  fail.searchParams.set("slug", report.slug);
+  fail.searchParams.set("failed", "1");
+
   return {
-    kind: "portone",
+    kind: "toss",
     paymentId,
-    storeId: env.portoneStoreId!,
-    channelKey: env.portoneChannelKey!,
+    clientKey: env.tossClientKey!,
+    customerKey: user.id,
     orderName,
     totalAmount: report.price,
-    redirectUrl: new URL(`/checkout/complete?slug=${report.slug}`, env.siteUrl).toString(),
+    customerName: reading.subject.name,
+    successUrl: complete.toString(),
+    failUrl: fail.toString(),
   };
 }
 
@@ -103,7 +117,10 @@ async function fulfill(payment: Payment, report: ReportProduct): Promise<string>
   return resultPathFor(report);
 }
 
-export async function confirmPayment(paymentId: string, options: { userId?: string } = {}): Promise<ConfirmResult> {
+export async function confirmPayment(
+  paymentId: string,
+  options: { userId?: string; tossPaymentKey?: string } = {},
+): Promise<ConfirmResult> {
   const repo = getRepository();
   const payment = await repo.getPayment(paymentId);
   if (!payment || (options.userId && payment.userId !== options.userId)) {
@@ -122,11 +139,16 @@ export async function confirmPayment(paymentId: string, options: { userId?: stri
     return { status: "pending" };
   }
 
-  const state = await getPortOnePaymentState(paymentId);
+  // 결제창에서 돌아왔으면 승인을 낸다. 토스는 승인을 불러야 실제로 돈이 빠진다.
+  // 승인 요청에 금액을 함께 보내므로, 브라우저가 금액을 바꿔 보내도 토스가 거절한다.
+  const state = options.tossPaymentKey
+    ? await confirmTossPayment({ paymentKey: options.tossPaymentKey, orderId: paymentId, amount: payment.amount })
+    : await getTossPaymentState(paymentId);
+
   if (state.status === "paid") {
     if (state.amount !== payment.amount) {
-      // 위변조 의심: 결제를 취소하고 실패 처리
-      await cancelPortOnePayment(paymentId, "결제 금액 불일치").catch((error) => console.error(error));
+      // 여기까지 왔다면 토스 쪽 금액이 우리 주문과 다른 것이다. 되돌린다.
+      await cancelTossPayment(state.transactionId, "결제 금액 불일치").catch((error) => console.error(error));
       await repo.updatePayment(paymentId, { status: "failed", failureReason: "결제 금액이 주문과 달라 자동 취소되었어요." });
       return { status: "failed", reason: "결제 금액이 주문과 달라 자동 취소되었어요.", retryUrl };
     }
@@ -164,14 +186,14 @@ export async function settleMockPayment(user: AppUser, paymentId: string, outcom
   return confirmPayment(paymentId, { userId: user.id });
 }
 
-/** 브라우저 결제창이 실패·취소를 돌려줬을 때 기록만 남긴다(최종 판정은 PortOne 조회로) */
+/** 브라우저 결제창이 실패·취소를 돌려줬을 때 기록만 남긴다(최종 판정은 토스 조회로) */
 export async function markClientFailure(user: AppUser, paymentId: string, reason: string) {
   const repo = getRepository();
   const payment = await repo.getPayment(paymentId);
   if (!payment || payment.userId !== user.id || payment.status !== "pending") return;
-  if (payment.provider === "portone") {
-    const state = await getPortOnePaymentState(paymentId).catch(() => null);
-    if (state?.status === "paid") return; // 실제로는 결제됨 → 웹훅/완료 확인이 처리
+  if (payment.provider === "toss") {
+    const state = await getTossPaymentState(paymentId).catch(() => null);
+    if (state?.status === "paid") return; // 실제로는 결제됨 → 완료 화면이 처리한다
   }
   await repo.updatePayment(paymentId, { status: "failed", failureReason: reason.slice(0, 200) });
 }

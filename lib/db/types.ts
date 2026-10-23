@@ -58,13 +58,13 @@ export interface Reading {
   pdfCreatedAt: string | null;
 }
 
-export type PaymentProvider = "portone" | "mock";
+export type PaymentProvider = "toss" | "mock";
 export type PaymentStatus = "pending" | "paid" | "failed" | "cancelled";
 
 export interface Payment {
   /** 행 id (uuid) */
   id: string;
-  /** PortOne 에 넘긴 결제 ID */
+  /** 서버가 발급해 토스에 orderId 로 넘긴 결제 ID */
   paymentId: string;
   provider: PaymentProvider;
   pgTransactionId: string | null;

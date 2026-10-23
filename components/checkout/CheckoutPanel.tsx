@@ -13,13 +13,15 @@ type ConfirmResult =
 type CheckoutStart =
   | { kind: "already-purchased"; redirect: string }
   | {
-      kind: "portone";
+      kind: "toss";
       paymentId: string;
-      storeId: string;
-      channelKey: string;
+      clientKey: string;
+      customerKey: string;
       orderName: string;
       totalAmount: number;
-      redirectUrl: string;
+      customerName: string | null;
+      successUrl: string;
+      failUrl: string;
     }
   | { kind: "mock"; paymentId: string; orderName: string; totalAmount: number };
 
@@ -150,24 +152,27 @@ export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice 
 
     setBusy("paying");
     try {
-      const { requestPayment } = await import("@portone/browser-sdk/v2");
-      const response = await requestPayment({
-        storeId: start.storeId,
-        channelKey: start.channelKey,
-        paymentId: start.paymentId,
+      const { loadTossPayments } = await import("@tosspayments/tosspayments-sdk");
+      const tossPayments = await loadTossPayments(start.clientKey);
+      // customerKey 를 사람마다 고정해 두면 간편결제가 지난번 카드를 기억한다
+      const payment = tossPayments.payment({ customerKey: start.customerKey });
+
+      // 리다이렉트 방식이라 여기서 돌아오지 않는다. 결과는 successUrl(/checkout/complete)에서 이어진다.
+      await payment.requestPayment({
+        method: "CARD",
+        amount: { currency: "KRW", value: start.totalAmount },
+        orderId: start.paymentId,
         orderName: start.orderName,
-        totalAmount: start.totalAmount,
-        currency: "KRW",
-        payMethod: "CARD",
-        redirectUrl: start.redirectUrl,
+        customerName: start.customerName ?? undefined,
+        successUrl: start.successUrl,
+        failUrl: start.failUrl,
+        card: { useEscrow: false, flowMode: "DEFAULT", useCardPoint: false, useAppCardOnly: false },
       });
-      // 모바일 리다이렉트 방식이면 response 가 없고 /checkout/complete 에서 이어진다
-      if (!response) return;
-      const result = await confirm(start.paymentId, response.code ? { code: response.code, message: response.message } : undefined);
-      if (result) await handleResult(start.paymentId, result);
     } catch (error) {
+      // 구매자가 결제창을 닫은 것도 여기로 온다 — 실패로 기록하되 조용히 넘긴다
       console.error(error);
-      const result = await confirm(start.paymentId, { code: "SDK_ERROR", message: "결제창을 여는 중 문제가 생겼어요." });
+      const message = error instanceof Error ? error.message : "결제창을 여는 중 문제가 생겼어요.";
+      const result = await confirm(start.paymentId, { code: "SDK_ERROR", message });
       if (result) await handleResult(start.paymentId, result);
     } finally {
       setBusy(null);
@@ -247,7 +252,7 @@ export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice 
             <h2 className="mt-space-sm font-headline-md text-headline-md text-on-surface">{mock.orderName}</h2>
             <p className="font-price-display text-price-display text-secondary">{formatKRW(mock.totalAmount)}</p>
             <p className="mt-space-xs font-body-sm text-body-sm text-on-surface-variant">
-              PortOne 키가 없는 개발 환경이라 실제 결제 없이 승인/취소를 흉내 냅니다.
+              토스페이먼츠 키가 없는 개발 환경이라 실제 결제 없이 승인/취소를 흉내 냅니다.
             </p>
             <div className="mt-space-md grid grid-cols-2 gap-space-sm">
               <button type="button" onClick={() => settleMock("cancelled")} className="rounded-xl bg-surface-container-highest py-3 font-label-md text-label-md text-on-surface">

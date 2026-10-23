@@ -124,7 +124,7 @@ export default async function CheckoutPage({
           </li>
         </ul>
         {modes.payment() === "mock" && (
-          <p className="font-label-sm text-label-sm text-tertiary">개발 환경 · PortOne 키가 없어 모의 결제창이 열립니다.</p>
+          <p className="font-label-sm text-label-sm text-tertiary">개발 환경 · 토스페이먼츠 키가 없어 모의 결제창이 열립니다.</p>
         )}
       </section>
     </div>

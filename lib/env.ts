@@ -31,10 +31,9 @@ export const env = {
   supabaseUrl: read("SUPABASE_URL"),
   supabaseAnonKey: read("SUPABASE_ANON_KEY"),
   supabaseServiceRoleKey: read("SUPABASE_SERVICE_ROLE_KEY"),
-  portoneStoreId: read("PORTONE_STORE_ID"),
-  portoneChannelKey: read("PORTONE_CHANNEL_KEY"),
-  portoneApiSecret: read("PORTONE_API_SECRET"),
-  portoneWebhookSecret: read("PORTONE_WEBHOOK_SECRET"),
+  // 토스페이먼츠 직접 연동
+  tossClientKey: read("NEXT_PUBLIC_TOSS_CLIENT_KEY"),
+  tossSecretKey: read("TOSS_SECRET_KEY"),
   devSessionSecret: read("DEV_SESSION_SECRET") ?? "sazudaero-local-dev-only",
   // 알림톡 — 솔라피 계정과 카카오 비즈니스 채널·템플릿
   solapiApiKey: read("SOLAPI_API_KEY"),
@@ -58,12 +57,10 @@ export const isLandingOnly = process.env.LANDING_ONLY === "1";
 export const isFreeAccess = process.env.FREE_ACCESS === "1";
 
 const supabaseReady = Boolean(env.supabaseUrl && env.supabaseAnonKey && env.supabaseServiceRoleKey);
-const portoneReady = Boolean(
-  env.portoneStoreId && env.portoneChannelKey && env.portoneApiSecret && env.portoneWebhookSecret,
-);
+const tossReady = Boolean(env.tossClientKey && env.tossSecretKey);
 
 export type DataMode = "supabase" | "local";
-export type PaymentMode = "portone" | "mock";
+export type PaymentMode = "toss" | "mock";
 export type AiMode = "anthropic" | "template";
 
 export class ServiceNotConfiguredError extends Error {
@@ -83,15 +80,10 @@ export const modes = {
   data: (): DataMode =>
     pick(supabaseReady, "supabase", "local", "Supabase", ["SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"]),
   payment: (): PaymentMode =>
-    // 무료 시험 모드에서는 PortOne 키가 있어도 모의 결제로 보낸다
+    // 무료 시험 모드에서는 토스 키가 있어도 모의 결제로 보낸다
     isFreeAccess
       ? "mock"
-      : pick(portoneReady, "portone", "mock", "PortOne", [
-      "PORTONE_STORE_ID",
-      "PORTONE_CHANNEL_KEY",
-      "PORTONE_API_SECRET",
-      "PORTONE_WEBHOOK_SECRET",
-    ]),
+      : pick(tossReady, "toss", "mock", "토스페이먼츠", ["NEXT_PUBLIC_TOSS_CLIENT_KEY", "TOSS_SECRET_KEY"]),
   ai: (): AiMode => pick(Boolean(env.anthropicApiKey), "anthropic", "template", "Anthropic", ["ANTHROPIC_API_KEY"]),
 };
 

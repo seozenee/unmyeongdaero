@@ -62,7 +62,8 @@ export async function createDraftReading(user: AppUser, input: unknown) {
   });
   await repo.updateReading(reading.id, { sazu: manse });
 
-  return { alreadyPurchased: false as const, readingId: reading.id, redirect: `/checkout/${report.slug}?reading=${reading.id}` };
+  // 바로 결제로 보내지 않는다. 계산된 만세력을 먼저 보여 주고, 맞는지 확인한 뒤 결제로 넘어간다.
+  return { alreadyPurchased: false as const, readingId: reading.id, redirect: `/readings/${reading.id}/manse` };
 }
 
 /** 구매자 본인의 리딩인지 확인하고 돌려준다 */
