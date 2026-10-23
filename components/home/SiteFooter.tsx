@@ -38,14 +38,13 @@ export function SiteFooter() {
         <Link className="hover:text-on-surface" href="/refund">
           환불규정 안내
         </Link>
-        {/* TODO: 카카오톡 채널 URL 확정 후 연결 */}
-        <a className="hover:text-on-surface" href="#">
-          카카오톡 1:1 상담
+        <a className="hover:text-on-surface" href="mailto:help@unmyeongdaero.com">
+          1:1 문의
         </a>
       </div>
 
       <p className="mt-1 font-label-sm text-label-sm text-outline/60">
-        © 2025 unmyeongdaero.com. All rights reserved. 본 서비스에서 제공하는 모든 해석 콘텐츠의 저작권은 운명대로에
+        © 2026 unmyeongdaero.com. All rights reserved. 본 서비스에서 제공하는 모든 해석 콘텐츠의 저작권은 운명대로에
         있습니다.
       </p>
     </footer>

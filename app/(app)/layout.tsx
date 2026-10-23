@@ -1,3 +1,4 @@
+import { SiteFooter } from "@/components/home/SiteFooter";
 import { AppHeader } from "@/components/ui/AppHeader";
 import { BottomNav } from "@/components/ui/BottomNav";
 import { DesktopFrame } from "@/components/ui/DesktopFrame";
@@ -18,6 +19,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           바깥 하단바(z-50)를 넘지 못해 버튼이 가려진다. */}
       <main className="relative mx-auto flex min-h-screen w-full max-w-md flex-col bg-surface px-margin pb-24 pt-16 lg:shadow-[0_0_80px_rgba(0,0,0,0.55)] lg:ring-1 lg:ring-outline-variant/30">
         {children}
+        {/* 사업자정보는 모든 화면 아래에 둔다. 전자상거래법 표시사항이기도 하고,
+            카드사 심사는 결제 경로 어디서든 이 정보가 보이기를 요구한다. */}
+        <SiteFooter />
       </main>
       <BottomNav />
     </>
