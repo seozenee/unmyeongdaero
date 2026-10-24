@@ -2,7 +2,8 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import type { BirthProfile, Reading, StoredSazu, StoredSazuTopic } from "../../db/types";
-import { listReports } from "../../reports/catalog";
+import { buildManseTopics } from "../../manse";
+import { getReport, listReports } from "../../reports/catalog";
 import { SAZU_SAMPLE_PROFILES } from "../../sazu/sample-profiles";
 import { storyReportSchema } from "../report";
 import { buildTemplateReport } from "../report-template";
@@ -87,5 +88,46 @@ describe("buildTemplateReport · 실제 sazu 샌드박스 응답", () => {
     if (!process.env.REPORT_DUMP) return;
     mkdirSync(path.dirname(process.env.REPORT_DUMP), { recursive: true });
     writeFileSync(process.env.REPORT_DUMP, JSON.stringify(dump, null, 2));
+  });
+});
+
+// 위 블록은 옛 sazu 응답 고정본을 쓴다. 실제 서비스는 우리 만세력 엔진이 낸 모듈을 쓰므로,
+// 엔진이 내주지 않는 경로를 읽어 문장이 비어 버리는 일을 여기서 잡는다.
+describe("buildTemplateReport · 우리 만세력 엔진", () => {
+  const today = new Date("2026-10-24");
+
+  for (const report of listReports("report")) {
+    it(`${report.slug}: 빈 조각 없이 장마다 다른 이야기`, () => {
+      const sazu = buildManseTopics(report.topics, subject, report.partner === "none" ? null : partner, today);
+      const result = buildTemplateReport(report, readingFor(report.slug, report.partner !== "none"), sazu, today);
+
+      expect(() => storyReportSchema.parse(result)).not.toThrow();
+      expect(result.sections.map((section) => section.title)).toEqual([...report.chapters]);
+
+      const text = JSON.stringify(result);
+      // 값이 비어 빈 괄호·빈 따옴표·외톨이 가운뎃점만 남는 문장
+      expect(text).not.toMatch(/\(\)|""의|· "/);
+      expect(text).not.toMatch(/ \.|\. \./);
+      expect(text).not.toMatch(/ · ·| · "/);
+      expect(text).not.toMatch(/undefined|NaN|null세|\[object/);
+      // 라벨이 가운뎃점으로 시작하거나 끝나면 읽을 값이 빠진 것이다
+      for (const section of result.sections) {
+        for (const item of section.evidence) expect(item.label.trim()).not.toMatch(/^·|·$/);
+      }
+
+      // 장마다 다른 이야기여야 한다 — 같은 채움 문장이 여러 장을 덮으면 산 값이 아니다
+      const leads = result.sections.map((section) => section.lead);
+      expect(new Set(leads).size).toBe(leads.length);
+    });
+  }
+
+  it("한글 조사가 받침에 맞는다", () => {
+    const sazu = buildManseTopics(["life"], subject, null, today);
+    const result = buildTemplateReport(getReport("destiny-full")!, readingFor("destiny-full", false), sazu, today);
+    const text = JSON.stringify(result);
+    // 받침 없는 오행(화·토·수) 뒤에 받침용 조사가 붙은 흔적
+    expect(text).not.toMatch(/[화토수](으로|이에요|이라고|과 )/);
+    // 받침 있는 오행(목·금) 뒤에 받침 없는 조사
+    expect(text).not.toMatch(/[목금](로 |예요|와 )/);
   });
 });

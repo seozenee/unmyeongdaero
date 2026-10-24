@@ -75,13 +75,13 @@ export interface DecadeInput {
    */
   birth: { year: number; month: number; day: number; hour: number | null; minute?: number };
   isFemale: boolean;
-  /** 만들 대운 개수 */
+  /** 만들 대운 개수. 기본 9칸 — 시작 나이에 따라 아흔 몇 살까지 덮는다 */
   count?: number;
 }
 
 export function computeDecadeFortune(input: DecadeInput): DecadeResult {
   const { pillars, birth, isFemale } = input;
-  const count = input.count ?? 12;
+  const count = input.count ?? 9;
 
   // 1) 방향 — 연간의 음양과 성별이 같은 편이면 순행
   const yearPolarity = STEM_POLARITY[pillars.year.stem as Stem];

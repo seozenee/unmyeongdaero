@@ -19,6 +19,7 @@ import {
   type Stem,
   type TenGod,
 } from "./tables";
+import { josa } from "../text/josa";
 import type { FourPillars } from "./pillars";
 import type { Strength } from "./strength";
 
@@ -150,10 +151,10 @@ export function computeYongsin(pillars: FourPillars, strength: Strength): Yongsi
   // 억부 — 넘치면 덜어 내고, 모자라면 채운다
   const eokbu =
     strength === "신강"
-      ? { element: output, method: "설기", note: `힘이 넉넉하니 ${me}이 생하는 ${output}으로 덜어 낸다` }
+      ? { element: output, method: "설기", note: `힘이 넉넉하니 ${josa(me, "이/가")} 생하는 ${josa(output, "으로/로")} 덜어 낸다` }
       : strength === "신약"
-        ? { element: resource, method: "생조", note: `힘이 모자라니 ${me}을 생하는 ${resource}으로 채운다` }
-        : { element: output, method: "설기", note: `치우침이 크지 않아 ${output}으로 흐름을 트는 쪽을 본다` };
+        ? { element: resource, method: "생조", note: `힘이 모자라니 ${josa(me, "을/를")} 생하는 ${josa(resource, "으로/로")} 채운다` }
+        : { element: output, method: "설기", note: `치우침이 크지 않아 ${josa(output, "으로/로")} 흐름을 트는 쪽을 본다` };
 
   const johu = johuElement(monthBranch);
 
@@ -163,8 +164,8 @@ export function computeYongsin(pillars: FourPillars, strength: Strength): Yongsi
   const reasoning = `${strength} → ${eokbu.note}.${
     johu
       ? agreed
-        ? ` ${johu.season}에 태어나 필요한 ${johu.element}과도 같은 방향이다.`
-        : ` ${johu.season}생이라 조후로는 ${johu.element}이 필요하지만, 억부를 앞세워 ${chosen}으로 잡는다.`
+        ? ` ${johu.season}에 태어나 필요한 ${josa(johu.element, "과/와")}도 같은 방향이다.`
+        : ` ${johu.season}생이라 조후로는 ${josa(johu.element, "이/가")} 필요하지만, 억부를 앞세워 ${josa(chosen, "으로/로")} 잡는다.`
       : ""
   }`;
 
