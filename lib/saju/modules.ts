@@ -114,3 +114,49 @@ export function findCurrentDecadeIndex(items: DecadeItem[], age: number) {
   });
   return current;
 }
+
+// ─── 연도별 세운 ────────────────────────────────────────────────────────────
+
+export interface YearItem {
+  year: number;
+  age: number;
+  ganji: string;
+  /** 12운성 이름 (장생·제왕·묘…) */
+  stage?: string;
+  /** 1~12. 높을수록 힘이 실리는 해 */
+  level?: number;
+  note?: string;
+}
+
+const yearRunSchema = z
+  .object({
+    years: z
+      .array(
+        z
+          .object({
+            year: z.number(),
+            age: z.number().optional(),
+            internationalAge: z.number().optional(),
+            ganji: z.string(),
+            interpretation: z.string().optional(),
+            twelveFortune: z.object({ name: z.string().optional(), level: z.number().optional() }).passthrough().optional(),
+          })
+          .passthrough(),
+      )
+      .min(2),
+  })
+  .passthrough();
+
+/** 연도별 흐름표용 세운 목록. 한두 해만 있으면 표가 되지 않으므로 둘 미만이면 비운다. */
+export function parseYearRun(modules: SazuModules): YearItem[] | null {
+  const parsed = yearRunSchema.safeParse(modules.seun);
+  if (!parsed.success) return null;
+  return parsed.data.years.map((item) => ({
+    year: item.year,
+    age: item.internationalAge ?? item.age ?? 0,
+    ganji: item.ganji,
+    stage: item.twelveFortune?.name,
+    level: item.twelveFortune?.level,
+    note: item.interpretation,
+  }));
+}

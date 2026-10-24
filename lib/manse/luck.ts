@@ -224,7 +224,13 @@ export function computeIljin(pillars: FourPillars, now = new Date()): Iljin {
 
 export interface LuckResult {
   iljin: Iljin;
-  seun: { previousSeun: Seun; currentSeun: Seun; nextSeun: Seun };
+  seun: {
+    previousSeun: Seun;
+    currentSeun: Seun;
+    nextSeun: Seun;
+    /** 작년부터 여섯 해. 연도별 흐름표는 한두 해로는 그릴 수 없다. */
+    years: Seun[];
+  };
   weolun: {
     currentWeolun: Weolun;
     nextWeolun: Weolun;
@@ -235,7 +241,7 @@ export interface LuckResult {
   };
 }
 
-/** 앞뒤 한 해씩의 세운과, 앞으로 열두 달의 월운 */
+/** 세운 여섯 해와, 앞으로 열두 달의 월운 */
 export function computeLuck(pillars: FourPillars, birthYear: number, now = new Date()): LuckResult {
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
@@ -252,6 +258,7 @@ export function computeLuck(pillars: FourPillars, birthYear: number, now = new D
       previousSeun: computeSeun(pillars, birthYear, year - 1),
       currentSeun: computeSeun(pillars, birthYear, year),
       nextSeun: computeSeun(pillars, birthYear, year + 1),
+      years: Array.from({ length: 6 }, (_, index) => computeSeun(pillars, birthYear, year - 1 + index)),
     },
     weolun: {
       currentWeolun: upcoming[0]!,

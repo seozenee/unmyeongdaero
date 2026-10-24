@@ -3,6 +3,7 @@
 import { DecadeTimeline } from "@/components/saju/DecadeTimeline";
 import { FiveElementsRadar } from "@/components/saju/FiveElementsRadar";
 import { FourPillarsChart } from "@/components/saju/FourPillarsChart";
+import { YearFlowTable } from "@/components/saju/YearFlowTable";
 import { GuideAvatar } from "@/components/story/GuideAvatar";
 import { Reveal } from "@/components/report/Reveal";
 import { Icon } from "@/components/ui/Icon";
@@ -11,7 +12,7 @@ import { WebtoonMedia } from "@/components/webtoon/WebtoonMedia";
 import { getWebtoonAsset } from "@/components/webtoon/assets";
 import { cn } from "@/lib/cn";
 import type { BasisFact } from "@/lib/saju/basis";
-import type { DecadeItem, ElementCounts, FourPillarsInput } from "@/lib/saju/modules";
+import type { DecadeItem, ElementCounts, FourPillarsInput, YearItem } from "@/lib/saju/modules";
 import type { Guide } from "@/lib/story/guides";
 import type { StoryPanel, StoryReport, TimelineItem } from "@/lib/story/report";
 
@@ -19,6 +20,7 @@ export interface ReportPanels {
   pillars: FourPillarsInput | null;
   counts: ElementCounts | null;
   decade: { items: DecadeItem[]; direction?: string; currentIndex: number } | null;
+  years: { items: YearItem[]; currentYear: number } | null;
 }
 
 interface ReportDocumentProps {
@@ -46,6 +48,9 @@ function Panel({ panel, panels }: { panel: StoryPanel | null; panels: ReportPane
   if (panel === "elements" && panels.counts) return <FiveElementsRadar counts={panels.counts} />;
   if (panel === "decade" && panels.decade) {
     return <DecadeTimeline items={panels.decade.items} direction={panels.decade.direction} currentIndex={panels.decade.currentIndex} />;
+  }
+  if (panel === "years" && panels.years) {
+    return <YearFlowTable items={panels.years.items} currentYear={panels.years.currentYear} />;
   }
   return null;
 }

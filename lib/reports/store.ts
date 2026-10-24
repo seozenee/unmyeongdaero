@@ -39,6 +39,7 @@ function toProduct(row: Row): ReportProduct | null {
 
   const category = (str(row.category) ?? base?.category) as ReportCategory | undefined;
   const title = str(row.title) ?? base?.title;
+  const tagline = str(row.tagline) ?? base?.tagline;
   const description = str(row.description) ?? base?.description;
   const price = typeof row.price === "number" ? row.price : base?.price;
   const guide = (str(row.guide) ?? base?.guide) as GuideId | undefined;
@@ -52,6 +53,8 @@ function toProduct(row: Row): ReportProduct | null {
     category,
     categoryLabel: str(row.category_label) ?? base?.categoryLabel ?? category,
     title,
+    // 후킹 한 줄이 비면 카드가 허전해지므로 설명 첫 문장으로 메운다
+    tagline: tagline ?? (description ?? "").split(/[.。]/)[0] ?? "",
     description,
     price,
     originalPrice: typeof row.original_price === "number" ? row.original_price : base?.originalPrice,

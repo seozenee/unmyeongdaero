@@ -3,7 +3,7 @@
 import type { SazuTopic } from "../sazu/schemas";
 import type { GuideId } from "../story/guides";
 
-export type ReportCategory = "reunion" | "romance" | "chemistry" | "destiny" | "year" | "wealth" | "study";
+export type ReportCategory = "reunion" | "romance" | "chemistry" | "destiny" | "year" | "wealth" | "work" | "study" | "child";
 export type PartnerRequirement = "none" | "optional" | "required";
 export type ProductKind = "report" | "consult";
 
@@ -20,7 +20,11 @@ export interface ReportProduct {
   category: ReportCategory;
   /** 카테고리 배지 문구 */
   categoryLabel: string;
+  /** 간판. 짧고 부르기 쉬운 상품 이름 */
   title: string;
+  /** 후킹 한 줄. 카드에서 제목 다음으로 큰 글씨가 된다 */
+  tagline: string;
+  /** 실제로 무엇을 받는지. 전문용어 없이 */
   description: string;
   price: number;
   originalPrice?: number;
@@ -37,7 +41,7 @@ export interface ReportProduct {
   /** 자유 서술 질문 */
   detail?: { prompt: string; placeholder: string };
   /** components/home/assets 의 장면 이미지 키 */
-  cover: "highlightReunion" | "thumbReunion" | "thumbLove" | "thumbCompatibility" | "thumbLife";
+  cover: "highlightReunion" | "thumbReunion" | "thumbLove" | "thumbCompatibility" | "thumbLife" | "thumbStudy" | "thumbChild" | "thumbWork";
   /** 화면·AI 풀이에 반드시 붙일 고지 */
   disclaimer?: string;
 }
@@ -62,10 +66,11 @@ export const REPORTS = [
     slug: "reunion-deep",
     kind: "report",
     category: "reunion",
-    categoryLabel: "재회 심층 리포트",
-    title: "월령의 밤 : 그 사람은 왜 연락을 멈췄을까?",
+    categoryLabel: "재회 심층",
+    title: "재회 심층사주",
+    tagline: "그 사람이 연락을 멈춘 진짜 이유",
     description:
-      "헤어진 상대의 가려진 무의식과 마음의 빗장이 풀리는 결정적 타이밍, 그리고 내가 먼저 연락하면 안 되는 사주적 이유.",
+      "헤어진 상대의 명식까지 함께 펼쳐, 지금 그 사람 마음에 남아 있는 것과 빗장이 풀리는 시기, 먼저 연락하면 안 되는 이유까지 짚어 드려요.",
     price: 14900,
     originalPrice: 24000,
     discountLabel: "38% OFF",
@@ -93,9 +98,11 @@ export const REPORTS = [
     slug: "reunion",
     kind: "report",
     category: "reunion",
-    categoryLabel: "재회 사주",
-    title: "그 사람의 속마음과 재회 타이밍",
-    description: "상대방의 현재 사주 대운 속 연애관, 연락이 닿을 가능성이 가장 높은 날짜와 금기 행동",
+    categoryLabel: "재회",
+    title: "재회사주",
+    tagline: "다시 닿을 수 있을까",
+    description:
+      "그 사람의 지금 연애관과, 연락이 닿기 쉬운 흐름·지금은 피해야 할 행동을 짚어 드려요.",
     price: 12900,
     guide: "seoha",
     topics: ["love"],
@@ -109,9 +116,11 @@ export const REPORTS = [
     slug: "love",
     kind: "report",
     category: "romance",
-    categoryLabel: "연애 사주",
-    title: "올해 나를 찾아올 결정적 인연의 얼굴과 장소",
-    description: "내 사주 원국에 박힌 정관/편관의 기운으로 풀어낸 인연의 나이대, 외모 분위기, 첫 만남의 계기",
+    categoryLabel: "연애",
+    title: "연애사주",
+    tagline: "올해 나를 찾아올 사람의 얼굴",
+    description:
+      "내 명식에 새겨진 연애의 결과 자꾸 반복되는 패턴, 올해 인연이 들어오는 시기를 읽어 드려요.",
     price: 13900,
     guide: "seoha",
     topics: ["love"],
@@ -129,9 +138,11 @@ export const REPORTS = [
     slug: "compatibility",
     kind: "report",
     category: "chemistry",
-    categoryLabel: "궁합 사주",
-    title: "사소한 말에 상처받는 이유 : 기운 충돌 처방전",
-    description: "반복되는 싸움의 오행적 원인과 대화법, 서로의 결핍을 채워주는 현실적 조화의 길",
+    categoryLabel: "궁합",
+    title: "궁합사주",
+    tagline: "우리는 왜 같은 걸로 또 싸울까",
+    description:
+      "두 사람의 기운이 부딪히는 지점과 서로를 채우는 자리, 이 사람에게 실제로 닿는 말투를 찾아 드려요.",
     price: 16800,
     guide: "yunseul",
     topics: ["compatibility"],
@@ -152,9 +163,10 @@ export const REPORTS = [
     kind: "report",
     category: "destiny",
     categoryLabel: "종합 명식",
-    title: "명식 전서 : 타고난 결부터 말년까지, 한 권으로",
+    title: "명식 전서",
+    tagline: "타고난 결부터 말년까지, 한 권으로",
     description:
-      "원국·격국·용신에서 시작해 대운 여덟 칸, 올해와 내년의 세운, 재물과 인연의 자리까지 — 흩어져 있던 풀이를 한 사람의 생애 순서로 꿰어 읽습니다.",
+      "타고난 그릇에서 시작해 열 해씩 바뀌는 대운 아홉 칸, 올해와 내년, 재물과 인연, 말년까지 — 흩어져 있던 풀이를 한 사람의 생애 순서로 꿰어 읽는 열한 장입니다.",
     price: 48200,
     originalPrice: 72000,
     discountLabel: "33% OFF",
@@ -190,9 +202,11 @@ export const REPORTS = [
     slug: "life",
     kind: "report",
     category: "destiny",
-    categoryLabel: "평생 사주",
-    title: "타고난 그릇과 30대 후반 대운의 방향성",
-    description: "내 사주의 중심 오행과 용신 분석, 인생의 가장 큰 물줄기가 바뀌는 황금기 전환점",
+    categoryLabel: "평생",
+    title: "평생사주",
+    tagline: "내 그릇의 크기와 물줄기가 바뀌는 때",
+    description:
+      "타고난 그릇의 모양과 중심이 되는 기운, 인생의 큰 물줄기가 바뀌는 전환점을 읽어 드려요.",
     price: 19800,
     guide: "doham",
     topics: ["life"],
@@ -209,9 +223,11 @@ export const REPORTS = [
     slug: "yearly",
     kind: "report",
     category: "year",
-    categoryLabel: "신년 운세",
-    title: "다가오는 해, 나에게 머무는 한 글자",
-    description: "세운과 월운으로 짚어 보는 한 해의 큰 흐름, 기회가 열리는 달과 한 템포 쉬어 갈 달",
+    categoryLabel: "신년",
+    title: "2027 신년사주",
+    tagline: "내년 한 해, 나에게 머무는 한 글자",
+    description:
+      "한 해의 큰 흐름을 달 단위로 쪼개, 기회가 열리는 달과 한 템포 쉬어 갈 달을 나눠 드려요.",
     price: 14900,
     guide: "yunseul",
     topics: ["yearly"],
@@ -227,9 +243,11 @@ export const REPORTS = [
     slug: "money",
     kind: "report",
     category: "wealth",
-    categoryLabel: "금전운",
-    title: "돈이 들어오는 길목과 새는 구멍",
-    description: "재성의 구조와 재고(財庫)가 열리는 시기로 읽는 나만의 재물 흐름",
+    categoryLabel: "재물",
+    title: "재물사주",
+    tagline: "돈이 들어오는 길목과 새는 구멍",
+    description:
+      "돈이 들어오는 자리와 새어 나가는 구조, 재물의 흐름이 바뀌는 시기를 읽어 드려요.",
     price: 9900,
     guide: "doham",
     topics: ["money"],
@@ -245,9 +263,11 @@ export const REPORTS = [
     slug: "career",
     kind: "report",
     category: "wealth",
-    categoryLabel: "취업운",
-    title: "나에게 맞는 일, 움직이기 좋은 때",
-    description: "십성과 대운으로 보는 일의 적성, 지원·이직에 힘이 실리는 시기",
+    categoryLabel: "직업",
+    title: "직업사주",
+    tagline: "하늘이 내게 맞춘 일",
+    description:
+      "타고난 기질로 읽는 일의 적성과, 지원·이직에 힘이 실리는 시기를 짚어 드려요.",
     price: 9900,
     guide: "doham",
     topics: ["money", "decade"],
@@ -263,9 +283,11 @@ export const REPORTS = [
     slug: "health",
     kind: "report",
     category: "destiny",
-    categoryLabel: "건강운",
-    title: "내 몸의 기운이 기우는 방향",
-    description: "오행 균형으로 살피는 유의 계통과 생활 속 기운 고르기",
+    categoryLabel: "건강",
+    title: "건강사주",
+    tagline: "내 몸이 먼저 지치는 자리",
+    description:
+      "기운의 치우침으로 읽는 몸의 긴장 자리와, 리듬을 고르게 되돌리는 생활 습관을 짚어 드려요.",
     price: 9900,
     guide: "doham",
     topics: ["health"],
@@ -283,9 +305,11 @@ export const REPORTS = [
     slug: "study",
     kind: "report",
     category: "study",
-    categoryLabel: "학업·시험운",
-    title: "공부가 붙는 시기와 나에게 맞는 공부법",
-    description: "인성·식상의 흐름으로 읽는 집중력의 결, 시험·자격증에 힘이 실리는 달과 흔들리기 쉬운 달",
+    categoryLabel: "공부",
+    title: "공부사주",
+    tagline: "나에게 붙는 공부법과 터지는 시기",
+    description:
+      "내가 어떤 방식으로 공부해야 남는 사람인지, 시험과 자격증에 힘이 실리는 달은 언제인지 읽어 드려요.",
     price: 12900,
     guide: "doham",
     topics: ["life", "yearly"],
@@ -303,9 +327,11 @@ export const REPORTS = [
     slug: "child-study",
     kind: "report",
     category: "study",
-    categoryLabel: "자녀 학업·진로",
-    title: "우리 아이가 빛나는 공부 방향과 진로의 결",
-    description: "자녀의 명식으로 읽는 타고난 학습 기질과 재능, 공부에 힘이 붙는 시기, 부모가 건네면 좋은 말",
+    categoryLabel: "우리 아이 공부",
+    title: "우리 아이 공부사주",
+    tagline: "이 아이에게 맞는 공부 방식",
+    description:
+      "아이의 명식으로 읽는 공부 체질과 집중이 붙는 방식, 부모가 건네면 좋은 말과 눌러서는 안 될 결을 짚어 드려요.",
     price: 14900,
     guide: "doham",
     roles: { subject: "child" },
@@ -324,9 +350,11 @@ export const REPORTS = [
     slug: "parent-child",
     kind: "report",
     category: "study",
-    categoryLabel: "부모·자녀 궁합",
-    title: "나와 아이, 부딪히는 이유와 가까워지는 말",
-    description: "부모와 자녀의 오행이 서로를 채우고 부딪히는 지점, 잔소리 대신 닿는 대화법",
+    categoryLabel: "부모·자녀",
+    title: "부모자녀 궁합사주",
+    tagline: "잔소리 대신 닿는 말",
+    description:
+      "부모와 아이의 기운이 부딪히는 지점과, 이 아이에게 실제로 닿는 말투를 찾아 드려요.",
     price: 14900,
     guide: "yunseul",
     roles: { subject: "parent", partner: "child" },
@@ -341,12 +369,151 @@ export const REPORTS = [
     cover: "thumbCompatibility",
   },
   {
+    slug: "business",
+    kind: "report",
+    category: "work",
+    categoryLabel: "사업",
+    title: "사업사주",
+    tagline: "내 사주에 사업이 있을까",
+    description:
+      "남 밑에서 버는 결인지 내 간판을 걸 결인지, 사람을 써야 크는지 혼자 해야 남는지 — 벌일 때와 접을 때까지 짚어 드려요.",
+    price: 16900,
+    originalPrice: 24000,
+    discountLabel: "29% OFF",
+    guide: "doham",
+    topics: ["money", "decade"],
+    partner: "none",
+    chapters: [
+      "내 밑천 — 혼자 밀고 나가는 힘의 크기",
+      "사람을 쓰는 결인가, 혼자 쥐는 결인가",
+      "돈이 돌아 들어오는 구조와 새는 구멍",
+      "벌일 때와 거둘 때 — 대운이 바뀌는 자리",
+      "올해와 내년, 움직여도 되는 달",
+      "이 사주가 피해야 할 사업의 모양",
+    ],
+    questions: [
+      { id: "stage", question: "지금 사업은 어느 단계인가요?", options: ["준비 중이에요", "1년 미만", "1~3년차", "3년 이상", "접을지 고민 중"] },
+      { id: "shape", question: "어떤 모양을 생각하고 계세요?", options: ["혼자 하는 일", "직원을 두는 일", "동업", "온라인·무점포", "아직 모르겠어요"] },
+      { id: "worry", question: "가장 걱정되는 건 무엇인가요?", options: ["자금", "사람", "매출이 안 늘어요", "시기를 모르겠어요"] },
+    ],
+    detail: {
+      prompt: "어떤 일을 하고 계시거나 하려는지, 지금 가장 막힌 지점을 적어 주세요.",
+      placeholder: "(예) 3년째 카페를 하는데 매출이 제자리라 확장할지 접을지 고민이에요.",
+    },
+    cover: "thumbWork",
+  },
+  {
+    // 입시 상품. 합격 여부를 점치지 않는다 — 학업 기운이 차오르는 해와 꺾이는 해,
+    // 시험에 힘이 실리는 달을 연도별로 짚는 것이 이 상품이 파는 것이다.
+    slug: "child-admission",
+    kind: "report",
+    category: "child",
+    categoryLabel: "우리 아이 입시",
+    title: "2027 대학사주",
+    tagline: "우리 아이가 갈 대학의 첫 글자",
+    description:
+      "입시를 앞둔 아이의 학업 기운이 차오르는 해와 꺾이는 해를 연도별 표로 펼쳐, 고3·재수 시기의 흐름과 시험에 힘이 실리는 달을 짚어 드려요.",
+    price: 19800,
+    originalPrice: 29000,
+    discountLabel: "31% OFF",
+    guide: "doham",
+    roles: { subject: "child" },
+    topics: ["yearly", "decade"],
+    partner: "none",
+    chapters: [
+      "이 아이의 공부 그릇 — 타고난 학업의 결",
+      "집중이 붙는 자리와 흩어지는 자리",
+      "연도별 학업 흐름 — 중3부터 재수까지",
+      "지금 지나는 대운이 공부에 주는 배경",
+      "시험에 힘이 실리는 달과 흔들리는 달",
+      "원서와 선택 — 기운이 열리는 방향",
+      "부모가 할 일과 하지 말아야 할 일",
+    ],
+    questions: [
+      { id: "grade", question: "아이는 지금 몇 학년인가요?", options: ["중학생", "고1", "고2", "고3", "재수·N수"] },
+      { id: "target", question: "지금 목표는 어디쯤인가요?", options: ["최상위권", "상위권", "중위권", "아직 못 정했어요"] },
+      { id: "subject", question: "어느 쪽이 더 강한가요?", options: ["문과 쪽", "이과 쪽", "예체능", "고르게 해요"] },
+      { id: "struggle", question: "요즘 가장 걱정되는 건?", options: ["집중을 못 해요", "성적이 안 올라요", "의욕이 없어요", "불안해해요"] },
+    ],
+    detail: {
+      prompt: "아이의 지금 상황과, 이 풀이에서 꼭 알고 싶은 것을 적어 주세요.",
+      placeholder: "(예) 고2인데 2학기 들어 성적이 계속 떨어져요. 재수를 각오해야 할지 고민입니다.",
+    },
+    disclaimer: "학업 기운의 흐름을 읽는 참고용 풀이예요. 합격 여부를 점치지 않으며, 입시 결과를 보장하지 않습니다.",
+    cover: "thumbChild",
+  },
+  {
+    slug: "child-dream",
+    kind: "report",
+    category: "child",
+    categoryLabel: "우리 아이 진로",
+    title: "우리 아이 장래희망 사주",
+    tagline: "이 아이는 무엇이 되려고 태어났을까",
+    description:
+      "타고난 재능이 어느 쪽으로 뻗는지, 어떤 일에서 빛나고 어떤 일에서 시드는지 — 아이가 스스로 길을 고를 때 참고할 결을 읽어 드려요.",
+    price: 16900,
+    guide: "doham",
+    roles: { subject: "child" },
+    topics: ["life", "decade"],
+    partner: "none",
+    chapters: [
+      "이 아이가 타고난 기질의 모양",
+      "재능이 뻗는 방향 — 만들까, 다룰까, 이끌까",
+      "빛나는 자리와 시드는 자리",
+      "재능이 자라는 시기 — 열 해 단위의 배경",
+      "어울리는 일의 결과 어울리지 않는 일의 결",
+      "부모가 길을 넓혀 주는 방법",
+    ],
+    questions: [
+      { id: "age", question: "아이는 몇 살인가요?", options: ["미취학", "초등 저학년", "초등 고학년", "중학생", "고등학생"] },
+      { id: "likes", question: "아이가 가장 오래 붙잡고 있는 건?", options: ["만들기·그리기", "읽기·쓰기", "숫자·퍼즐", "몸 쓰는 놀이", "사람들과 어울리기"] },
+      { id: "parentWish", question: "부모로서 가장 바라는 건?", options: ["아이가 좋아하는 일을 찾기", "안정적인 직업", "재능을 일찍 키워 주기", "그냥 건강하게"] },
+    ],
+    detail: {
+      prompt: "아이가 요즘 빠져 있는 것이나, 진로를 두고 드는 생각을 적어 주세요.",
+      placeholder: "(예) 그림을 몇 시간씩 그리는데 이걸 직업으로 밀어줘도 될지 모르겠어요.",
+    },
+    cover: "thumbChild",
+  },
+  {
+    slug: "child-talent",
+    kind: "report",
+    category: "child",
+    categoryLabel: "영재",
+    title: "영재사주",
+    tagline: "우리 아이는 어떤 영재일까",
+    description:
+      "아이의 명식에 드러난 재능의 종류와 그것이 터지는 시기, 그리고 지금 눌러서는 안 될 결을 짚어 드려요.",
+    price: 14900,
+    guide: "yunseul",
+    roles: { subject: "child" },
+    topics: ["life"],
+    partner: "none",
+    chapters: [
+      "이 아이의 재능이 머무는 자리",
+      "어떤 종류의 영재인가 — 다섯 결로 보는 분류",
+      "재능이 터지는 시기와 기다려야 할 시기",
+      "키우는 법과 꺾는 법",
+    ],
+    questions: [
+      { id: "age", question: "아이는 몇 살인가요?", options: ["미취학", "초등 저학년", "초등 고학년", "중학생 이상"] },
+      { id: "signal", question: "또래보다 유난히 빠른 쪽이 있나요?", options: ["말·글", "숫자·논리", "그림·음악", "운동", "사람 다루기", "딱히 없어요"] },
+    ],
+    detail: {
+      prompt: "아이에게서 유난히 눈에 띄는 모습이 있다면 적어 주세요.",
+      placeholder: "(예) 다섯 살인데 한글을 혼자 떼고 책을 하루 종일 읽어요.",
+    },
+    cover: "thumbChild",
+  },
+  {
     slug: "consult",
     kind: "consult",
     category: "destiny",
-    categoryLabel: "AI 상담",
-    title: "서하와 나누는 1:1 사주 상담",
-    description: "내 명식을 바탕으로 궁금한 것을 자유롭게 묻는 대화 세션 · 최대 20턴",
+    categoryLabel: "1:1 상담",
+    title: "1:1 사주 상담",
+    tagline: "궁금한 걸 직접 묻는 자리",
+    description:
+      "내 명식을 띄워 두고 궁금한 것을 자유롭게 묻는 대화 세션이에요 · 최대 20턴",
     price: 5900,
     guide: "seoha",
     topics: ["consult"],

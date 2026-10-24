@@ -35,7 +35,7 @@ export function HighlightCard() {
             <br />왜 연락을 멈췄을까?
           </h2>
           <p className="mt-1 line-clamp-2 font-body-sm text-body-sm leading-relaxed text-on-surface-variant">
-            {report.description}
+            {report.tagline}
           </p>
 
           <div className="mt-2 flex items-center justify-between pt-2">

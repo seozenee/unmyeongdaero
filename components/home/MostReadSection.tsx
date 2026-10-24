@@ -88,7 +88,7 @@ function ReportListCard({ item }: { item: DossierItem }) {
       <div className="mt-1 flex items-start justify-between gap-space-md">
         <div className="flex flex-col">
           <h4 className="font-headline-md text-headline-md leading-snug text-on-surface">{report.title}</h4>
-          <p className="mt-1 line-clamp-2 font-body-sm text-body-sm text-on-surface-variant">{report.description}</p>
+          <p className="mt-1 line-clamp-2 font-body-sm text-body-sm text-on-surface-variant">{report.tagline}</p>
         </div>
         <div
           role="img"

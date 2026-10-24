@@ -75,6 +75,8 @@ interface Chart {
   cautions: Array<{ trait: string; basis: string | null }>;
   decade: { list: Record<string, Json>[]; index: number; current: Record<string, Json> | null; next: Record<string, Json> | null };
   seun: { current: Record<string, Json> | null; next: Record<string, Json> | null };
+  /** 연도별 흐름표가 쓰는 여섯 해 */
+  seunYears: Record<string, Json>[];
   weoluns: Record<string, Json>[];
   yearForecast: { headline: string | null; advice: string | null };
 }
@@ -143,6 +145,7 @@ function buildChart(name: string, modules: Record<string, Json>, birth: BirthPro
       current: (at(modules, "seun.currentSeun") as Record<string, Json>) ?? null,
       next: (at(modules, "seun.nextSeun") as Record<string, Json>) ?? null,
     },
+    seunYears: list(at(modules, "seun.years")) as Record<string, Json>[],
     weoluns: [
       ...(list(at(modules, "weolun.upcomingWeoluns")) as Record<string, Json>[]),
       ...(list(at(modules, "weolun.yearWeoluns")) as Record<string, Json>[]),
@@ -1025,6 +1028,177 @@ const lateYears: Builder = ({ me }, title) => {
   );
 };
 
+// ─── 사업 ───────────────────────────────────────────────────────────────────
+
+/** 밑천 — 혼자 밀고 나가는 힘이 얼마나 되는가 */
+const bizCapital: Builder = ({ me, reading }, title) => {
+  const bigyeop = groupCount(me, "비겁");
+  const strong = me.strength?.includes("신강") ?? false;
+  return section(
+    title,
+    strong
+      ? `${me.name}님은 ${me.strength}의 그릇이라, 남의 간판보다 내 간판을 걸 때 힘이 제대로 쓰여요`
+      : `${me.name}님은 ${me.strength ?? "치우치지 않은"}의 그릇이라, 혼자 다 지기보다 기댈 구조를 먼저 만드는 편이 맞아요`,
+    [
+      me.strengthAnalysis,
+      `사업에서 밑천은 돈이 아니라 버티는 힘이에요. 명리에서는 그걸 일간의 힘으로 봐요. ${strong ? "밀고 나가는 힘이 넉넉하니, 초반에 혼자 감당해야 하는 시기를 견디는 데는 유리해요. 다만 덜어 낼 곳을 못 찾으면 혼자 다 쥐려다 지쳐요." : "힘이 넉넉한 편은 아니라, 처음부터 크게 벌이기보다 작게 열어 두고 반응을 보며 키우는 쪽이 오래가요."}`,
+      bigyeop > 0
+        ? `비겁(나와 같은 편의 기운)이 ${bigyeop}자리예요. ${bigyeop >= 3 ? "경쟁과 동업이 늘 따라붙는 구조라, 지분과 역할을 먼저 문서로 나눠 두세요." : "함께하는 사람에게서 힘을 얻는 편이라, 혼자보다 둘이 더 멀리 가요."}`
+        : "비겁이 드러나지 않아, 남과 겨루기보다 내 속도로 쌓아 올리는 쪽이 편해요.",
+      answerLine(reading, "worry") ?? storyEcho(reading),
+    ],
+    [
+      me.strength ? { label: `신강약 · ${me.strength}`, detail: me.strengthAnalysis ?? "버티는 힘의 기준이에요." } : null,
+      pillarEvidence(me, "day"),
+      me.gyeokguk ? { label: `격국 ${me.gyeokguk.name}`, detail: me.gyeokguk.reasoning ?? "사주의 틀이에요." } : null,
+    ],
+    "pillars",
+  );
+};
+
+/** 혼자 쥐는 결인가, 사람을 쓰는 결인가 */
+const bizShape: Builder = ({ me, reading }, title) => {
+  const siksang = groupCount(me, "식상");
+  const gwan = groupCount(me, "관성");
+  const jae = groupCount(me, "재성");
+  const maker = siksang >= gwan;
+  return section(
+    title,
+    maker
+      ? "만들어 내는 힘이 앞서는 결이라, 조직을 키우기보다 내 손에서 나오는 것으로 승부하는 쪽이 맞아요"
+      : "틀을 세우고 굴리는 힘이 앞서는 결이라, 혼자 다 만들기보다 사람과 시스템을 쓰는 쪽이 맞아요",
+    [
+      `원국의 십성을 모아 보면 식상 ${siksang}자리, 관성 ${gwan}자리, 재성 ${jae}자리예요.`,
+      maker
+        ? "식상은 내가 밖으로 내보내는 힘이에요. 제품·콘텐츠·기술처럼 결과물이 손에 잡히는 일에서 돈이 붙어요. 사람을 많이 쓰면 오히려 내 손이 묶여 매출이 줄 수 있어요."
+        : "관성은 기준과 책임을 세우는 힘이에요. 매뉴얼이 돌아가고 역할이 나뉘는 구조에서 제 몫을 해요. 내가 다 만들려 들면 금세 한계가 와요.",
+      jae === 0
+        ? "다만 재성이 원국에 드러나지 않아요. 잘 만들어도 값을 매기고 받아 내는 일은 따로 배워야 하는 결이라, 가격과 수금 구조를 먼저 정해 두세요."
+        : `재성이 ${jae}자리 있어 값을 매기고 거둬들이는 감각은 타고난 편이에요.`,
+      answerLine(reading, "shape"),
+    ],
+    [
+      { label: `십성 분포 · 식상${siksang} 관성${gwan} 재성${jae}`, detail: "네 기둥의 천간·지지 십성을 모은 분포예요." },
+      pillarEvidence(me, "month"),
+      me.strengths[0] ? { label: `강점 · ${me.strengths[0].trait}`, detail: me.strengths[0].basis ?? "" } : null,
+    ],
+    "elements",
+  );
+};
+
+// ─── 입시·자녀 ──────────────────────────────────────────────────────────────
+
+/** 연도별 학업 흐름 — 이 장의 주인공은 표다 */
+const admissionYears: Builder = ({ me, reading }, title) => {
+  const years = me.seunYears;
+  const best = years.filter((item) => fortuneTone(num(at(item, "twelveFortune.level"))) === "good");
+  const soft = years.filter((item) => fortuneTone(num(at(item, "twelveFortune.level"))) === "caution");
+  const name = reading.subject.name;
+  return section(
+    title,
+    best[0]
+      ? `${name}에게 학업의 기운이 가장 차오르는 해는 ${num(best[0].year)}년이에요`
+      : "해마다 들어오는 기운이 달라, 밀어붙일 해와 다지는 해를 나눠 봐야 해요",
+    [
+      "아래 표는 해마다 들어오는 기운의 세기를 나란히 놓은 거예요. 막대가 긴 해는 노력이 결과로 잘 바뀌는 해, 짧은 해는 결과보다 바탕을 쌓는 해예요.",
+      best.length
+        ? `힘이 실리는 해는 ${best.map((item) => `${num(item.year)}년(${str(item.ganji)})`).join(", ")}이에요. 이 해에 원서·본시험처럼 결과가 갈리는 일을 모으면 유리해요.`
+        : null,
+      soft.length
+        ? `반대로 ${soft.map((item) => `${num(item.year)}년`).join(", ")}은 한 템포 쉬어 가는 결이에요. 성적이 안 오른다고 아이를 몰아붙이면 오히려 다음 해의 힘까지 깎여요.`
+        : null,
+      answerLine(reading, "grade") ?? answerLine(reading, "struggle"),
+    ],
+    [
+      ...years.slice(0, 3).map((item) => ({
+        label: `${num(item.year)} ${str(item.ganji)} 세운`,
+        detail: soften(str(item.interpretation) ?? "그해에 들어오는 기운이에요."),
+      })),
+    ],
+    "years",
+  );
+};
+
+/** 원서와 선택 — 기운이 열리는 방향 */
+const admissionChoice: Builder = ({ me, reading }, title) => {
+  const [top] = sipseongGroups(me);
+  const style = top ? STUDY_STYLE[top[0]] : undefined;
+  const yong = me.yongsin.yong;
+  return section(
+    title,
+    style ? `${top![0]} 기운이 앞서는 아이라, ${style.career} 쪽에서 힘이 가장 덜 들어요` : "타고난 결이 덜 깎이는 방향으로 고르는 게 가장 안전해요",
+    [
+      style ? `공부 체질이 ${style.type}이라, 같은 성적대라면 ${style.career}에 가까운 전공에서 버티는 힘이 더 나와요.` : null,
+      yong ? `용신이 ${elementKo(yong)}이라, ${ELEMENT_VIRTUE[yong].good}을 쓰는 환경 — 그런 결의 학교와 전공에서 기운이 덜 깎여요.` : null,
+      "원서는 점수로 고르지만, 버티는 건 결로 버텨요. 같은 점수대에서 고민될 때 이 결을 기준의 하나로 얹어 보세요.",
+      "이 풀이는 합격 여부를 점치지 않아요. 기운이 어느 쪽으로 덜 깎이는지를 볼 뿐이고, 원서의 판단은 성적과 전형이 먼저예요.",
+    ],
+    [
+      top ? { label: `십성 · ${top[0]} ${top[1]}자리`, detail: style?.how ?? "원국에서 가장 센 결이에요." } : null,
+      yong ? { label: `용신 ${elementKo(yong)}`, detail: me.yongsin.usage ?? ELEMENT_VIRTUE[yong].good } : null,
+      me.gyeokguk ? { label: `격국 ${me.gyeokguk.name}`, detail: me.gyeokguk.reasoning ?? "" } : null,
+    ],
+  );
+};
+
+/** 재능이 뻗는 방향 — 다섯 결로 나눈다 */
+const TALENT: Record<string, { kind: string; shows: string; grow: string }> = {
+  인성: { kind: "받아들이는 재능", shows: "설명을 한 번 듣고 구조째 외우고, 혼자 파고드는 시간을 즐거워해요", grow: "답을 주기보다 질문을 던져 주면 혼자 더 멀리 갑니다" },
+  식상: { kind: "만들어 내는 재능", shows: "배운 것을 바로 자기 말·그림·만들기로 바꿔 내놓아요", grow: "내놓을 자리를 자주 만들어 주세요. 발표든 전시든 보는 눈이 있을 때 자랍니다" },
+  관성: { kind: "지키고 이끄는 재능", shows: "규칙과 역할을 먼저 정하고, 맡은 건 끝까지 해냅니다", grow: "책임을 조금씩 늘려 주세요. 맡기면 맡길수록 커지는 결입니다" },
+  비겁: { kind: "겨루며 크는 재능", shows: "또래와 나란히 놓일 때 눈빛이 달라지고, 지는 걸 못 견뎌 해요", grow: "경쟁 자체보다 '어제의 나'와 겨루게 틀을 바꿔 주면 오래갑니다" },
+  재성: { kind: "다루고 거두는 재능", shows: "목표와 보상이 선명할 때 몰입하고, 결과를 숫자로 확인하길 좋아해요", grow: "작은 목표를 잘게 쪼개 주세요. 눈에 보이는 성취가 연료입니다" },
+};
+
+const talentDirection: Builder = (ctx, title) => {
+  const child = ctx.report.roles?.partner === "child" && ctx.partner ? ctx.partner : ctx.me;
+  const groups = sipseongGroups(child);
+  const [top, second] = groups;
+  const talent = top ? TALENT[top[0]] : undefined;
+  return section(
+    title,
+    talent ? `${child.name}은 ${talent.kind}이 가장 두껍게 깔린 아이예요` : "타고난 재능이 어느 쪽으로 뻗는지부터 봐요",
+    [
+      groups.length ? `원국의 십성을 모아 보면 ${groups.map(([group, count]) => `${group} ${count}자리`).join(", ")}예요.` : null,
+      talent ? `${talent.kind}은 이렇게 드러나요 — ${talent.shows}` : null,
+      talent ? `키우는 법은 하나예요. ${talent.grow}` : null,
+      second && TALENT[second[0]] ? `보조로는 ${TALENT[second[0]]!.kind}이 깔려 있어, ${second[0]} 쪽의 자극을 섞어 주면 한쪽으로만 몰리지 않아요.` : null,
+      answerLine(ctx.reading, "signal") ?? answerLine(ctx.reading, "likes"),
+    ],
+    [
+      top ? { label: `십성 · ${top[0]} ${top[1]}자리`, detail: talent?.shows ?? "원국에서 가장 센 결이에요." } : null,
+      pillarEvidence(child, "hour"),
+      child.goodSinsal[0] ? { label: `신살 ${child.goodSinsal[0].name}`, detail: sentences(child.goodSinsal[0].description, 1) ?? "" } : null,
+    ],
+    "elements",
+  );
+};
+
+/** 어울리는 일의 결과 어울리지 않는 일의 결 */
+const talentFit: Builder = (ctx, title) => {
+  const child = ctx.report.roles?.partner === "child" && ctx.partner ? ctx.partner : ctx.me;
+  const [top] = sipseongGroups(child);
+  const style = top ? STUDY_STYLE[top[0]] : undefined;
+  const yong = child.yongsin.yong;
+  const gi = child.yongsin.gi;
+  return section(
+    title,
+    style ? `${style.career} 쪽에서 이 아이는 가장 덜 힘들게 제 몫을 해요` : "같은 일이라도 결이 맞으면 덜 지쳐요",
+    [
+      style ? `${top![0]} 기운이 앞서는 아이라 ${style.career}과 결이 맞아요. 적성이 '좋아하는 일'만 뜻하는 건 아니에요 — 오래 해도 덜 닳는 쪽을 뜻해요.` : null,
+      yong ? `용신 ${elementKo(yong)}의 결, 곧 ${ELEMENT_VIRTUE[yong].good}을 쓰는 일에서 기운이 채워져요.` : null,
+      gi ? `반대로 ${ELEMENT_VIRTUE[gi].excess}을 계속 요구하는 자리는, 잘해 내더라도 아이를 빠르게 소모시켜요.` : null,
+      "다만 열 살의 명식으로 서른의 직업을 못 박지는 않아요. 넓게 보여 주고, 아이가 오래 붙잡는 것을 함께 지켜봐 주세요.",
+      answerLine(ctx.reading, "parentWish"),
+    ],
+    [
+      top ? { label: `십성 · ${top[0]} ${top[1]}자리`, detail: style?.career ?? "" } : null,
+      yong ? { label: `용신 ${elementKo(yong)}`, detail: child.yongsin.usage ?? ELEMENT_VIRTUE[yong].good } : null,
+      gi ? { label: `기신 ${elementKo(gi)}`, detail: `${ELEMENT_VIRTUE[gi].excess}이 길어지면 지치기 쉬워요.` } : null,
+    ],
+  );
+};
+
 const BUILDERS: Record<string, Builder[]> = {
   study: [natal, studyStyle, timing, cautionSection],
   "child-study": [natal, studyStyle, timing, careerDirection, parentTalk],
@@ -1038,6 +1212,10 @@ const BUILDERS: Record<string, Builder[]> = {
   money: [wealthStructure, wealthTiming, wealthHabit],
   career: [natal, timing, wealthTiming],
   health: [healthBalance, healthWatch, healthLife],
+  business: [bizCapital, bizShape, wealthStructure, decadeMap, yearCore, cautionSection],
+  "child-admission": [natal, studyStyle, admissionYears, decadeMap, yearMonths, admissionChoice, parentTalk],
+  "child-dream": [natal, talentDirection, careerDirection, decadeMap, talentFit, parentTalk],
+  "child-talent": [natal, talentDirection, decadeMap, parentTalk],
   "destiny-full": [
     natal, natalRelations, elementsAndYongsin, decadeMap, timing,
     yearCore, wealthStructure, loveSeat, healthBalance, lateYears, actionSection,

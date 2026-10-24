@@ -2,7 +2,7 @@
 // Claude 구조화 출력 스키마이자 저장 형식(readings.script). 필드 순서 = 생성·스트리밍 순서(브리핑이 먼저 흘러나온다).
 import { z } from "zod";
 
-export const STORY_PANELS = ["pillars", "elements", "decade"] as const;
+export const STORY_PANELS = ["pillars", "elements", "decade", "years"] as const;
 export type StoryPanel = (typeof STORY_PANELS)[number];
 
 export const briefingBeatSchema = z.object({

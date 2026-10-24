@@ -60,7 +60,8 @@ export function NeedsShelf({ products }: { products: ReportProduct[] }) {
               </div>
 
               <div className="flex flex-1 flex-col gap-space-xs p-space-md pt-space-sm">
-                <span className="line-clamp-2 font-label-md text-label-md text-on-surface">{report.title}</span>
+                <span className="font-label-sm text-label-sm text-secondary">{report.title}</span>
+                <span className="line-clamp-2 font-label-md text-label-md leading-snug text-on-surface">{report.tagline}</span>
                 <span className="mt-auto flex items-baseline justify-between pt-space-xs">
                   <span className="flex items-baseline gap-1.5">
                     {report.originalPrice && (

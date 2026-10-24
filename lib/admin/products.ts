@@ -36,6 +36,7 @@ export const productFormSchema = z.object({
     .max(40)
     .regex(/^[a-z0-9-]+$/, "영문 소문자·숫자·하이픈만 쓸 수 있어요."),
   title: z.string().trim().min(2, "상품 이름을 적어 주세요.").max(120),
+  tagline: z.string().trim().min(2, "후킹 한 줄을 적어 주세요.").max(120),
   description: z.string().trim().min(10, "설명을 10자 이상 적어 주세요.").max(500),
   category: z.enum(CATEGORIES),
   categoryLabel: z.string().trim().max(30).optional(),
@@ -92,6 +93,7 @@ export async function saveProduct(raw: unknown, options: { creating: boolean }):
     category: input.category,
     category_label: input.categoryLabel || null,
     title: input.title,
+    tagline: input.tagline,
     description: input.description,
     price: input.price,
     original_price: input.originalPrice ?? null,
@@ -181,6 +183,7 @@ export async function loadProductForm(slug: string): Promise<ProductFormInput | 
   return {
     slug,
     title: pick("title", builtIn?.title ?? ""),
+    tagline: pick("tagline", builtIn?.tagline ?? ""),
     description: pick("description", builtIn?.description ?? ""),
     category: pick("category", builtIn?.category ?? "destiny") as ProductFormInput["category"],
     categoryLabel: pick("category_label", builtIn?.categoryLabel ?? "") ?? "",

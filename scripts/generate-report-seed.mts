@@ -20,19 +20,20 @@ const literal = (value: string | number | undefined | null) =>
 
 const rows = REPORTS.map((report) => {
   const r = report as typeof report & { originalPrice?: number; discountLabel?: string };
-  return `  (${[r.slug, r.kind, r.category, r.title, r.price, r.originalPrice, r.discountLabel, r.description]
+  return `  (${[r.slug, r.kind, r.category, r.title, r.tagline, r.price, r.originalPrice, r.discountLabel, r.description]
     .map(literal)
     .join(", ")})`;
 });
 
 const sql = `-- scripts/generate-report-seed.mts 가 lib/reports/catalog.ts 에서 생성한 파일입니다. 직접 수정하지 마세요.
-insert into public.reports (slug, kind, category, title, price, original_price, discount_label, description)
+insert into public.reports (slug, kind, category, title, tagline, price, original_price, discount_label, description)
 values
 ${rows.join(",\n")}
 on conflict (slug) do update set
   kind = excluded.kind,
   category = excluded.category,
   title = excluded.title,
+  tagline = excluded.tagline,
   price = excluded.price,
   original_price = excluded.original_price,
   discount_label = excluded.discount_label,

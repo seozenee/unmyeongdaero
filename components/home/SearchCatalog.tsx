@@ -14,7 +14,7 @@ export function SearchCatalog({ products }: { products: ReportProduct[] }) {
     const keyword = query.trim().toLowerCase();
     if (!keyword) return products;
     return products.filter((report) =>
-      [report.title, report.categoryLabel, report.description, getGuide(report.guide).name]
+      [report.title, report.tagline, report.categoryLabel, report.description, getGuide(report.guide).name]
         .join(" ")
         .toLowerCase()
         .includes(keyword),
@@ -43,7 +43,7 @@ export function SearchCatalog({ products }: { products: ReportProduct[] }) {
             >
               <span className="font-label-sm text-label-sm text-secondary">{report.categoryLabel}</span>
               <span className="font-label-md text-label-md text-on-surface">{report.title}</span>
-              <span className="line-clamp-1 font-body-sm text-body-sm text-on-surface-variant">{report.description}</span>
+              <span className="line-clamp-1 font-body-sm text-body-sm text-on-surface-variant">{report.tagline}</span>
               <span className="font-label-md text-label-md text-on-surface">{formatKRW(report.price)}</span>
             </Link>
           </li>

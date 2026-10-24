@@ -8,6 +8,7 @@ import {
   parseDecadeFortune,
   parseElementCounts,
   parseFourPillars,
+  parseYearRun,
   resolveCurrentAge,
 } from "@/lib/saju/modules";
 import { mergedGlossary, mergedModules } from "@/lib/sazu/readings";
@@ -59,6 +60,7 @@ export default function ReadingPreviewPage({ searchParams }: { searchParams: { s
 
   const modules = mergedModules(sazu);
   const decade = parseDecadeFortune(modules);
+  const yearRun = parseYearRun(modules);
   const age = resolveCurrentAge(
     modules,
     { year: SUBJECT.birthYear, month: SUBJECT.birthMonth, day: SUBJECT.birthDay },
@@ -82,6 +84,7 @@ export default function ReadingPreviewPage({ searchParams }: { searchParams: { s
         pillars: parseFourPillars(modules),
         counts: parseElementCounts(modules),
         decade: decade ? { ...decade, currentIndex: findCurrentDecadeIndex(decade.items, age) } : null,
+        years: yearRun ? { items: yearRun, currentYear: now.getFullYear() } : null,
       }}
       basisFacts={buildBasisFacts(modules)}
       glossary={mergedGlossary(sazu)}
