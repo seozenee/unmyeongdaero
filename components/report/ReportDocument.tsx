@@ -6,6 +6,7 @@ import { FourPillarsChart } from "@/components/saju/FourPillarsChart";
 import { GuideAvatar } from "@/components/story/GuideAvatar";
 import { Reveal } from "@/components/report/Reveal";
 import { Icon } from "@/components/ui/Icon";
+import { ReadingProgress } from "./ReadingProgress";
 import { WebtoonMedia } from "@/components/webtoon/WebtoonMedia";
 import { getWebtoonAsset } from "@/components/webtoon/assets";
 import { cn } from "@/lib/cn";
@@ -57,6 +58,7 @@ export function ReportDocument(props: ReportDocumentProps) {
 
   return (
     <article className="flex w-full flex-col gap-space-xl pb-space-xl">
+      <ReadingProgress />
       {/* 인쇄 표지 — 종이에서는 어두운 장면 대신 활자 표지 한 장을 쓴다 */}
       <header className="hidden print:flex print:h-[220mm] print:break-after-page print:flex-col print:justify-center print:gap-space-lg">
         <span className="font-label-sm text-label-sm tracking-[0.3em] text-tertiary">UNMYEONGDAERO REPORT</span>
