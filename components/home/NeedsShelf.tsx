@@ -7,6 +7,7 @@ import { Icon } from "@/components/ui/Icon";
 import { formatKRW } from "@/lib/format";
 import type { ReportCategory, ReportProduct } from "@/lib/reports/catalog";
 import { getGuide } from "@/lib/story/guides";
+import { STITCH_ASSETS } from "./assets";
 
 export const CATEGORY_EVENT = "sazudaero:category";
 
@@ -39,17 +40,42 @@ export function NeedsShelf({ products }: { products: ReportProduct[] }) {
             <Link
               key={report.slug}
               href={`/reports/${report.slug}`}
-              className="flex flex-col gap-space-xs rounded-xl bg-surface-container p-space-md transition-transform active:scale-[0.98] motion-safe:animate-fade-up"
+              className="group relative flex flex-col overflow-hidden rounded-xl bg-surface-container transition-transform active:scale-[0.98] motion-safe:animate-fade-up"
             >
-              <div className="flex items-center justify-between">
-                <span className="font-label-sm text-label-sm text-secondary">{report.categoryLabel}</span>
-                <GuideAvatar guide={guide} size="sm" />
+              {/* 표지 — 글자가 읽히도록 아래로 갈수록 어둡게 덮는다 */}
+              <div className="relative h-24 w-full overflow-hidden">
+                <div
+                  role="img"
+                  aria-label=""
+                  className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+                  style={{ backgroundImage: `url('${STITCH_ASSETS[report.cover]}')` }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-surface-container via-surface-container/50 to-transparent" />
+                <span className="absolute left-space-md top-space-sm rounded-full bg-surface-container-lowest/70 px-2 py-0.5 font-label-sm text-label-sm text-secondary backdrop-blur">
+                  {report.categoryLabel}
+                </span>
+                <div className="absolute right-space-sm top-space-sm">
+                  <GuideAvatar guide={guide} size="sm" />
+                </div>
               </div>
-              <span className="line-clamp-3 font-label-md text-label-md text-on-surface">{report.title}</span>
-              <span className="mt-auto flex items-center justify-between pt-space-xs font-label-md text-label-md text-on-surface">
-                {formatKRW(report.price)}
-                <Icon name="chevron_right" className="text-[16px] text-outline" />
-              </span>
+
+              <div className="flex flex-1 flex-col gap-space-xs p-space-md pt-space-sm">
+                <span className="line-clamp-2 font-label-md text-label-md text-on-surface">{report.title}</span>
+                <span className="mt-auto flex items-baseline justify-between pt-space-xs">
+                  <span className="flex items-baseline gap-1.5">
+                    {report.originalPrice && (
+                      <span className="font-label-sm text-label-sm text-outline line-through">
+                        {formatKRW(report.originalPrice)}
+                      </span>
+                    )}
+                    <span className="font-label-md text-label-md text-on-surface">{formatKRW(report.price)}</span>
+                  </span>
+                  <Icon
+                    name="chevron_right"
+                    className="text-[16px] text-outline transition-transform duration-200 group-hover:translate-x-0.5"
+                  />
+                </span>
+              </div>
             </Link>
           );
         })}

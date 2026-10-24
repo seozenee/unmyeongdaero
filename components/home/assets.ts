@@ -1,15 +1,20 @@
-// design/code.html 에 들어있던 Stitch 호스팅 이미지.
-// TODO(배포 전): Stitch 임시 URL 은 만료될 수 있으므로 자체 스토리지(public/ 또는 Supabase Storage)로 교체.
-// 로고는 components/ui/Logo.tsx 로 옮겼다(외부 URL 만료 방지).
+// 상품 표지. 우리가 만든 웹툰 컷을 쓴다.
+//
+// 처음에는 design/code.html 에 들어 있던 Stitch 호스팅 이미지를 그대로 썼는데, 그건 임시
+// 주소라 언제 만료될지 모른다. 어느 날 첫 화면의 그림이 통째로 사라지는 종류의 빚이다.
+// 같은 세계관으로 만든 그림이 public/webtoon 에 있으므로 그쪽으로 옮긴다.
+//
+// 컷은 상품의 뜻에 맞춰 골랐다. 궁합은 나란히 놓인 두 명식표, 평생은 펼쳐지는 운명
+// 두루마리처럼, 그림이 상품을 설명하게 둔다.
 export const STITCH_ASSETS = {
-  highlightReunion:
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuD7Y9BZUgKaBGly4AqjjCUE7PrQ9oASjzW1iP_30LMQEendAIfgw70CPoCMVqop4lchTupiLbVcgrJN_6pRyorUVHZ2FTS2sxCrsOD5m25oEhKf1FM9oFPGa0UsC3wzWApT52E3rFj2mLBoM7YFLuIICm2Uchp6--4bUdp9Rx7lOpq7yzU1i6oRnVEQZC1V185WBxrhPHf_jY8YrGe_1hIwL7u3sBSqy9Rq41VEvfRsFsSFPcRUjzwfsw",
-  thumbReunion:
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuA68wdVwewDgLI4evJwX0ZqfBpxcAVdUICDZwalCYjyedU41wMcrxQ9JXCidUUNytno4boYW9c-tUK7tqxcvOW6FEEqnMX4yEveSFW80Zir2sKaKKECfSpx5WuU0NwYkB4vOErCHSKGl9zxEGo5idLSTH26GG9vnZEvjbWlxPi7LRk0My1ZmnqscroNxQbZKXkx7g-WjpX0_GcrSPTrycXTH1IPEEvR6EzGlRVBf-R7wIW20Xodl8K2UA",
-  thumbLove:
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuCzV1KfNI75XRo5NuKbkIB2HJ2F1jtCsnPifZuAQi9CzX_Esf2tubnB3gC2A7VfSOcfOQNCOqQha8orP8vvVDjQvcMzqljHvwVd3lFBEJKA3jui7IfePbRrnOMMqjrW98-ChNJ2Cq_LrizZf_k_u-OJ3cq00s_FvNPJoa27rp-soK2QrrRf5JFaePwZ0EdlvyRlvD7OuswlbLk7ZVpK_hfNSHYV8fehHly_R3wjZ--uUsBRfo3CsoS5dA",
-  thumbCompatibility:
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuDTRVaSdSAkW2a-6JHB4cY2w3F_iplNke1VVJDUGh28y6sFnaa2suNJNnoMk9YzoEZe5EfEb9lW9xk5NMSDwr_7gqPxGFcP2qtqloMurXriaR3k985IuSPQj5DAdQgSUehExLIKXSw-lfDPi541nqb_ETL4yW_m9m1hACs-EluTCv7Kpc3c4kkwwKGhNwaIVDkbVeK8xlAwveKppCijcZvvCIfyMgxp2ucaibjk2vd2CcN5bj_aXp-K4w",
-  thumbLife:
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuB_oT9bnb5X5PvOtxb3nj5qGiia2GY3f5Rgk5OsuH0qH95XtX5uNBZ127o6eq80ZBCuZLxGxuYIdFIkJxkJwVu2NRyguGzmQa_fq9Ow8EL2MDMuoL1iV0vjhLIgh7yfwejDS-l6avJUNZ3qnj_3IOgECPmKnPfjlkBfWcAi2XBdjsBhuMXpevimPlYrJLIXl2IOQk6_-bscMsgC2dwQgTOlkSgaXeFfCpBHRLfe9RU6wxUgD0AofcGJMg",
+  /** 월령의 밤 — 달빛 아래 한옥 대문 */
+  highlightReunion: "/webtoon/seoha/intro-0.webp",
+  /** 재회 — 입구로 이어지는 돌길 끝의 따뜻한 빛 */
+  thumbReunion: "/webtoon/seoha/intro-1.webp",
+  /** 연애 — 촛불 번짐 속의 안내자 */
+  thumbLove: "/webtoon/yunseul/intro-5.webp",
+  /** 궁합 — 나란히 놓인 두 장의 명식표 */
+  thumbCompatibility: "/webtoon/yunseul/panel-second.webp",
+  /** 평생 — 펼쳐지는 운명의 두루마리 */
+  thumbLife: "/webtoon/doham/panel-unfold.webp",
 } as const;

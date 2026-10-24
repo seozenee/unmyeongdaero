@@ -82,7 +82,8 @@
   },
   "doham": {
     "intro-0": {
-      "image": "/webtoon/doham/intro-0.webp"
+      "image": "/webtoon/doham/intro-0.webp",
+      "video": "/webtoon/doham/intro-0.mp4"
     },
     "intro-1": {
       "image": "/webtoon/doham/intro-1.webp"
