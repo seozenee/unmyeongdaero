@@ -29,4 +29,10 @@ export const STITCH_ASSETS = {
   thumbTalent: "/webtoon/yunseul/cover-talent.webp",
   /** 사업 — 장부와 저울이 놓인 한밤의 계산대 */
   thumbWork: "/webtoon/doham/cover-business.webp",
+  /** ─ 상품 포스터 (첫 화면 큰 카드) ─ */
+  posterDestinyFull: "/webtoon/doham/poster-destiny-full.webp",
+  posterReunionDeep: "/webtoon/seoha/poster-reunion-deep.webp",
+  posterChildAdmission: "/webtoon/doham/poster-child-admission.webp",
+  posterCompatibility: "/webtoon/yunseul/poster-compatibility.webp",
+  posterBusiness: "/webtoon/doham/poster-business.webp",
 } as const;

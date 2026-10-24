@@ -34,6 +34,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
         />
         {/* display=block: 아이콘 폰트 로딩 전 리거처 텍스트("notifications" 등)가 비치지 않도록 */}
+        {/* 상품 간판용 한글 디스플레이 서체 — 상품마다 다른 목소리를 준다 (lib/reports/fonts.ts) */}
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Song+Myung&family=Gugi&family=Jua&family=Do+Hyeon&family=Nanum+Brush+Script&family=Gasoek+One&family=Yeon+Sung&display=swap"
+        />
         {/* eslint-disable-next-line @next/next/no-page-custom-font, @next/next/google-font-display */}
         <link
           rel="stylesheet"

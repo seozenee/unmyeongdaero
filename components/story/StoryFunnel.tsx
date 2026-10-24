@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { BirthForm } from "@/components/story/BirthForm";
 import { useTypewriter } from "@/components/story/useTypewriter";
 import { STITCH_ASSETS } from "@/components/home/assets";
-import { GuideAvatar } from "@/components/story/GuideAvatar";
+import { ProductIntro } from "@/components/story/ProductIntro";
 import { Icon } from "@/components/ui/Icon";
 import { SpeechBalloon, WhisperLines } from "@/components/webtoon/ComicText";
 import { Stage, StageAction } from "@/components/webtoon/Stage";
@@ -209,123 +209,9 @@ export function StoryFunnel({ report }: { report: ReportProduct }) {
   };
 
   // ─ 상품 소개 (스테이지를 닫았을 때 보이는 화면) ─
-  // ─ 상품 소개 — 맨 처음 보이는 판매 화면 ─
+  // 상품 소개는 ProductIntro 가 그린다 — 상품마다 다른 포스터·문구·서체를 쓴다
   const detailPage = (
-    <div className="flex w-full flex-col pb-[calc(6rem+env(safe-area-inset-bottom,0px))]">
-      {/* 표지 — 화면 위쪽을 통째로 쓴다 */}
-      <div className="relative -mx-margin aspect-[4/5] overflow-hidden">
-        <div
-          role="img"
-          aria-label=""
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url('${STITCH_ASSETS[report.cover]}')` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/60 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-space-xs px-margin pb-space-lg">
-          <span className="w-fit rounded-full bg-secondary-container/70 px-2.5 py-1 font-label-sm text-label-sm text-on-secondary-container backdrop-blur">
-            {report.categoryLabel}
-          </span>
-          <span className="font-label-md text-label-md text-secondary">{report.title}</span>
-          <h1 className="font-headline-xl-mobile text-headline-xl-mobile leading-tight tracking-tight text-on-surface">
-            {report.tagline}
-          </h1>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-space-lg pt-space-md">
-        <p className="font-body-md text-body-md leading-relaxed text-on-surface-variant">{report.description}</p>
-
-        {/* 안내자 */}
-        <div className="flex items-center gap-space-md rounded-xl bg-surface-container p-space-md">
-          <GuideAvatar guide={guide} size="md" />
-          <div className="flex min-w-0 flex-col">
-            <span className="font-label-md text-label-md text-on-surface">{guide.title}</span>
-            <span className="line-clamp-2 font-body-sm text-body-sm text-on-surface-variant">{guide.tagline}</span>
-          </div>
-        </div>
-
-        {/* 받는 것 — 숫자로 먼저 보여 준다 */}
-        <ul className="grid grid-cols-3 gap-space-sm">
-          {[
-            { value: `${report.chapters.length}장`, label: "보고서 구성" },
-            { value: report.partner === "required" ? "두 명식" : "내 명식", label: "읽는 범위" },
-            { value: "PDF", label: "저장·공유" },
-          ].map((item) => (
-            <li key={item.label} className="flex flex-col items-center gap-0.5 rounded-xl bg-surface-container py-space-md">
-              <span className="font-headline-sm text-headline-sm text-on-surface">{item.value}</span>
-              <span className="font-label-sm text-label-sm text-outline">{item.label}</span>
-            </li>
-          ))}
-        </ul>
-
-        {/* 목차 */}
-        <section className="flex flex-col gap-space-sm rounded-xl bg-surface-container p-space-lg">
-          <h2 className="font-headline-sm text-headline-sm text-on-surface">이런 이야기를 받아요</h2>
-          <ol className="flex flex-col gap-space-sm">
-            {report.chapters.map((chapter, index) => (
-              <li key={chapter} className="flex gap-space-sm">
-                <span className="w-6 shrink-0 font-label-md text-label-md text-tertiary">{String(index + 1).padStart(2, "0")}</span>
-                <span className="font-body-md text-body-md leading-snug text-on-surface">{chapter}</span>
-              </li>
-            ))}
-          </ol>
-          <p className="mt-space-xs border-t border-outline-variant/40 pt-space-sm font-body-sm text-body-sm text-on-surface-variant">
-            ＋ 흐름 시기표 · 해 보면 좋은 것 / 피하면 좋은 것 · 문장마다 붙는 명리 근거
-          </p>
-        </section>
-
-        {/* 어떻게 읽히는지 */}
-        <section className="flex flex-col gap-space-sm rounded-xl bg-surface-container-low p-space-lg">
-          <h2 className="font-headline-sm text-headline-sm text-on-surface">무엇을 보고 쓰나요</h2>
-          <ul className="flex flex-col gap-space-sm">
-            {[
-              { icon: "calendar_month", text: "생년월일시로 만세력을 직접 계산해요. 절기와 진태양시까지 맞춰서요." },
-              { icon: "fact_check", text: "모든 문장에 근거가 붙어요. 어느 글자에서 나온 말인지 함께 보여 드려요." },
-              { icon: "lock_open", text: "한 번 사면 계속 볼 수 있어요. 구독 결제가 아니에요." },
-            ].map((item) => (
-              <li key={item.icon} className="flex gap-space-sm">
-                <Icon name={item.icon} className="mt-0.5 shrink-0 text-[18px] text-tertiary" />
-                <span className="font-body-sm text-body-sm leading-relaxed text-on-surface-variant">{item.text}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {report.disclaimer && (
-          <p className="font-body-sm text-body-sm leading-relaxed text-outline">{report.disclaimer}</p>
-        )}
-      </div>
-
-      {/* 값과 시작 버튼은 늘 손 닿는 곳에 */}
-      <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] z-30 mx-auto w-full max-w-md border-t border-outline-variant/40 bg-surface/95 px-margin py-space-sm backdrop-blur">
-        <div className="flex items-center gap-space-md">
-          <div className="flex min-w-0 flex-col">
-            <span className="flex items-baseline gap-1.5">
-              {report.originalPrice && (
-                <span className="font-label-sm text-label-sm text-outline line-through">{formatKRW(report.originalPrice)}</span>
-              )}
-              {report.discountLabel && (
-                <span className="rounded bg-secondary-container/40 px-1.5 py-0.5 font-label-sm text-label-sm font-bold text-secondary">
-                  {report.discountLabel}
-                </span>
-              )}
-            </span>
-            <span className="font-price-display text-price-display text-on-surface">{formatKRW(report.price)}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setPhase(cursor > 0 ? "chat" : "intro")}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-on-surface py-3.5 font-label-md text-label-md text-surface shadow-lg transition-transform active:scale-[0.98]"
-          >
-            <Icon name="play_arrow" className="text-[18px]" />
-            {cursor > 0 ? "이어서 보기" : `${josa(guide.name, "을/를")} 만나러 가기`}
-          </button>
-        </div>
-        <p className="mt-1 text-center font-label-sm text-label-sm text-outline">
-          대화 입력은 무료 · 결제는 마지막에
-        </p>
-      </div>
-    </div>
+    <ProductIntro report={report} onStart={() => setPhase(cursor > 0 ? "chat" : "intro")} resuming={cursor > 0} />
   );
 
   if (phase === "closed") return detailPage;

@@ -39,6 +39,22 @@
     "report-cover": {
       "image": "/webtoon/seoha/report-cover.webp",
       "video": "/webtoon/seoha/report-cover.mp4"
+    },
+    "poster-reunion-deep": {
+      "image": "/webtoon/seoha/poster-reunion-deep.webp",
+      "video": "/webtoon/seoha/poster-reunion-deep.mp4"
+    },
+    "poster-reunion": {
+      "image": "/webtoon/seoha/poster-reunion.webp",
+      "video": "/webtoon/seoha/poster-reunion.mp4"
+    },
+    "poster-love": {
+      "image": "/webtoon/seoha/poster-love.webp",
+      "video": "/webtoon/seoha/poster-love.mp4"
+    },
+    "poster-consult": {
+      "image": "/webtoon/seoha/poster-consult.webp",
+      "video": "/webtoon/seoha/poster-consult.mp4"
     }
   },
   "yunseul": {
@@ -71,16 +87,33 @@
       "video": "/webtoon/yunseul/panel-brush.mp4"
     },
     "panel-second": {
-      "image": "/webtoon/yunseul/panel-second.webp"
+      "image": "/webtoon/yunseul/panel-second.webp",
+      "video": "/webtoon/yunseul/panel-second.mp4"
     },
     "panel-unfold": {
-      "image": "/webtoon/yunseul/panel-unfold.webp"
+      "image": "/webtoon/yunseul/panel-unfold.webp",
+      "video": "/webtoon/yunseul/panel-unfold.mp4"
     },
     "report-cover": {
-      "image": "/webtoon/yunseul/report-cover.webp"
+      "image": "/webtoon/yunseul/report-cover.webp",
+      "video": "/webtoon/yunseul/report-cover.mp4"
     },
     "cover-talent": {
       "image": "/webtoon/yunseul/cover-talent.webp"
+    },
+    "poster-compatibility": {
+      "image": "/webtoon/yunseul/poster-compatibility.webp",
+      "video": "/webtoon/yunseul/poster-compatibility.mp4"
+    },
+    "poster-parent-child": {
+      "image": "/webtoon/yunseul/poster-parent-child.webp",
+      "video": "/webtoon/yunseul/poster-parent-child.mp4"
+    },
+    "poster-yearly": {
+      "image": "/webtoon/yunseul/poster-yearly.webp"
+    },
+    "poster-child-talent": {
+      "image": "/webtoon/yunseul/poster-child-talent.webp"
     }
   },
   "doham": {
@@ -132,6 +165,39 @@
     },
     "cover-business": {
       "image": "/webtoon/doham/cover-business.webp"
+    },
+    "poster-destiny-full": {
+      "image": "/webtoon/doham/poster-destiny-full.webp",
+      "video": "/webtoon/doham/poster-destiny-full.mp4"
+    },
+    "poster-child-admission": {
+      "image": "/webtoon/doham/poster-child-admission.webp",
+      "video": "/webtoon/doham/poster-child-admission.mp4"
+    },
+    "poster-business": {
+      "image": "/webtoon/doham/poster-business.webp",
+      "video": "/webtoon/doham/poster-business.mp4"
+    },
+    "poster-life": {
+      "image": "/webtoon/doham/poster-life.webp"
+    },
+    "poster-money": {
+      "image": "/webtoon/doham/poster-money.webp"
+    },
+    "poster-career": {
+      "image": "/webtoon/doham/poster-career.webp"
+    },
+    "poster-health": {
+      "image": "/webtoon/doham/poster-health.webp"
+    },
+    "poster-study": {
+      "image": "/webtoon/doham/poster-study.webp"
+    },
+    "poster-child-study": {
+      "image": "/webtoon/doham/poster-child-study.webp"
+    },
+    "poster-child-dream": {
+      "image": "/webtoon/doham/poster-child-dream.webp"
     }
   }
 }

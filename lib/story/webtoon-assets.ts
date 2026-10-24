@@ -50,24 +50,74 @@ function shotsFor(guide: WebtoonGuide): ShotSpec[] {
     { key: "panel-second", character: false, aspect: "16:9", prompt: `Two old saju chart papers laid side by side on a dark wooden desk with red seal stamps and a candle, inside ${scene}.`, motion: "candle flame flickers, paper edges flutter slightly, dust floats" },
     { key: "panel-unfold", character: true, aspect: "16:9", prompt: `${name} unrolls a long scroll of destiny charts across the desk, glowing characters rising from it like fireflies, inside ${scene}.`, motion: "the scroll unrolls, glowing characters float upward, light sweeps across" },
     { key: "report-cover", character: true, aspect: "3:4", prompt: `${name} holds out a bound report book tied with a ribbon toward the viewer, elegant editorial composition, inside ${scene}.`, motion: "the character gently offers the book, the ribbon sways, particles drift in the light" },
-    ...PRODUCT_COVERS.filter((cover) => cover.guide === guide).map(({ key, prompt, motion }) => ({
+    ...PRODUCT_COVERS.filter((cover) => cover.guide === guide).map(({ key, prompt, motion, portrait }) => ({
       key,
-      character: false,
-      aspect: "16:9" as const,
-      prompt: `${prompt} Rendered inside ${scene}.`,
+      // 포스터는 안내자의 얼굴로 파는 그림이라 캐릭터 시트를 기준으로 삼는다
+      character: Boolean(portrait),
+      aspect: (portrait ? "3:4" : "16:9") as "3:4" | "16:9",
+      prompt: portrait ? prompt : `${prompt} Rendered inside ${scene}.`,
       motion,
     })),
   ];
 }
 
 /**
- * 상품 표지.
+ * 상품 포스터.
  *
- * 안내자 컷을 돌려 쓰면 세 아이 상품이 똑같은 그림을 달게 된다. 카드가 나란히
- * 놓이는 자리라 같은 그림 셋은 바로 눈에 띈다. 상품마다 제 그림을 준다.
- * 사람 얼굴은 넣지 않는다 — 소품과 공간만으로 뜻이 서고, 얼굴 일관성에 드는 비용도 없다.
+ * 어두운 빈 방에 흰 글씨를 얹으면 카드가 밋밋해진다. 장사가 되는 카드는 포스터다 —
+ * 인물의 얼굴이 크게 앞에 나오고, 배경이 한 가지 색으로 쨍하게 받쳐 주고, 제목이
+ * 들어갈 가운데가 비어 있어야 한다. 아래 프롬프트는 그 세 가지를 노린다.
+ *
+ * 세계관(달빛·먹·한옥)은 지키되 채도와 대비만 끌어올린다. 상품마다 다른 강조색을
+ * 써서 카드가 나란히 놓였을 때 서로 구분되게 한다.
  */
-const PRODUCT_COVERS: ReadonlyArray<{ key: string; guide: WebtoonGuide; prompt: string; motion: string }> = [
+const POSTER_PROMPT = (guide: WebtoonGuide, accent: string, subject: string) =>
+  `Vertical movie-poster portrait. ${subject} Large head-and-shoulders composition, the face in the upper half and looking straight at the viewer, strong rim light, dramatic chiaroscuro. The background is a bold saturated ${accent} field with deep black vignette, glowing embers and fine particles. High contrast, rich saturation, polished and striking. The lower third is kept simple and uncluttered so large title lettering can sit over it.`;
+
+const POSTERS: ReadonlyArray<{ key: string; guide: WebtoonGuide; accent: string; subject: string }> = [
+  // ─ 재회·연애 (서하) ─
+  { key: "poster-reunion-deep", guide: "seoha", accent: "deep crimson and vermilion", subject: "Seoha the moonlit saju reader, a single tear-like glint in her eye, a broken red thread drifting from her fingers." },
+  { key: "poster-reunion", guide: "seoha", accent: "dusk violet and rose", subject: "Seoha the moonlit saju reader holding a single unsent letter to her chest, a paper lantern floating away behind her." },
+  { key: "poster-love", guide: "seoha", accent: "warm coral and gold", subject: "Seoha the moonlit saju reader with a red thread looping from her fingertip into the dark, peach blossoms drifting past her face." },
+  { key: "poster-consult", guide: "seoha", accent: "indigo and pale silver", subject: "Seoha the moonlit saju reader seated across an empty cushion, one hand open in invitation, a teacup steaming between them." },
+
+  // ─ 궁합·관계 (윤슬) ─
+  { key: "poster-compatibility", guide: "yunseul", accent: "hot pink and vermilion", subject: "Yunseul the compatibility reader pressing two red seal stamps together, two name papers glowing in her hands." },
+  { key: "poster-parent-child", guide: "yunseul", accent: "warm amber and soft jade", subject: "Yunseul the compatibility reader holding a small child's paper hand-print beside a grown hand-print, both glowing faintly." },
+  { key: "poster-yearly", guide: "yunseul", accent: "deep teal and gold", subject: "Yunseul the compatibility reader turning the page of a great wall calendar, twelve glowing month-glyphs circling her." },
+  { key: "poster-child-talent", guide: "yunseul", accent: "bright violet and gold", subject: "Yunseul the compatibility reader cupping a small glowing seed in her palms, five coloured sparks orbiting it." },
+
+  // ─ 인생·운세 (도담) ─
+  { key: "poster-destiny-full", guide: "doham", accent: "antique gold and amber", subject: "Doham the scholar of destiny in his black gat and round glasses, holding an open thread-bound book of fate, golden hanja characters rising around him." },
+  { key: "poster-life", guide: "doham", accent: "deep sapphire and silver", subject: "Doham the scholar unrolling a long scroll that becomes a river of light flowing past him into the dark." },
+
+  // ─ 돈·일 (도담) ─
+  { key: "poster-money", guide: "doham", accent: "rich gold and black", subject: "Doham the scholar with coins of light streaming through his open hands, some falling away into shadow below." },
+  { key: "poster-career", guide: "doham", accent: "steel blue and copper", subject: "Doham the scholar standing before three glowing doorways of different shapes, one brush raised to mark the chosen one." },
+  { key: "poster-business", guide: "doham", accent: "emerald green and old gold", subject: "Doham the scholar behind a merchant's brass coin scale, stacked coins and an abacus glinting, a shop lantern above him." },
+  { key: "poster-health", guide: "doham", accent: "jade green and warm ivory", subject: "Doham the scholar with five faintly glowing orbs circling his chest in a slow ring, one dimmer than the rest." },
+
+  // ─ 공부·아이 (도담) ─
+  { key: "poster-study", guide: "doham", accent: "cool indigo and lamp amber", subject: "Doham the scholar leaning over a desk of open books, a single brush glowing where it touches the page." },
+  { key: "poster-child-study", guide: "doham", accent: "soft sky blue and cream", subject: "Doham the scholar setting a small lamp beside a child-sized desk stacked with workbooks, warm light spilling across it." },
+  { key: "poster-child-admission", guide: "doham", accent: "royal blue and cold silver", subject: "Doham the scholar holding up a single brush over a student's exam paper, a calendar of circled dates glowing faintly behind him." },
+  { key: "poster-child-dream", guide: "doham", accent: "sunset orange and deep plum", subject: "Doham the scholar pointing toward several glowing paths forking into the dark, a pair of small shoes waiting at their start." },
+];
+
+/**
+ * 상품 표지(소품 컷).
+ *
+ * 포스터가 안내자의 얼굴로 상품을 파는 그림이라면, 이쪽은 소품과 공간만으로 뜻을
+ * 세우는 그림이다. 선반 카드처럼 작게 놓이는 자리에 쓴다.
+ */
+const PRODUCT_COVERS: ReadonlyArray<{ key: string; guide: WebtoonGuide; prompt: string; motion: string; portrait?: boolean }> = [
+  ...POSTERS.map(({ key, guide, accent, subject }) => ({
+    key,
+    guide,
+    portrait: true,
+    prompt: POSTER_PROMPT(guide, accent, subject),
+    motion: "subtle breathing, a slow blink, hair and fabric drifting, light particles rising",
+  })),
   {
     key: "cover-admission",
     guide: "doham",

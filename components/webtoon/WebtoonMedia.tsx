@@ -31,11 +31,14 @@ function motionFor(src: string) {
 export function WebtoonMedia({
   asset,
   still = false,
+  active = true,
   className,
 }: {
   asset: WebtoonAsset;
   /** 정지 화면으로 둘 것인지 (보고서 표지 등) */
   still?: boolean;
+  /** 지금 보이는 컷인가. 캐러셀처럼 여러 장이 깔릴 때 보이는 것만 재생한다 */
+  active?: boolean;
   className?: string;
 }) {
   const playVideo = Boolean(asset.video) && !still;
@@ -43,7 +46,7 @@ export function WebtoonMedia({
   return (
     <div aria-hidden className={cn("absolute inset-0 overflow-hidden bg-surface-container-lowest", className)}>
       {playVideo ? (
-        <SceneVideo src={asset.video!} poster={asset.image} />
+        <SceneVideo src={asset.video!} poster={asset.image} active={active} />
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -66,8 +69,11 @@ export function WebtoonMedia({
  *
  * 움직임을 줄여 쓰는 사람에게는 영상을 틀지 않고 첫 프레임만 보여 준다 —
  * 5초짜리 반복 재생은 전정기관을 자극할 수 있다.
+ *
+ * 여러 장이 한 화면에 깔리면(캐러셀) 보이는 것만 재생한다. 넷을 동시에 틀면
+ * 브라우저가 디코더를 아끼려고 제멋대로 멈춰 세워, 정작 보고 있는 카드가 정지한다.
  */
-function SceneVideo({ src, poster }: { src: string; poster: string }) {
+function SceneVideo({ src, poster, active }: { src: string; poster: string; active: boolean }) {
   const ref = useRef<HTMLVideoElement>(null);
   const [ready, setReady] = useState(false);
   const [reduced, setReduced] = useState(false);
@@ -76,12 +82,32 @@ function SceneVideo({ src, poster }: { src: string; poster: string }) {
     setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   }, []);
 
+  // 서버에서 내려온 <video> 는 React 가 붙기 전에 이미 다 받아 둘 수 있다. 그러면 canplay 는
+  // 이미 지나가 버렸고, 그 한 번을 놓치면 영상이 투명한 채로 깔려 까만 화면만 남는다.
+  // 지금 상태를 직접 보고, 앞으로 올 이벤트도 함께 듣는다.
+  useEffect(() => {
+    const video = ref.current;
+    if (!video) return;
+    const show = () => setReady(true);
+    if (video.readyState >= 2) show();
+    video.addEventListener("loadeddata", show);
+    video.addEventListener("canplay", show);
+    return () => {
+      video.removeEventListener("loadeddata", show);
+      video.removeEventListener("canplay", show);
+    };
+  }, [src]);
+
   useEffect(() => {
     const video = ref.current;
     if (!video || reduced) return;
+    if (!active) {
+      video.pause();
+      return;
+    }
     // 자동재생이 막히는 환경(저전력 모드 등)에서는 poster 가 그대로 남는다 — 화면이 비지는 않는다
     void video.play().catch(() => undefined);
-  }, [src, reduced]);
+  }, [src, reduced, active]);
 
   return (
     <video
@@ -89,12 +115,11 @@ function SceneVideo({ src, poster }: { src: string; poster: string }) {
       key={src}
       src={src}
       poster={poster}
-      autoPlay={!reduced}
+      autoPlay={!reduced && active}
       loop
       muted
       playsInline
       preload="auto"
-      onCanPlay={() => setReady(true)}
       className={cn(
         "h-full w-full object-cover transition-opacity duration-700",
         ready ? "opacity-100" : "opacity-0",

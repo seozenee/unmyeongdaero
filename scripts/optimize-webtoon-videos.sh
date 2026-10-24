@@ -17,6 +17,9 @@ set -euo pipefail
 DIR="${1:-public/webtoon}"
 WIDTH=720
 HEIGHT=1280
+# 포스터(poster-*)는 첫 화면의 카드다. 스테이지와 달리 3:4 그대로 쓰므로 자르지 않는다.
+POSTER_WIDTH=640
+POSTER_HEIGHT=854
 # crf 26 은 이 그림체에서 눈에 띄는 손실 없이 1/15 로 줄어드는 지점이었다
 CRF=26
 
@@ -28,7 +31,13 @@ total_after=0
 while IFS= read -r -d '' file; do
   before=$(stat -f%z "$file")
   size=$(ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0 "$file")
-  if [ "$size" = "${WIDTH},${HEIGHT}" ]; then
+
+  case "$(basename "$file")" in
+    poster-*) want="${POSTER_WIDTH},${POSTER_HEIGHT}"; filter="scale=${POSTER_WIDTH}:${POSTER_HEIGHT}:flags=lanczos" ;;
+    *)        want="${WIDTH},${HEIGHT}";               filter="crop='min(iw,ih*9/16)':ih,scale=${WIDTH}:${HEIGHT}:flags=lanczos" ;;
+  esac
+
+  if [ "$size" = "$want" ]; then
     echo "건너뜀 (이미 변환됨): ${file#public/webtoon/}"
     continue
   fi
@@ -37,7 +46,7 @@ while IFS= read -r -d '' file; do
   # -nostdin 이 없으면 ffmpeg 이 find 의 파일 목록을 stdin 에서 먹어 치워
   # 다음 경로가 잘린 채로 넘어온다
   ffmpeg -nostdin -v error -i "$file" \
-    -vf "crop='min(iw,ih*9/16)':ih,scale=${WIDTH}:${HEIGHT}:flags=lanczos" \
+    -vf "$filter" \
     -c:v libx264 -preset slow -crf "$CRF" -profile:v high -pix_fmt yuv420p \
     -movflags +faststart -an -y "$tmp"
   mv "$tmp" "$file"
