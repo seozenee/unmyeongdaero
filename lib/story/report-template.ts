@@ -343,13 +343,18 @@ const elementsAndYongsin: Builder = ({ me }, title) => {
 
 const natalRelations: Builder = ({ me, reading }, title) => {
   const top = me.relations.slice(0, 3);
+  // 엔진의 summary 는 "…있다"로 끝나는 메모체다. 보고서 본문은 말하듯 쓰므로 수를 세어 다시 쓴다.
+  const bound = me.relations.filter((relation) => relation.type.includes("합")).length;
+  const friction = me.relations.length - bound;
   return section(
     title,
     top[0]
       ? `원국 안에서 가장 세게 맞물리는 자리는 ${top[0].sourcePosition}과 ${top[0].targetPosition}이에요`
       : "원국 안의 밀고 당기는 힘이 반복되는 패턴을 만들어요",
     [
-      sentences(me.relationSummary, 3),
+      me.relations.length
+        ? `여덟 글자 사이에서 서로 묶이는 자리가 ${bound}곳, 부딪히거나 어긋나는 자리가 ${friction}곳 보여요. ${friction > bound ? "묶이기보다 부딪히는 쪽이 많아, 한자리에 오래 머물기보다 옮기고 바꾸며 나아가는 결이에요." : "부딪힘보다 묶이는 쪽이 많아, 한번 정한 자리와 사람을 오래 끌고 가는 결이에요."}`
+        : null,
       top[0]
         ? join(
             `${top[0].sourcePosition} ${josa(top[0].source, "과/와")} ${top[0].targetPosition} ${top[0].target}이 ${top[0].type}으로 얽혀요.`,
