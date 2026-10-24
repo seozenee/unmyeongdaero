@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { SfxText } from "@/components/webtoon/ComicText";
-import { getWebtoonAsset, WebtoonMedia } from "@/components/webtoon/WebtoonMedia";
+import { getWebtoonAsset, WebtoonMedia, type WebtoonAsset } from "@/components/webtoon/WebtoonMedia";
 import { cn } from "@/lib/cn";
 import type { Guide } from "@/lib/story/guides";
 import type { Camera, FigurePose, Place } from "@/lib/story/webtoon";
@@ -49,13 +49,8 @@ export function Stage({ guide, place, camera, figure, assetKey, still, sfx, chil
 
   return (
     <div className="fixed inset-0 z-[60] mx-auto flex w-full max-w-md flex-col overflow-hidden bg-surface-container-lowest lg:shadow-[0_0_80px_rgba(0,0,0,0.55)] lg:ring-1 lg:ring-outline-variant/30">
-      {/* 장면 */}
-      <div key={`${place}-${assetKey ?? camera}`} className="absolute inset-0 motion-safe:animate-fade-in">
-        {asset && <WebtoonMedia asset={asset} still={still} />}
-        {/* 글자가 읽히도록 위아래를 어둡게 */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-surface-container-lowest/45" />
-        <div className="pointer-events-none absolute inset-0 shadow-[inset_0_0_90px_rgba(0,0,0,0.55)]" />
-      </div>
+      {/* 장면 — 이전 컷 위로 겹쳐 넘어간다 */}
+      <SceneLayer sceneKey={`${place}-${assetKey ?? camera}`} asset={asset} still={still} />
 
       {/* 상단 조작 */}
       <div className="pt-safe relative flex items-start justify-between p-space-md">
@@ -114,6 +109,62 @@ export function Stage({ guide, place, camera, figure, assetKey, still, sfx, chil
   );
 }
 
+/**
+ * 장면 한 겹.
+ *
+ * 컷이 바뀔 때 이전 컷을 바로 지우지 않고 아래에 남겨 둔 뒤, 새 컷이 다 올라오면 치운다.
+ * 바로 지우면 두 컷 사이에 검은 바탕이 한 프레임 비쳐 끊겨 보인다 — 장면이 바뀌는 게
+ * 아니라 화면이 깜빡이는 것처럼 느껴진다.
+ */
+function SceneLayer({
+  sceneKey,
+  asset,
+  still,
+}: {
+  sceneKey: string;
+  asset: WebtoonAsset | null;
+  still?: boolean;
+}) {
+  const [layers, setLayers] = useState<Array<{ key: string; asset: WebtoonAsset | null }>>([
+    { key: sceneKey, asset },
+  ]);
+
+  useEffect(() => {
+    setLayers((current) => {
+      if (current[current.length - 1]?.key === sceneKey) return current;
+      // 바로 앞 컷 하나만 남긴다. 더 쌓으면 영상이 여러 개 동시에 돌아간다.
+      return [...current.slice(-1), { key: sceneKey, asset }];
+    });
+  }, [sceneKey, asset]);
+
+  // 새 컷이 올라오고 나면 아래 겹을 치운다
+  useEffect(() => {
+    if (layers.length < 2) return;
+    const timer = setTimeout(() => setLayers((current) => current.slice(-1)), 700);
+    return () => clearTimeout(timer);
+  }, [layers]);
+
+  return (
+    <div className="absolute inset-0">
+      {layers.map((layer, index) => (
+        <div
+          key={layer.key}
+          className={cn(
+            "absolute inset-0",
+            // 마지막(새) 겹만 떠오르게 한다. 아래 겹은 그대로 두고 위에서 덮는다.
+            index === layers.length - 1 && layers.length > 1 && "motion-safe:animate-fade-in",
+          )}
+        >
+          {layer.asset && <WebtoonMedia asset={layer.asset} still={still} />}
+        </div>
+      ))}
+      {/* 글자가 읽히도록 위아래를 어둡게 */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-surface-container-lowest from-[2%] via-transparent to-surface-container-lowest/45" />
+      <div className="pointer-events-none absolute inset-0 shadow-[inset_0_0_90px_rgba(0,0,0,0.55)]" />
+    </div>
+  );
+}
+
 /** 스테이지 아래에 놓는 기본 행동 버튼 */
 export function StageAction({
   children,
@@ -132,10 +183,14 @@ export function StageAction({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "flex w-full items-center justify-center gap-2 rounded-lg py-3.5 font-label-md text-label-md shadow-lg transition-transform active:scale-[0.99] disabled:opacity-60",
+        // 누를 때 살짝 들어가고, 손가락을 떼면 돌아온다. 화면이 어두워 버튼이 떠 있어야
+        // 눌리는 것임을 알 수 있으므로 그림자를 넉넉히 준다.
+        "group flex w-full items-center justify-center gap-2 rounded-xl py-4 font-label-md text-label-md",
+        "shadow-[0_8px_24px_rgba(0,0,0,0.45)] transition-[transform,box-shadow,background-color] duration-200",
+        "active:translate-y-[1px] active:shadow-[0_4px_14px_rgba(0,0,0,0.5)] disabled:opacity-60",
         tone === "story"
-          ? "bg-secondary-container/90 text-on-secondary-container ring-1 ring-secondary/30 backdrop-blur"
-          : "bg-on-surface text-surface",
+          ? "bg-secondary-container/90 text-on-secondary-container ring-1 ring-secondary/40 backdrop-blur-md hover:bg-secondary-container"
+          : "bg-on-surface text-surface hover:bg-on-surface/92",
       )}
     >
       {children}
