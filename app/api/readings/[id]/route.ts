@@ -13,7 +13,13 @@ export async function GET(_request: Request, { params }: { params: { id: string 
 
   try {
     const { reading } = await getOwnedPurchasedReading(user, params.id);
-    return NextResponse.json({ status: reading.status, error: reading.error, script: reading.script });
+    return NextResponse.json({
+      status: reading.status,
+      error: reading.error,
+      // 되지 않을 재시도를 화면이 권하지 않도록 함께 내려 준다
+      errorRetryable: reading.errorRetryable ?? true,
+      script: reading.script,
+    });
   } catch (error) {
     return toErrorResponse(error);
   }

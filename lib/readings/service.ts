@@ -19,6 +19,36 @@ import { notifyReading } from "./notify";
 import { readingDraftSchema, validateDraftForReport } from "./schema";
 
 /**
+ * 실패를 손님에게 어떻게 말할지 정한다.
+ *
+ * 키가 거부당했거나(401) 설정이 빠졌을 때는 몇 번을 눌러도 같은 자리에서 멈춘다.
+ * 그런데도 "다시 시도해 주세요"를 띄우면, 손님은 되지 않을 일을 반복하다 지친다.
+ * 고쳐야 할 사람은 우리이고, 손님은 기다리면 되는 상황이라고 정확히 말한다.
+ *
+ * 운영자도 로그만 보고 가를 수 있어야 한다 — 설정 문제와 일시적 오류는 대응이 다르다.
+ */
+export function describeFailure(error: unknown): { message: string; retryable: boolean; tag: string } {
+  if (error instanceof SazuApiError) return { message: error.userMessage, retryable: true, tag: "sazu" };
+
+  const status = typeof error === "object" && error !== null ? (error as { status?: number }).status : undefined;
+  const name = error instanceof Error ? error.name : "";
+
+  // 인증·권한·설정 — 사람이 고치기 전에는 몇 번을 눌러도 같다
+  if (status === 401 || status === 403 || name === "ServiceNotConfiguredError") {
+    return {
+      message: "지금은 풀이를 만들 수 없어요. 저희가 확인하고 있고, 준비되면 카카오톡으로 알려 드릴게요.",
+      retryable: false,
+      tag: "config",
+    };
+  }
+  // 한도·혼잡 — 기다리면 풀린다
+  if (status === 429 || (typeof status === "number" && status >= 500)) {
+    return { message: "지금 요청이 몰려 있어요. 잠시 뒤 다시 시도해 주세요.", retryable: true, tag: "busy" };
+  }
+  return { message: "풀이를 쓰는 중 문제가 생겼어요. 다시 시도해 주세요.", retryable: true, tag: "unknown" };
+}
+
+/**
  * 결제 전에 명식이 실제로 계산되는지 확인한다.
  * 잘못된 날짜(2월 30일, 존재하지 않는 윤달)로 결제까지 마친 뒤 실패하는 일을 막는다.
  */
@@ -153,10 +183,12 @@ async function runGeneration(reading: Reading, report: ReportProduct, live: Retu
       console.error(`[reading ${reading.id}] 완료 알림 실패`, error),
     );
   } catch (error) {
-    console.error(`[reading ${reading.id}] 생성 실패`, error);
-    const message =
-      error instanceof SazuApiError ? error.userMessage : "풀이를 쓰는 중 문제가 생겼어요. 다시 시도해 주세요.";
-    await repo.updateReading(reading.id, { status: "failed", error: message }).catch(() => undefined);
+    const { message, retryable, tag } = describeFailure(error);
+    // 태그를 앞에 둔다 — 운영 로그에서 설정 문제만 따로 추려낼 수 있어야 한다
+    console.error(`[reading ${reading.id}] 생성 실패 (${tag})`, error);
+    await repo
+      .updateReading(reading.id, { status: "failed", error: message, errorRetryable: retryable })
+      .catch(() => undefined);
     live.fail(message);
   }
 }

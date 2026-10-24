@@ -42,6 +42,8 @@ export interface Reading {
   /** 생성된 브리핑 + 보고서 */
   script: StoryReport | null;
   error: string | null;
+  /** 그 실패가 다시 눌러서 풀릴 종류인지. 모르면 null */
+  errorRetryable?: boolean | null;
   createdAt: string;
   updatedAt: string;
   generatedAt: string | null;
@@ -122,7 +124,7 @@ export interface Repository {
     patch: Partial<
       Pick<
         Reading,
-        | "status" | "sazu" | "script" | "error" | "generatedAt"
+        | "status" | "sazu" | "script" | "error" | "errorRetryable" | "generatedAt"
         | "notifyPhone" | "notifyConsentAt" | "notifiedKind"
         | "pdfPath" | "pdfToken" | "pdfCreatedAt"
       >

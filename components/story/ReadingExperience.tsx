@@ -56,6 +56,8 @@ export function ReadingExperience(props: ReadingExperienceProps) {
   const coverAsset = getWebtoonAsset(guide.id, "report-cover");
   const [finalReport, setFinalReport] = useState<StoryReport | null>(props.initialReport);
   const [failure, setFailure] = useState<string | null>(props.initialStatus === "failed" ? props.initialError : null);
+  // 다시 눌러서 풀릴 실패인지. 모르면 지금까지처럼 재시도를 보여 준다.
+  const [canRetry, setCanRetry] = useState(true);
   const [polling, setPolling] = useState(false);
   const [view, setView] = useState<"chat" | "report">(props.initialReport ? "report" : "chat");
   const [cursor, setCursor] = useState(0);
@@ -95,12 +97,18 @@ export function ReadingExperience(props: ReadingExperienceProps) {
   const refreshStatus = useCallback(async () => {
     const response = await fetch(`/api/readings/${props.readingId}`, { cache: "no-store" });
     if (!response.ok) return null;
-    const body = (await response.json()) as { status: ReadingStatus; error: string | null; script: unknown };
+    const body = (await response.json()) as {
+      status: ReadingStatus;
+      error: string | null;
+      errorRetryable?: boolean;
+      script: unknown;
+    };
     if (body.status === "ready" && isCompleteReport(body.script)) {
       setFinalReport(body.script);
       setPolling(false);
     } else if (body.status === "failed") {
       setFailure(body.error ?? "풀이를 쓰는 중 문제가 생겼어요.");
+      setCanRetry(body.errorRetryable !== false);
       setPolling(false);
     }
     return body.status;
@@ -321,18 +329,33 @@ export function ReadingExperience(props: ReadingExperienceProps) {
             <Icon name="error" className="text-[18px]" /> 풀이를 마저 쓰지 못했어요
           </span>
           <p className="font-body-sm text-body-sm text-on-surface">{failure}</p>
-          <p className="font-label-sm text-label-sm text-outline">이미 결제한 열람권은 그대로 남아 있어요. 다시 시도해도 추가 결제는 없어요.</p>
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              start();
-            }}
-            disabled={isLoading}
-            className="rounded-xl bg-on-surface py-3 font-label-md text-label-md text-surface disabled:opacity-60"
-          >
-            다시 시도하기
-          </button>
+          <p className="font-label-sm text-label-sm text-outline">
+            {canRetry
+              ? "이미 결제한 열람권은 그대로 남아 있어요. 다시 시도해도 추가 결제는 없어요."
+              : "이미 결제한 열람권은 그대로 남아 있어요. 준비되는 대로 다시 만들어 드릴게요."}
+          </p>
+          {canRetry ? (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                start();
+              }}
+              disabled={isLoading}
+              className="rounded-xl bg-on-surface py-3 font-label-md text-label-md text-surface disabled:opacity-60"
+            >
+              다시 시도하기
+            </button>
+          ) : (
+            <a
+              href="http://pf.kakao.com/_YwTaX/chat"
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-xl bg-surface-container-highest py-3 text-center font-label-md text-label-md text-on-surface"
+            >
+              카카오톡으로 문의하기
+            </a>
+          )}
         </div>
       )}
 
