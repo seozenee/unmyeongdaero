@@ -99,7 +99,8 @@
       "video": "/webtoon/yunseul/report-cover.mp4"
     },
     "cover-talent": {
-      "image": "/webtoon/yunseul/cover-talent.webp"
+      "image": "/webtoon/yunseul/cover-talent.webp",
+      "video": "/webtoon/yunseul/cover-talent.mp4"
     },
     "poster-compatibility": {
       "image": "/webtoon/yunseul/poster-compatibility.webp",
@@ -110,10 +111,12 @@
       "video": "/webtoon/yunseul/poster-parent-child.mp4"
     },
     "poster-yearly": {
-      "image": "/webtoon/yunseul/poster-yearly.webp"
+      "image": "/webtoon/yunseul/poster-yearly.webp",
+      "video": "/webtoon/yunseul/poster-yearly.mp4"
     },
     "poster-child-talent": {
-      "image": "/webtoon/yunseul/poster-child-talent.webp"
+      "image": "/webtoon/yunseul/poster-child-talent.webp",
+      "video": "/webtoon/yunseul/poster-child-talent.mp4"
     }
   },
   "doham": {

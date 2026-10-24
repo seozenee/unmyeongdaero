@@ -6,12 +6,27 @@ import { getWebtoonAsset, type WebtoonAsset } from "@/components/webtoon/assets"
 import type { GuideId } from "@/lib/story/guides";
 
 /** 상품 slug → 포스터 컷 키 */
+// 상품 하나에 포스터 하나. 돌려 쓰지 않는다 — 카드가 나란히 놓이는 자리라
+// 같은 그림이 두 번 나오면 바로 눈에 띈다.
 const POSTER_KEY: Record<string, string> = {
-  "destiny-full": "poster-destiny-full",
   "reunion-deep": "poster-reunion-deep",
-  "child-admission": "poster-child-admission",
+  reunion: "poster-reunion",
+  love: "poster-love",
+  consult: "poster-consult",
   compatibility: "poster-compatibility",
+  "parent-child": "poster-parent-child",
+  yearly: "poster-yearly",
+  "child-talent": "poster-child-talent",
+  "destiny-full": "poster-destiny-full",
+  life: "poster-life",
+  money: "poster-money",
+  career: "poster-career",
   business: "poster-business",
+  health: "poster-health",
+  study: "poster-study",
+  "child-study": "poster-child-study",
+  "child-admission": "poster-child-admission",
+  "child-dream": "poster-child-dream",
 };
 
 /** 포스터가 있으면 그림과(있다면) 영상을, 없으면 null */
