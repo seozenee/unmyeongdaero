@@ -7,7 +7,8 @@ import { ReportDocument, type ReportPanels } from "@/components/report/ReportDoc
 import { GuideBubble, NarrationLine, TypingIndicator } from "@/components/story/Bubbles";
 import { Icon } from "@/components/ui/Icon";
 import { CaptionBox, SfxText } from "@/components/webtoon/ComicText";
-import { getWebtoonAsset, WebtoonMedia } from "@/components/webtoon/WebtoonMedia";
+import { WebtoonMedia } from "@/components/webtoon/WebtoonMedia";
+import { getWebtoonAsset } from "@/components/webtoon/assets";
 import type { ReadingStatus } from "@/lib/db/types";
 import type { BasisFact } from "@/lib/saju/basis";
 import { getGuide, type GuideId } from "@/lib/story/guides";

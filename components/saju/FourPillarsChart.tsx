@@ -1,5 +1,5 @@
 import { cn } from "@/lib/cn";
-import { ELEMENT_LABEL, parseGanji } from "@/lib/saju/ganji";
+import { ELEMENT_LABEL, ELEMENT_TEXT, ELEMENT_TINT, parseGanji } from "@/lib/saju/ganji";
 import type { FourPillarsInput } from "@/lib/saju/modules";
 
 // 명리 관습대로 오른쪽→왼쪽(년·월·일·시)으로 읽히도록 시주를 가장 왼쪽에 둔다.
@@ -62,7 +62,9 @@ function Row({ rowKey, label, pillars }: { rowKey: "stem" | "branch"; label: str
           <div
             key={column.key}
             className={cn(
+              // 오행 색을 아주 옅게 깔아, 여덟 글자의 기운이 어디로 쏠렸는지 한눈에 보이게 한다
               "relative flex aspect-[3/4] flex-col items-center justify-center gap-0.5 rounded-lg bg-surface-container-highest",
+              ELEMENT_TINT[char.element],
               isDayMaster && "ring-1 ring-primary/70",
             )}
           >
@@ -71,10 +73,12 @@ function Row({ rowKey, label, pillars }: { rowKey: "stem" | "branch"; label: str
                 일간
               </span>
             )}
-            <span className="font-headline-lg text-headline-lg leading-none text-on-surface">{char.han}</span>
+            <span className={cn("font-headline-lg text-headline-lg leading-none", ELEMENT_TEXT[char.element])}>
+              {char.han}
+            </span>
             <span className="font-label-sm text-label-sm text-on-surface-variant">
               {char.ko}
-              <span className="text-tertiary"> · {ELEMENT_LABEL[char.element].ko}</span>
+              <span className={ELEMENT_TEXT[char.element]}> · {ELEMENT_LABEL[char.element].ko}</span>
             </span>
           </div>
         );

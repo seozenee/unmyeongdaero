@@ -1,5 +1,5 @@
 // 안내자 아이콘. 생성된 정면 초상(intro-5)의 얼굴 부분을 원형으로 잘라 쓴다.
-import { getWebtoonAsset } from "@/components/webtoon/WebtoonMedia";
+import { getWebtoonAsset } from "@/components/webtoon/assets";
 import { cn } from "@/lib/cn";
 import type { Guide } from "@/lib/story/guides";
 

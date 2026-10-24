@@ -14,6 +14,30 @@ export const ELEMENT_LABEL: Record<FiveElement, { ko: string; han: string }> = {
   water: { ko: "수", han: "水" },
 };
 
+/**
+ * 화면에서 오행에 입히는 색.
+ *
+ * PDF(lib/pdf/theme.ts)가 쓰는 것과 같은 짝을, 어두운 바탕용으로 바꿔 든다.
+ * 종이에서는 -fixed-variant 계열(진한 쪽), 화면에서는 그 짝이 되는 밝은 쪽이다.
+ * 새 색을 만들지 않고 토큰 안에서 고른다.
+ */
+export const ELEMENT_TEXT: Record<FiveElement, string> = {
+  wood: "text-tertiary",
+  fire: "text-secondary",
+  earth: "text-primary",
+  metal: "text-outline",
+  water: "text-on-surface-variant",
+};
+
+/** 같은 짝의 아주 옅은 바탕. 글자를 덮지 않을 만큼만 깐다 */
+export const ELEMENT_TINT: Record<FiveElement, string> = {
+  wood: "bg-tertiary/10",
+  fire: "bg-secondary/10",
+  earth: "bg-primary/10",
+  metal: "bg-outline/10",
+  water: "bg-on-surface-variant/10",
+};
+
 interface GanjiChar {
   han: string;
   ko: string;

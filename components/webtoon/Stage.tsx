@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { SfxText } from "@/components/webtoon/ComicText";
-import { getWebtoonAsset, WebtoonMedia, type WebtoonAsset } from "@/components/webtoon/WebtoonMedia";
+import { WebtoonMedia } from "@/components/webtoon/WebtoonMedia";
+import { getWebtoonAsset, type WebtoonAsset } from "@/components/webtoon/assets";
 import { cn } from "@/lib/cn";
 import type { Guide } from "@/lib/story/guides";
 import type { Camera, FigurePose, Place } from "@/lib/story/webtoon";

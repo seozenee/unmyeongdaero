@@ -12,20 +12,7 @@
 // poster 에 같은 컷의 이미지를 넣어, 영상이 첫 프레임을 받기 전에도 화면이 비지 않게 한다.
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
-import type { GuideId } from "@/lib/story/guides";
-import manifest from "@/lib/story/webtoon-manifest.json";
-
-export interface WebtoonAsset {
-  image: string;
-  video?: string;
-}
-
-const MANIFEST = manifest as Record<string, Record<string, WebtoonAsset> | undefined>;
-
-export function getWebtoonAsset(guide: GuideId, key: string | undefined): WebtoonAsset | null {
-  if (!key) return null;
-  return MANIFEST[guide]?.[key] ?? null;
-}
+import type { WebtoonAsset } from "./assets";
 
 // 컷마다 다른 결로 움직이도록 이미지 경로에서 결정적으로 고른다 (영상이 없는 컷에만 쓴다)
 const MOTIONS = [
