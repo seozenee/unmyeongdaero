@@ -5,6 +5,7 @@ import { FiveElementsRadar } from "@/components/saju/FiveElementsRadar";
 import { FourPillarsChart } from "@/components/saju/FourPillarsChart";
 import { YearFlowTable } from "@/components/saju/YearFlowTable";
 import { GuideAvatar } from "@/components/story/GuideAvatar";
+import { GlossaryText } from "@/components/report/GlossaryText";
 import { Reveal } from "@/components/report/Reveal";
 import { Icon } from "@/components/ui/Icon";
 import { ReadingProgress } from "./ReadingProgress";
@@ -179,7 +180,11 @@ export function ReportDocument(props: ReportDocumentProps) {
               <ul className="flex flex-col gap-space-sm">
                 {section.evidence.map((item) => (
                   <li key={item.label} className="flex flex-col gap-0.5">
-                    <span className="font-label-md text-label-md text-on-surface">{item.label}</span>
+                    <GlossaryText
+                      text={item.label}
+                      glossary={props.glossary}
+                      className="font-label-md text-label-md text-on-surface"
+                    />
                     <span className="font-body-sm text-body-sm text-on-surface-variant">{item.detail}</span>
                   </li>
                 ))}

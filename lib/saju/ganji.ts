@@ -29,6 +29,15 @@ export const ELEMENT_TEXT: Record<FiveElement, string> = {
   water: "text-on-surface-variant",
 };
 
+/** 막대·칸을 통째로 칠할 때 쓰는 진한 쪽 */
+export const ELEMENT_FILL: Record<FiveElement, string> = {
+  wood: "bg-tertiary",
+  fire: "bg-secondary",
+  earth: "bg-primary",
+  metal: "bg-outline",
+  water: "bg-on-surface-variant",
+};
+
 /** 같은 짝의 아주 옅은 바탕. 글자를 덮지 않을 만큼만 깐다 */
 export const ELEMENT_TINT: Record<FiveElement, string> = {
   wood: "bg-tertiary/10",

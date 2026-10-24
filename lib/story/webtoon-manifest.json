@@ -182,19 +182,24 @@
       "video": "/webtoon/doham/poster-business.mp4"
     },
     "poster-life": {
-      "image": "/webtoon/doham/poster-life.webp"
+      "image": "/webtoon/doham/poster-life.webp",
+      "video": "/webtoon/doham/poster-life.mp4"
     },
     "poster-money": {
-      "image": "/webtoon/doham/poster-money.webp"
+      "image": "/webtoon/doham/poster-money.webp",
+      "video": "/webtoon/doham/poster-money.mp4"
     },
     "poster-career": {
-      "image": "/webtoon/doham/poster-career.webp"
+      "image": "/webtoon/doham/poster-career.webp",
+      "video": "/webtoon/doham/poster-career.mp4"
     },
     "poster-health": {
-      "image": "/webtoon/doham/poster-health.webp"
+      "image": "/webtoon/doham/poster-health.webp",
+      "video": "/webtoon/doham/poster-health.mp4"
     },
     "poster-study": {
-      "image": "/webtoon/doham/poster-study.webp"
+      "image": "/webtoon/doham/poster-study.webp",
+      "video": "/webtoon/doham/poster-study.mp4"
     },
     "poster-child-study": {
       "image": "/webtoon/doham/poster-child-study.webp"

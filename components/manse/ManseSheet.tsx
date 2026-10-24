@@ -17,6 +17,10 @@ export interface ManseFact {
 export interface ManseSheetProps {
   name: string;
   birthLine: string;
+  /** 손님이 적어 넣은 값 그대로. 한자가 아니라 이쪽이 실제로 확인할 수 있는 것이다 */
+  entered?: ReadonlyArray<{ label: string; value: string }>;
+  /** 입력을 고치러 돌아가는 곳 */
+  editHref?: string;
   pillars: FourPillarsInput | null;
   counts: ElementCounts | null;
   decade: { items: DecadeItem[]; currentIndex: number; direction: string | null } | null;
@@ -34,7 +38,7 @@ export interface ManseSheetProps {
  * 한 덩어리씩 차례로 올라오게 한다. 여덟 글자가 한꺼번에 튀어나오면 어디를 볼지 모르지만,
  * 순서대로 들어오면 읽는 차례가 생긴다.
  */
-export function ManseSheet({ name, birthLine, pillars, counts, decade, facts, basis }: ManseSheetProps) {
+export function ManseSheet({ name, birthLine, entered, editHref, pillars, counts, decade, facts, basis }: ManseSheetProps) {
   return (
     <div className="flex flex-col gap-space-lg">
       <Reveal>
@@ -47,9 +51,46 @@ export function ManseSheet({ name, birthLine, pillars, counts, decade, facts, ba
         </header>
       </Reveal>
 
+      {/*
+        확인하라고 띄운 화면인데, 한자 여덟 글자는 처음 보는 사람이 맞는지 틀린지 알 수 없다.
+        정작 확인할 수 있는 건 자기가 적어 넣은 값이다. 그걸 맨 위에 둔다.
+      */}
+      {entered && entered.length > 0 && (
+        <Reveal delay={45}>
+          <section className="flex flex-col gap-space-sm rounded-xl border border-primary/30 bg-primary/5 p-space-lg">
+            <div className="flex items-start gap-space-sm">
+              <Icon name="check_circle" className="mt-0.5 shrink-0 text-[20px] text-primary" />
+              <div className="flex flex-col gap-0.5">
+                <h2 className="font-headline-sm text-headline-sm text-on-surface">이것만 확인해 주세요</h2>
+                <p className="font-body-sm text-body-sm text-on-surface-variant">
+                  아래 내용으로 계산했어요. 한 글자라도 다르면 풀이가 통째로 달라져요.
+                </p>
+              </div>
+            </div>
+            <dl className="flex flex-col gap-1 rounded-lg bg-surface-container-lowest p-space-md">
+              {entered.map((row) => (
+                <div key={row.label} className="flex gap-space-sm font-body-md text-body-md">
+                  <dt className="w-20 shrink-0 text-outline">{row.label}</dt>
+                  <dd className="text-on-surface">{row.value}</dd>
+                </div>
+              ))}
+            </dl>
+            {editHref && (
+              <a
+                href={editHref}
+                className="flex items-center justify-center gap-1.5 rounded-lg bg-surface-container-highest py-2.5 font-label-md text-label-md text-on-surface"
+              >
+                <Icon name="edit" className="text-[16px]" />
+                고치러 가기
+              </a>
+            )}
+          </section>
+        </Reveal>
+      )}
+
       {pillars && (
         <Reveal delay={90}>
-          <Block title="원국" caption="태어난 순간을 네 기둥으로 옮긴 것">
+          <Block title="원국" caption="태어난 순간을 네 기둥으로 옮긴 것 — 읽는 법은 풀이에서">
             <FourPillarsChart pillars={pillars} />
           </Block>
         </Reveal>
@@ -57,7 +98,7 @@ export function ManseSheet({ name, birthLine, pillars, counts, decade, facts, ba
 
       {counts && (
         <Reveal delay={180}>
-          <Block title="오행" caption="다섯 기운이 어떻게 나뉘어 있는지">
+          <Block title="오행" caption="다섯 기운이 어떻게 나뉘어 있는지 — 많고 적음에 좋고 나쁨은 없어요">
             <FiveElementsRadar counts={counts} />
           </Block>
         </Reveal>

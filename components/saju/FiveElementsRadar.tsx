@@ -3,7 +3,7 @@
 import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer } from "recharts";
 import tokens from "@/design/tokens.json";
 import { cn } from "@/lib/cn";
-import { ELEMENT_LABEL, FIVE_ELEMENTS } from "@/lib/saju/ganji";
+import { ELEMENT_FILL, ELEMENT_LABEL, ELEMENT_TEXT, ELEMENT_TINT, FIVE_ELEMENTS } from "@/lib/saju/ganji";
 import type { ElementCounts } from "@/lib/saju/modules";
 
 const { colors } = tokens;
@@ -25,6 +25,22 @@ export function FiveElementsRadar({ counts, className }: { counts: ElementCounts
         <h3 className="font-headline-md text-headline-md text-on-surface">오행 분포</h3>
         <span className="font-label-sm text-label-sm text-outline">원국 {total}자 기준</span>
       </div>
+
+      {/*
+        레이더는 모양을 보여 주지만 "얼마나 치우쳤는지"는 띠가 더 빠르다.
+        다섯 기운을 제 색으로 이어 붙여, 한 줄로 비율을 보여 준다.
+      */}
+      {total > 0 && (
+        <div className="mt-space-sm flex h-3 w-full overflow-hidden rounded-full bg-surface-container-lowest" aria-hidden>
+          {FIVE_ELEMENTS.filter((element) => counts[element] > 0).map((element) => (
+            <div
+              key={element}
+              className={cn("h-full", ELEMENT_FILL[element])}
+              style={{ width: `${(counts[element] / total) * 100}%` }}
+            />
+          ))}
+        </div>
+      )}
 
       <div className="mt-space-sm h-60 w-full" aria-hidden>
         <ResponsiveContainer width="100%" height="100%">
@@ -54,18 +70,28 @@ export function FiveElementsRadar({ counts, className }: { counts: ElementCounts
           <li
             key={item.element}
             className={cn(
-              "flex flex-col items-center rounded-lg py-space-sm",
-              dominant.includes(item.element) ? "bg-tertiary/10" : "bg-surface-container-high",
+              "flex flex-col items-center gap-0.5 rounded-lg py-space-sm transition-colors",
+              item.count === 0 ? "bg-surface-container-high" : ELEMENT_TINT[item.element],
+              dominant.includes(item.element) && "ring-1 ring-inset ring-on-surface/15",
             )}
           >
-            <span className="font-label-sm text-label-sm text-on-surface-variant">{item.axisLabel}</span>
+            <span className={cn("font-label-sm text-label-sm", item.count === 0 ? "text-outline" : ELEMENT_TEXT[item.element])}>
+              {item.axisLabel}
+            </span>
             <span
               className={cn(
                 "font-price-display text-price-display",
-                item.count === 0 ? "text-outline" : dominant.includes(item.element) ? "text-tertiary" : "text-on-surface",
+                item.count === 0 ? "text-outline" : ELEMENT_TEXT[item.element],
               )}
             >
               {item.count}
+            </span>
+            {/* 작은 막대 하나로 칸끼리의 높낮이를 바로 견준다 */}
+            <span className="mt-0.5 h-1 w-6 overflow-hidden rounded-full bg-on-surface/10">
+              <span
+                className={cn("block h-full rounded-full", item.count === 0 ? "" : ELEMENT_FILL[item.element])}
+                style={{ width: `${max > 0 ? (item.count / max) * 100 : 0}%` }}
+              />
             </span>
           </li>
         ))}

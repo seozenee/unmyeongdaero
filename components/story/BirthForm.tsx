@@ -1,11 +1,10 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { cn } from "@/lib/cn";
 import type { BirthProfile } from "@/lib/db/types";
 import birthCities from "@/lib/saju/birth-cities.json";
-import { SAZU_SAMPLE_PROFILES } from "@/lib/sazu/sample-profiles";
 
 interface BirthFormProps {
   title: string;
@@ -15,15 +14,28 @@ interface BirthFormProps {
   onSkip?: () => void;
 }
 
-const CURRENT_YEAR = new Date().getFullYear();
-const YEARS = Array.from({ length: CURRENT_YEAR - 1929 }, (_, index) => CURRENT_YEAR - index);
-const MONTHS = Array.from({ length: 12 }, (_, index) => index + 1);
-const DAYS = Array.from({ length: 31 }, (_, index) => index + 1);
-const HOURS = Array.from({ length: 24 }, (_, index) => index);
-const MINUTES = Array.from({ length: 60 }, (_, index) => index);
-
 const FIELD =
   "w-full rounded-lg border border-outline-variant/60 bg-surface-container-lowest px-space-sm py-2.5 font-body-md text-body-md text-on-surface outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/60";
+
+/** 그 해 그 달이 며칠까지 있는지 */
+const daysInMonth = (year: number, month: number) => new Date(year, month, 0).getDate();
+
+/** "19950312" → { year, month, day }. 달력에 없는 날이면 null */
+function parseBirthDate(digits: string) {
+  if (digits.length !== 8) return null;
+  const year = Number(digits.slice(0, 4));
+  const month = Number(digits.slice(4, 6));
+  const day = Number(digits.slice(6, 8));
+  const thisYear = new Date().getFullYear();
+  if (year < 1900 || year > thisYear) return null;
+  if (month < 1 || month > 12) return null;
+  // 음력은 윤달 때문에 양력 달력보다 하루 모자랄 수 있어 30일까지는 받아 준다
+  if (day < 1 || day > Math.max(daysInMonth(year, month), 30)) return null;
+  return { year, month, day };
+}
+
+const formatDigits = (digits: string) =>
+  [digits.slice(0, 4), digits.slice(4, 6), digits.slice(6, 8)].filter(Boolean).join(".");
 
 function Segmented<T extends string>({
   value,
@@ -46,7 +58,7 @@ function Segmented<T extends string>({
           aria-checked={value === option.value}
           onClick={() => onChange(option.value)}
           className={cn(
-            "rounded-md py-2 font-label-md text-label-md transition-colors",
+            "rounded-md py-2.5 font-label-md text-label-md transition-colors",
             value === option.value ? "bg-surface-container-highest text-on-surface" : "text-on-surface-variant",
           )}
         >
@@ -57,47 +69,78 @@ function Segmented<T extends string>({
   );
 }
 
+/**
+ * 생년월일시 입력.
+ *
+ * 전에는 드롭다운이 여섯 개였다 — 연·월·일·시·분·도시. 아흔여섯 해와 예순 개의 분을
+ * 폰에서 굴려 고르게 하는 건 결제 직전에 놓기에 가장 나쁜 모양이다. 2월 31일도 고를 수
+ * 있었고, 그 틀림은 결제가 끝난 뒤에야 드러났다.
+ *
+ * 세 가지를 바꿨다.
+ *  · 한 번에 하나씩 묻는다. 여섯 칸이 한꺼번에 깔리면 손이 멈춘다.
+ *  · 날짜는 숫자로 바로 친다. 아는 사람은 여덟 자를 치는 게 가장 빠르다.
+ *  · 달력에 없는 날은 그 자리에서 막는다. 결제 뒤에 알려 주는 건 늦다.
+ */
 export function BirthForm({ title, submitLabel = "다 적었어요", initial, onSubmit, onSkip }: BirthFormProps) {
   const id = useId();
+  const [step, setStep] = useState(0);
+
   const [name, setName] = useState(initial?.name ?? "");
-  const [year, setYear] = useState(initial?.birthYear ?? 1995);
-  const [month, setMonth] = useState(initial?.birthMonth ?? 1);
-  const [day, setDay] = useState(initial?.birthDay ?? 1);
+  const [digits, setDigits] = useState(
+    initial?.birthYear
+      ? `${initial.birthYear}${String(initial.birthMonth ?? 1).padStart(2, "0")}${String(initial.birthDay ?? 1).padStart(2, "0")}`
+      : "",
+  );
   const [calendar, setCalendar] = useState<"solar" | "lunar">(initial?.isLunar ? "lunar" : "solar");
   const [leap, setLeap] = useState(initial?.isLeapMonth ?? false);
-  const [hour, setHour] = useState<number | null>(initial?.birthHour === undefined ? 12 : initial.birthHour);
-  const [minute, setMinute] = useState(initial?.birthMinute ?? 0);
+  const [knowsTime, setKnowsTime] = useState(initial?.birthHour !== null);
+  const [time, setTime] = useState(
+    initial?.birthHour != null
+      ? `${String(initial.birthHour).padStart(2, "0")}:${String(initial.birthMinute ?? 0).padStart(2, "0")}`
+      : "12:00",
+  );
   const [gender, setGender] = useState<"female" | "male">(initial?.isFemale === false ? "male" : "female");
   const [city, setCity] = useState(initial?.birthCity ?? "서울");
   const [error, setError] = useState<string | null>(null);
 
-  const fillSample = (profile: BirthProfile) => {
-    setName(profile.name);
-    setYear(profile.birthYear);
-    setMonth(profile.birthMonth);
-    setDay(profile.birthDay);
-    setCalendar(profile.isLunar ? "lunar" : "solar");
-    setLeap(false);
-    setHour(profile.birthHour);
-    setMinute(profile.birthMinute ?? 0);
-    setGender(profile.isFemale ? "female" : "male");
-    setCity(profile.birthCity);
-    setError(null);
+  const date = useMemo(() => parseBirthDate(digits), [digits]);
+  const dateTyped = digits.length === 8;
+
+  const STEPS = [
+    { key: "name", label: "이름" },
+    { key: "birth", label: "생년월일" },
+    { key: "rest", label: "시간·성별" },
+  ] as const;
+
+  const next = () => {
+    if (step === 0) {
+      if (!name.trim()) return setError("이름(또는 불리고 싶은 호칭)을 적어 주세요.");
+      setError(null);
+      return setStep(1);
+    }
+    if (step === 1) {
+      if (!dateTyped) return setError("생년월일 여덟 자리를 적어 주세요. (예: 19950312)");
+      if (!date) return setError("달력에 없는 날이에요. 다시 확인해 주세요.");
+      setError(null);
+      return setStep(2);
+    }
   };
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!name.trim()) {
-      setError("이름(또는 불리고 싶은 호칭)을 적어 주세요.");
+    if (step < 2) return next();
+    if (!name.trim() || !date) {
+      setError("빠진 곳이 있어요. 앞으로 돌아가 확인해 주세요.");
       return;
     }
+    const [hourText, minuteText] = time.split(":");
     onSubmit({
       name: name.trim(),
-      birthYear: year,
-      birthMonth: month,
-      birthDay: day,
-      birthHour: hour,
-      birthMinute: hour === null ? undefined : minute,
+      birthYear: date.year,
+      birthMonth: date.month,
+      birthDay: date.day,
+      birthHour: knowsTime ? Number(hourText) : null,
+      birthMinute: knowsTime ? Number(minuteText) : undefined,
       isFemale: gender === "female",
       isLunar: calendar === "lunar",
       isLeapMonth: calendar === "lunar" ? leap : undefined,
@@ -112,142 +155,195 @@ export function BirthForm({ title, submitLabel = "다 적었어요", initial, on
     >
       <div className="flex items-center justify-between">
         <h3 className="font-label-md text-label-md text-on-surface">{title}</h3>
-        <Icon name="edit_note" className="text-[20px] text-outline" />
+        {/* 어디쯤 왔는지 — 세 칸이면 끝이 보인다 */}
+        <span className="flex items-center gap-1" aria-label={`${step + 1} / ${STEPS.length} 단계`}>
+          {STEPS.map((item, index) => (
+            <span
+              key={item.key}
+              className={cn(
+                "h-1.5 rounded-full transition-all duration-300",
+                index === step ? "w-5 bg-on-surface" : index < step ? "w-1.5 bg-tertiary" : "w-1.5 bg-outline-variant",
+              )}
+            />
+          ))}
+        </span>
       </div>
 
-      
-      <label className="flex flex-col gap-1" htmlFor={`${id}-name`}>
-        <span className="font-label-sm text-label-sm text-on-surface-variant">이름</span>
-        <input
-          id={`${id}-name`}
-          className={FIELD}
-          value={name}
-          maxLength={20}
-          placeholder="이름 또는 불리고 싶은 호칭"
-          onChange={(event) => setName(event.target.value)}
-        />
-      </label>
-
-      <div className="flex flex-col gap-1">
-        <span className="font-label-sm text-label-sm text-on-surface-variant">생년월일</span>
-        <Segmented
-          label="양력 음력"
-          value={calendar}
-          onChange={setCalendar}
-          options={[
-            { value: "solar", label: "양력" },
-            { value: "lunar", label: "음력" },
-          ]}
-        />
-        <div className="mt-1 grid grid-cols-[1.4fr_1fr_1fr] gap-space-xs">
-          <select aria-label="태어난 해" className={FIELD} value={year} onChange={(e) => setYear(Number(e.target.value))}>
-            {YEARS.map((value) => (
-              <option key={value} value={value}>
-                {value}년
-              </option>
-            ))}
-          </select>
-          <select aria-label="태어난 달" className={FIELD} value={month} onChange={(e) => setMonth(Number(e.target.value))}>
-            {MONTHS.map((value) => (
-              <option key={value} value={value}>
-                {value}월
-              </option>
-            ))}
-          </select>
-          <select aria-label="태어난 날" className={FIELD} value={day} onChange={(e) => setDay(Number(e.target.value))}>
-            {DAYS.map((value) => (
-              <option key={value} value={value}>
-                {value}일
-              </option>
-            ))}
-          </select>
-        </div>
-        {calendar === "lunar" && (
-          <label className="mt-1 flex items-center gap-space-xs font-body-sm text-body-sm text-on-surface-variant">
-            <input type="checkbox" checked={leap} onChange={(e) => setLeap(e.target.checked)} className="accent-primary" />
-            윤달에 태어났어요
-          </label>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <span className="font-label-sm text-label-sm text-on-surface-variant">태어난 시간</span>
-        <div className="grid grid-cols-2 gap-space-xs">
-          <select
-            aria-label="태어난 시"
+      {step === 0 && (
+        <label className="flex flex-col gap-1" htmlFor={`${id}-name`}>
+          <span className="font-label-sm text-label-sm text-on-surface-variant">어떻게 불러 드릴까요</span>
+          <input
+            id={`${id}-name`}
             className={FIELD}
-            value={hour ?? "unknown"}
-            onChange={(e) => setHour(e.target.value === "unknown" ? null : Number(e.target.value))}
-          >
-            <option value="unknown">모름</option>
-            {HOURS.map((value) => (
-              <option key={value} value={value}>
-                {value}시
-              </option>
-            ))}
-          </select>
-          <select
-            aria-label="태어난 분"
-            className={FIELD}
-            value={minute}
-            disabled={hour === null}
-            onChange={(e) => setMinute(Number(e.target.value))}
-          >
-            {MINUTES.map((value) => (
-              <option key={value} value={value}>
-                {value}분
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+            value={name}
+            maxLength={20}
+            autoFocus
+            enterKeyHint="next"
+            placeholder="이름 또는 불리고 싶은 호칭"
+            onChange={(event) => {
+              setName(event.target.value);
+              setError(null);
+            }}
+          />
+          <span className="font-body-sm text-body-sm text-outline">본명이 아니어도 괜찮아요. 풀이에서 부를 이름이에요.</span>
+        </label>
+      )}
 
-      <div className="grid grid-cols-2 gap-space-sm">
-        <div className="flex flex-col gap-1">
-          <span className="font-label-sm text-label-sm text-on-surface-variant">성별</span>
+      {step === 1 && (
+        <div className="flex flex-col gap-space-sm">
           <Segmented
-            label="성별"
-            value={gender}
-            onChange={setGender}
+            label="양력 음력"
+            value={calendar}
+            onChange={setCalendar}
             options={[
-              { value: "female", label: "여성" },
-              { value: "male", label: "남성" },
+              { value: "solar", label: "양력" },
+              { value: "lunar", label: "음력" },
             ]}
           />
+          <label className="flex flex-col gap-1" htmlFor={`${id}-date`}>
+            <span className="font-label-sm text-label-sm text-on-surface-variant">생년월일 여덟 자리</span>
+            <input
+              id={`${id}-date`}
+              className={cn(FIELD, "text-center font-headline-sm text-headline-sm tracking-[0.2em]")}
+              value={formatDigits(digits)}
+              inputMode="numeric"
+              autoFocus
+              enterKeyHint="next"
+              placeholder="1995.03.12"
+              aria-describedby={`${id}-date-help`}
+              onChange={(event) => {
+                setDigits(event.target.value.replace(/\D/g, "").slice(0, 8));
+                setError(null);
+              }}
+            />
+            <span id={`${id}-date-help`} className="font-body-sm text-body-sm text-outline">
+              {dateTyped && date
+                ? `${date.year}년 ${date.month}월 ${date.day}일 (${calendar === "lunar" ? "음력" : "양력"})`
+                : "숫자만 눌러 주세요. 1995년 3월 12일이면 19950312"}
+            </span>
+          </label>
+          {calendar === "lunar" && (
+            <label className="flex items-center gap-space-xs font-body-sm text-body-sm text-on-surface-variant">
+              <input type="checkbox" checked={leap} onChange={(e) => setLeap(e.target.checked)} className="accent-primary" />
+              윤달에 태어났어요
+            </label>
+          )}
         </div>
-        <label className="flex flex-col gap-1">
-          <span className="font-label-sm text-label-sm text-on-surface-variant">태어난 곳</span>
-          <select aria-label="태어난 곳" className={FIELD} value={city} onChange={(e) => setCity(e.target.value)}>
-            {birthCities.map((group) => (
-              <optgroup key={group.region} label={group.region}>
-                {group.cities.map((cityName) => (
-                  <option key={cityName} value={cityName}>
-                    {cityName}
-                  </option>
+      )}
+
+      {step === 2 && (
+        <div className="flex flex-col gap-space-md">
+          <div className="flex flex-col gap-1">
+            <span className="font-label-sm text-label-sm text-on-surface-variant">태어난 시간</span>
+            <div className="flex gap-space-xs">
+              <input
+                type="time"
+                aria-label="태어난 시각"
+                className={cn(FIELD, "flex-1", !knowsTime && "opacity-40")}
+                value={time}
+                disabled={!knowsTime}
+                onChange={(event) => setTime(event.target.value)}
+              />
+              <button
+                type="button"
+                aria-pressed={!knowsTime}
+                onClick={() => setKnowsTime((value) => !value)}
+                className={cn(
+                  "shrink-0 rounded-lg px-space-md font-label-md text-label-md transition-colors",
+                  knowsTime ? "bg-surface-container-lowest text-on-surface-variant" : "bg-surface-container-highest text-on-surface",
+                )}
+              >
+                몰라요
+              </button>
+            </div>
+            <span className="font-body-sm text-body-sm text-outline">
+              {knowsTime
+                ? "태어난 지역의 실제 태양 시각으로 바로잡아 계산해요."
+                : "시간을 몰라도 괜찮아요. 시주를 뺀 세 기둥으로 읽어 드려요."}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-space-sm">
+            <div className="flex flex-col gap-1">
+              <span className="font-label-sm text-label-sm text-on-surface-variant">성별</span>
+              <Segmented
+                label="성별"
+                value={gender}
+                onChange={setGender}
+                options={[
+                  { value: "female", label: "여성" },
+                  { value: "male", label: "남성" },
+                ]}
+              />
+            </div>
+            <label className="flex flex-col gap-1">
+              <span className="font-label-sm text-label-sm text-on-surface-variant">태어난 곳</span>
+              <select aria-label="태어난 곳" className={FIELD} value={city} onChange={(e) => setCity(e.target.value)}>
+                {birthCities.map((group) => (
+                  <optgroup key={group.region} label={group.region}>
+                    {group.cities.map((cityName) => (
+                      <option key={cityName} value={cityName}>
+                        {cityName}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
-              </optgroup>
-            ))}
-          </select>
-        </label>
-      </div>
+              </select>
+            </label>
+          </div>
+
+          {/* 적은 것을 한 번에 되짚어 준다 — 고치려면 지금이 마지막이다 */}
+          <dl className="flex flex-col gap-1 rounded-lg bg-surface-container-lowest p-space-md font-body-sm text-body-sm">
+            <div className="flex gap-space-sm">
+              <dt className="w-16 shrink-0 text-outline">이름</dt>
+              <dd className="text-on-surface">{name || "—"}</dd>
+            </div>
+            <div className="flex gap-space-sm">
+              <dt className="w-16 shrink-0 text-outline">생년월일</dt>
+              <dd className="text-on-surface">
+                {date ? `${date.year}.${date.month}.${date.day}` : "—"}
+                <span className="ml-1 text-outline">{calendar === "lunar" ? `음력${leap ? " 윤달" : ""}` : "양력"}</span>
+              </dd>
+            </div>
+            <div className="flex gap-space-sm">
+              <dt className="w-16 shrink-0 text-outline">시간</dt>
+              <dd className="text-on-surface">{knowsTime ? time : "모름"}</dd>
+            </div>
+          </dl>
+        </div>
+      )}
 
       {error && <p className="font-body-sm text-body-sm text-error">{error}</p>}
 
       <div className="flex gap-space-sm">
-        {onSkip && (
+        {step > 0 ? (
           <button
             type="button"
-            onClick={onSkip}
-            className="flex-1 rounded-xl bg-surface-container-highest py-3 font-label-md text-label-md text-on-surface-variant"
+            onClick={() => {
+              setError(null);
+              setStep((value) => value - 1);
+            }}
+            className="rounded-xl bg-surface-container-highest px-space-lg py-3 font-label-md text-label-md text-on-surface-variant"
           >
-            건너뛰기
+            <Icon name="arrow_back" className="text-[18px]" />
+            <span className="sr-only">이전</span>
           </button>
+        ) : (
+          onSkip && (
+            <button
+              type="button"
+              onClick={onSkip}
+              className="flex-1 rounded-xl bg-surface-container-highest py-3 font-label-md text-label-md text-on-surface-variant"
+            >
+              건너뛰기
+            </button>
+          )
         )}
         <button
           type="submit"
           className="flex-[2] rounded-xl bg-on-surface py-3 font-label-md text-label-md text-surface transition-transform active:scale-[0.98]"
         >
-          {submitLabel}
+          {step < 2 ? "다음" : submitLabel}
         </button>
       </div>
     </form>

@@ -129,6 +129,25 @@ export default async function MansePage({
       <ManseSheet
         name={reading.subject.name}
         birthLine={`${describeBirth(reading.subject)} · 만 ${age}세`}
+        entered={[
+          { label: "이름", value: reading.subject.name },
+          {
+            label: "생년월일",
+            value: `${reading.subject.birthYear}년 ${reading.subject.birthMonth}월 ${reading.subject.birthDay}일 (${
+              reading.subject.isLunar ? `음력${reading.subject.isLeapMonth ? " 윤달" : ""}` : "양력"
+            })`,
+          },
+          {
+            label: "태어난 시각",
+            value:
+              reading.subject.birthHour === null
+                ? "모름 — 시주를 뺀 세 기둥으로 읽어요"
+                : `${String(reading.subject.birthHour).padStart(2, "0")}:${String(reading.subject.birthMinute ?? 0).padStart(2, "0")}`,
+          },
+          { label: "성별", value: reading.subject.isFemale ? "여성" : "남성" },
+          { label: "태어난 곳", value: reading.subject.birthCity },
+        ]}
+        editHref={`/reports/${report.slug}`}
         pillars={pillars}
         counts={counts}
         decade={
