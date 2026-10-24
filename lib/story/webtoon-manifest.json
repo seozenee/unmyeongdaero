@@ -161,13 +161,16 @@
       "video": "/webtoon/doham/panel-unfold.mp4"
     },
     "cover-admission": {
-      "image": "/webtoon/doham/cover-admission.webp"
+      "image": "/webtoon/doham/cover-admission.webp",
+      "video": "/webtoon/doham/cover-admission.mp4"
     },
     "cover-dream": {
-      "image": "/webtoon/doham/cover-dream.webp"
+      "image": "/webtoon/doham/cover-dream.webp",
+      "video": "/webtoon/doham/cover-dream.mp4"
     },
     "cover-business": {
-      "image": "/webtoon/doham/cover-business.webp"
+      "image": "/webtoon/doham/cover-business.webp",
+      "video": "/webtoon/doham/cover-business.mp4"
     },
     "poster-destiny-full": {
       "image": "/webtoon/doham/poster-destiny-full.webp",
@@ -202,10 +205,12 @@
       "video": "/webtoon/doham/poster-study.mp4"
     },
     "poster-child-study": {
-      "image": "/webtoon/doham/poster-child-study.webp"
+      "image": "/webtoon/doham/poster-child-study.webp",
+      "video": "/webtoon/doham/poster-child-study.mp4"
     },
     "poster-child-dream": {
-      "image": "/webtoon/doham/poster-child-dream.webp"
+      "image": "/webtoon/doham/poster-child-dream.webp",
+      "video": "/webtoon/doham/poster-child-dream.mp4"
     }
   }
 }

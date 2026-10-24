@@ -106,7 +106,16 @@ function SceneVideo({ src, poster, active }: { src: string; poster: string; acti
       return;
     }
     // 자동재생이 막히는 환경(저전력 모드 등)에서는 poster 가 그대로 남는다 — 화면이 비지는 않는다
-    void video.play().catch(() => undefined);
+    const play = () => void video.play().catch(() => undefined);
+    play();
+
+    // 탭을 숨기면 브라우저가 재생을 멈춰 세운다. 돌아왔을 때 아무도 다시 틀어 주지 않으면
+    // 첫 화면이 정지 사진으로 남는다 — 앱을 잠깐 나갔다 온 사람에게는 그게 전부다.
+    const onVisible = () => {
+      if (!document.hidden) play();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, [src, reduced, active]);
 
   return (
