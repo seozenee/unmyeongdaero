@@ -9,7 +9,8 @@ import { getCurrentUser, loginUrl } from "@/lib/auth/session";
 import { getRepository } from "@/lib/db";
 import { modes } from "@/lib/env";
 import { formatKRW } from "@/lib/format";
-import { CONSULT_TURN_LIMIT, getReport } from "@/lib/reports/catalog";
+import { CONSULT_TURN_LIMIT } from "@/lib/reports/catalog";
+import { loadReport } from "@/lib/reports/store";
 import { describeBirth } from "@/lib/story/format";
 import { getGuide } from "@/lib/story/guides";
 
@@ -23,7 +24,7 @@ export default async function CheckoutPage({
   params: { slug: string };
   searchParams: { reading?: string; error?: string };
 }) {
-  const report = getReport(params.slug);
+  const report = await loadReport(params.slug);
   if (!report) notFound();
 
   const self = `/checkout/${report.slug}${searchParams.reading ? `?reading=${searchParams.reading}` : ""}`;

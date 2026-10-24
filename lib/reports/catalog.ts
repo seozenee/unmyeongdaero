@@ -146,6 +146,47 @@ export const REPORTS = [
     cover: "thumbCompatibility",
   },
   {
+    // 최고가 상품. 다른 리포트가 한 주제를 깊게 판다면 이건 평생의 줄기를 통째로 본다.
+    // 토픽 다섯을 한 명식 위에 겹쳐 읽으므로 생성에 드는 시간과 비용도 그만큼 크다.
+    slug: "destiny-full",
+    kind: "report",
+    category: "destiny",
+    categoryLabel: "종합 명식",
+    title: "명식 전서 : 타고난 결부터 말년까지, 한 권으로",
+    description:
+      "원국·격국·용신에서 시작해 대운 여덟 칸, 올해와 내년의 세운, 재물과 인연의 자리까지 — 흩어져 있던 풀이를 한 사람의 생애 순서로 꿰어 읽습니다.",
+    price: 48200,
+    originalPrice: 72000,
+    discountLabel: "33% OFF",
+    guide: "doham",
+    // 다섯 토픽을 모두 계산해 한 보고서로 엮는다
+    topics: ["life", "decade", "yearly", "money", "love"],
+    partner: "optional",
+    chapters: [
+      "타고난 그릇의 모양",
+      "나를 움직이는 힘과 막는 힘",
+      "중심 오행과 용신이 가리키는 방향",
+      "여덟 칸의 대운 — 삶의 배경이 바뀌는 자리",
+      "지금 지나는 대운의 한가운데에서",
+      "올해와 내년, 그리고 그다음",
+      "재물이 들어오는 길목과 새는 구멍",
+      "인연의 자리와 가까워지는 방식",
+      "몸과 마음이 기우는 방향",
+      "말년의 결과 지금 심어 둘 것",
+      "앞으로 10년을 위한 태도",
+    ],
+    questions: [
+      { id: "concern", question: "요즘 가장 마음이 쓰이는 건 무엇인가요?", options: ["진로·일", "사람·관계", "돈", "건강", "나 자신"] },
+      { id: "phase", question: "지금 인생의 어느 지점이라고 느끼나요?", options: ["막 시작하는 중", "버티는 중", "전환을 고민 중", "안정적이에요"] },
+      { id: "horizon", question: "이 풀이로 가장 알고 싶은 건 어느 시기인가요?", options: ["올해 안", "앞으로 3년", "앞으로 10년", "평생의 큰 줄기"] },
+    ],
+    detail: {
+      prompt: "지금의 상황과, 이 풀이에서 꼭 답을 얻고 싶은 것을 적어 주세요. 적어 주신 만큼 가까이 읽습니다.",
+      placeholder: "(예) 마흔을 앞두고 일도 관계도 한 번 정리하고 싶은데, 무엇을 남기고 무엇을 놓아야 할지 모르겠어요.",
+    },
+    cover: "thumbLife",
+  },
+  {
     slug: "life",
     kind: "report",
     category: "destiny",

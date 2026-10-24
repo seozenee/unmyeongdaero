@@ -7,7 +7,7 @@ import { Icon } from "@/components/ui/Icon";
 import { getCurrentUser, loginUrl } from "@/lib/auth/session";
 import { getRepository } from "@/lib/db";
 import { GLOSSARY } from "@/lib/manse/glossary";
-import { getReport } from "@/lib/reports/catalog";
+import { loadReport } from "@/lib/reports/store";
 import { findCurrentDecadeIndex, internationalAge, parseDecadeFortune, parseElementCounts, parseFourPillars } from "@/lib/saju/modules";
 import { mergedModules } from "@/lib/sazu/readings";
 import { describeBirth } from "@/lib/story/format";
@@ -45,7 +45,7 @@ export default async function MansePage({
   const reading = await repo.getReading(params.id);
   if (!reading || reading.userId !== user.id) notFound();
 
-  const report = getReport(reading.reportSlug);
+  const report = await loadReport(reading.reportSlug);
   if (!report) notFound();
 
   // 이미 산 사람은 여기 머물 이유가 없다

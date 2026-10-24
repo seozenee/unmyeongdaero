@@ -3,18 +3,17 @@ import { notFound, redirect } from "next/navigation";
 import { StoryFunnel } from "@/components/story/StoryFunnel";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getRepository } from "@/lib/db";
-import { } from "@/lib/env";
-import { getReport } from "@/lib/reports/catalog";
+import { loadReport } from "@/lib/reports/store";
 
 export const dynamic = "force-dynamic";
 
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  const report = getReport(params.slug);
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const report = await loadReport(params.slug);
   return report ? { title: report.title, description: report.description } : {};
 }
 
 export default async function ReportStoryPage({ params }: { params: { slug: string } }) {
-  const report = getReport(params.slug);
+  const report = await loadReport(params.slug);
   if (!report || report.kind !== "report") notFound();
 
   const user = await getCurrentUser();

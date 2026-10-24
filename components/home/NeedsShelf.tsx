@@ -5,13 +5,13 @@ import { useEffect, useState } from "react";
 import { GuideAvatar } from "@/components/story/GuideAvatar";
 import { Icon } from "@/components/ui/Icon";
 import { formatKRW } from "@/lib/format";
-import { listReports, type ReportCategory } from "@/lib/reports/catalog";
+import type { ReportCategory, ReportProduct } from "@/lib/reports/catalog";
 import { getGuide } from "@/lib/story/guides";
 
 export const CATEGORY_EVENT = "sazudaero:category";
 
 /** 상단 카테고리 탭과 연동되는 "고민별로 찾는 풀이" 목록 */
-export function NeedsShelf() {
+export function NeedsShelf({ products }: { products: ReportProduct[] }) {
   const [category, setCategory] = useState<"all" | ReportCategory>("all");
 
   useEffect(() => {
@@ -20,7 +20,8 @@ export function NeedsShelf() {
     return () => window.removeEventListener(CATEGORY_EVENT, onChange);
   }, []);
 
-  const reports = listReports("report").filter((report) => category === "all" || report.category === category);
+  // 상품은 서버에서 받아 온다. 운영 화면에서 만든 상품도 함께 오려면 여기서 직접 읽으면 안 된다.
+  const reports = products.filter((report) => category === "all" || report.category === category);
 
   return (
     <section id="needs" className="mt-space-xl flex scroll-mt-20 flex-col gap-space-md">

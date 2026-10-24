@@ -6,7 +6,6 @@ import { Icon } from "@/components/ui/Icon";
 import { getCurrentUser, loginUrl } from "@/lib/auth/session";
 import { getActiveSession } from "@/lib/consult/service";
 import { getRepository } from "@/lib/db";
-import { } from "@/lib/env";
 import { formatKRW } from "@/lib/format";
 import { CONSULT_TURN_LIMIT, getReport } from "@/lib/reports/catalog";
 import { getGuide } from "@/lib/story/guides";

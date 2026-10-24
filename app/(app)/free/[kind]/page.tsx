@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { FreeInsightFlow } from "@/components/free/FreeInsightFlow";
-import { } from "@/lib/env";
 
 const CONTENT: Record<string, { title: string; description: string }> = {
   today: { title: "오늘의 무료 운세 & 나의 만세력 명식", description: "내 생년월일시로 세운 여덟 글자 기운 표와, 오늘 일진이 내 사주에 어떻게 작용하는지 알려 드려요." },

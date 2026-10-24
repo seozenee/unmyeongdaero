@@ -4,7 +4,7 @@ import { ReadingExperience } from "@/components/story/ReadingExperience";
 import { getCurrentUser, loginUrl } from "@/lib/auth/session";
 import { getRepository } from "@/lib/db";
 import { modes } from "@/lib/env";
-import { getReport } from "@/lib/reports/catalog";
+import { loadReport } from "@/lib/reports/store";
 import { buildBasisFacts } from "@/lib/saju/basis";
 import {
   findCurrentDecadeIndex,
@@ -22,7 +22,7 @@ export const metadata: Metadata = { robots: { index: false } };
 const dateFormat = new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long", day: "numeric" });
 
 export default async function ReportReadPage({ params }: { params: { slug: string } }) {
-  const report = getReport(params.slug);
+  const report = await loadReport(params.slug);
   if (!report || report.kind !== "report") notFound();
 
   const user = await getCurrentUser();

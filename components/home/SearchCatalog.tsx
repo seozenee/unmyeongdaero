@@ -4,22 +4,22 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { formatKRW } from "@/lib/format";
-import { REPORTS } from "@/lib/reports/catalog";
+import type { ReportProduct } from "@/lib/reports/catalog";
 import { getGuide } from "@/lib/story/guides";
 
-export function SearchCatalog() {
+export function SearchCatalog({ products }: { products: ReportProduct[] }) {
   const [query, setQuery] = useState("");
 
   const results = useMemo(() => {
     const keyword = query.trim().toLowerCase();
-    if (!keyword) return REPORTS;
-    return REPORTS.filter((report) =>
+    if (!keyword) return products;
+    return products.filter((report) =>
       [report.title, report.categoryLabel, report.description, getGuide(report.guide).name]
         .join(" ")
         .toLowerCase()
         .includes(keyword),
     );
-  }, [query]);
+  }, [query, products]);
 
   return (
     <div className="flex w-full flex-col gap-space-md py-space-md">

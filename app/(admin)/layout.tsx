@@ -7,6 +7,7 @@ export const metadata: Metadata = { title: "운영", robots: { index: false, fol
 
 const NAV = [
   { href: "/admin", label: "현황" },
+  { href: "/admin/products", label: "상품" },
   { href: "/admin/readings", label: "풀이" },
   { href: "/admin/payments", label: "결제" },
 ];
