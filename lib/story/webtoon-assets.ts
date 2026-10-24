@@ -50,8 +50,53 @@ function shotsFor(guide: WebtoonGuide): ShotSpec[] {
     { key: "panel-second", character: false, aspect: "16:9", prompt: `Two old saju chart papers laid side by side on a dark wooden desk with red seal stamps and a candle, inside ${scene}.`, motion: "candle flame flickers, paper edges flutter slightly, dust floats" },
     { key: "panel-unfold", character: true, aspect: "16:9", prompt: `${name} unrolls a long scroll of destiny charts across the desk, glowing characters rising from it like fireflies, inside ${scene}.`, motion: "the scroll unrolls, glowing characters float upward, light sweeps across" },
     { key: "report-cover", character: true, aspect: "3:4", prompt: `${name} holds out a bound report book tied with a ribbon toward the viewer, elegant editorial composition, inside ${scene}.`, motion: "the character gently offers the book, the ribbon sways, particles drift in the light" },
+    ...PRODUCT_COVERS.filter((cover) => cover.guide === guide).map(({ key, prompt, motion }) => ({
+      key,
+      character: false,
+      aspect: "16:9" as const,
+      prompt: `${prompt} Rendered inside ${scene}.`,
+      motion,
+    })),
   ];
 }
+
+/**
+ * 상품 표지.
+ *
+ * 안내자 컷을 돌려 쓰면 세 아이 상품이 똑같은 그림을 달게 된다. 카드가 나란히
+ * 놓이는 자리라 같은 그림 셋은 바로 눈에 띈다. 상품마다 제 그림을 준다.
+ * 사람 얼굴은 넣지 않는다 — 소품과 공간만으로 뜻이 서고, 얼굴 일관성에 드는 비용도 없다.
+ */
+const PRODUCT_COVERS: ReadonlyArray<{ key: string; guide: WebtoonGuide; prompt: string; motion: string }> = [
+  {
+    key: "cover-admission",
+    guide: "doham",
+    prompt:
+      "A student's study desk before dawn: stacked exam workbooks, a worn pencil, a single desk lamp casting warm light, a paper calendar on the wall with several dates circled in red ink, a window showing the first blue light of morning.",
+    motion: "the lamp light flickers gently, dust motes drift, the calendar page lifts slightly in a draft",
+  },
+  {
+    key: "cover-dream",
+    guide: "doham",
+    prompt:
+      "A child's small shoes standing at the start of several glowing paths that fork outward into the dark, each path lit a different warm colour, fireflies marking the way, seen from behind and above.",
+    motion: "the glowing paths pulse softly one after another, fireflies drift upward",
+  },
+  {
+    key: "cover-talent",
+    guide: "yunseul",
+    prompt:
+      "A small wooden desk with a child's drawing, an abacus, a tiny brush and a folded paper crane, each object wrapped in its own faint coloured glow, warm lantern light from above.",
+    motion: "each object's glow brightens in turn, the paper crane's wing twitches, light particles rise",
+  },
+  {
+    key: "cover-business",
+    guide: "doham",
+    prompt:
+      "An old merchant's counter at night: a thick ledger open with columns of hanja, a brass coin scale, stacked coins with square holes, an abacus, a hanging shop lantern glowing amber above.",
+    motion: "the lantern sways slightly, the scale pans tip and settle, coins glint as light moves across them",
+  },
+];
 
 export const SHOTS: Record<WebtoonGuide, ShotSpec[]> = {
   seoha: shotsFor("seoha"),

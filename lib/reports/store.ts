@@ -37,10 +37,17 @@ function toProduct(row: Row): ReportProduct | null {
   if (!slug) return null;
   const base = getBuiltIn(slug);
 
-  const category = (str(row.category) ?? base?.category) as ReportCategory | undefined;
-  const title = str(row.title) ?? base?.title;
-  const tagline = str(row.tagline) ?? base?.tagline;
-  const description = str(row.description) ?? base?.description;
+  // 태그라인이 없는 행은 간판·후킹·설명을 셋으로 나누기 전에 심어진 시드 행이다.
+  // 그런 행에서 글과 분류를 섞어 오면 옛 긴 제목 밑에 새 후킹이 붙고, 카테고리도
+  // 옛 자리에 남아 탭에서 상품이 사라진다. 운영자가 고쳤을 법한 값(가격·할인)만
+  // 행에서 받고, 카탈로그가 쓰는 글과 분류는 한 벌째로 코드에서 가져온다.
+  const fresh = Boolean(str(row.tagline)) || !base;
+  const own = <T>(value: T | undefined) => (fresh ? value : undefined);
+
+  const category = (own(str(row.category)) ?? base?.category ?? str(row.category)) as ReportCategory | undefined;
+  const title = own(str(row.title)) ?? base?.title ?? str(row.title);
+  const tagline = own(str(row.tagline)) ?? base?.tagline;
+  const description = own(str(row.description)) ?? base?.description ?? str(row.description);
   const price = typeof row.price === "number" ? row.price : base?.price;
   const guide = (str(row.guide) ?? base?.guide) as GuideId | undefined;
   const chapters = arr<string>(row.chapters) ?? base?.chapters;
@@ -51,7 +58,7 @@ function toProduct(row: Row): ReportProduct | null {
     slug,
     kind: ((str(row.kind) ?? base?.kind) ?? "report") as ProductKind,
     category,
-    categoryLabel: str(row.category_label) ?? base?.categoryLabel ?? category,
+    categoryLabel: own(str(row.category_label)) ?? base?.categoryLabel ?? category,
     title,
     // 후킹 한 줄이 비면 카드가 허전해지므로 설명 첫 문장으로 메운다
     tagline: tagline ?? (description ?? "").split(/[.。]/)[0] ?? "",
@@ -66,7 +73,7 @@ function toProduct(row: Row): ReportProduct | null {
     chapters,
     questions: (arr<SituationQuestion>(row.questions) ?? base?.questions ?? []) as readonly SituationQuestion[],
     detail: (row.detail as ReportProduct["detail"]) ?? base?.detail,
-    cover: (str(row.cover) ?? base?.cover ?? "thumbLife") as ReportProduct["cover"],
+    cover: (own(str(row.cover)) ?? base?.cover ?? "thumbLife") as ReportProduct["cover"],
     disclaimer: str(row.disclaimer) ?? base?.disclaimer,
   };
 }

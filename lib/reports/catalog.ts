@@ -41,7 +41,7 @@ export interface ReportProduct {
   /** 자유 서술 질문 */
   detail?: { prompt: string; placeholder: string };
   /** components/home/assets 의 장면 이미지 키 */
-  cover: "highlightReunion" | "thumbReunion" | "thumbLove" | "thumbCompatibility" | "thumbLife" | "thumbStudy" | "thumbChild" | "thumbWork";
+  cover: "highlightReunion" | "thumbReunion" | "thumbLove" | "thumbCompatibility" | "thumbLife" | "thumbStudy" | "thumbChild" | "thumbWork" | "thumbAdmission" | "thumbDream" | "thumbTalent";
   /** 화면·AI 풀이에 반드시 붙일 고지 */
   disclaimer?: string;
 }
@@ -262,7 +262,7 @@ export const REPORTS = [
   {
     slug: "career",
     kind: "report",
-    category: "wealth",
+    category: "work",
     categoryLabel: "직업",
     title: "직업사주",
     tagline: "하늘이 내게 맞춘 일",
@@ -326,7 +326,7 @@ export const REPORTS = [
   {
     slug: "child-study",
     kind: "report",
-    category: "study",
+    category: "child",
     categoryLabel: "우리 아이 공부",
     title: "우리 아이 공부사주",
     tagline: "이 아이에게 맞는 공부 방식",
@@ -344,12 +344,12 @@ export const REPORTS = [
       { id: "childStyle", question: "아이는 어떤 편인가요?", options: ["스스로 하는 편", "시켜야 하는 편", "잘하다가 금방 지쳐요", "아직 잘 모르겠어요"] },
     ],
     detail: { prompt: "아이에 대해 더 알려 주고 싶은 게 있다면 적어 주세요.", placeholder: "(예) 수학은 좋아하는데 영어를 유독 싫어하고, 요즘 휴대폰 보는 시간이 길어요." },
-    cover: "thumbLife",
+    cover: "thumbChild",
   },
   {
     slug: "parent-child",
     kind: "report",
-    category: "study",
+    category: "child",
     categoryLabel: "부모·자녀",
     title: "부모자녀 궁합사주",
     tagline: "잔소리 대신 닿는 말",
@@ -440,7 +440,7 @@ export const REPORTS = [
       placeholder: "(예) 고2인데 2학기 들어 성적이 계속 떨어져요. 재수를 각오해야 할지 고민입니다.",
     },
     disclaimer: "학업 기운의 흐름을 읽는 참고용 풀이예요. 합격 여부를 점치지 않으며, 입시 결과를 보장하지 않습니다.",
-    cover: "thumbChild",
+    cover: "thumbAdmission",
   },
   {
     slug: "child-dream",
@@ -473,7 +473,7 @@ export const REPORTS = [
       prompt: "아이가 요즘 빠져 있는 것이나, 진로를 두고 드는 생각을 적어 주세요.",
       placeholder: "(예) 그림을 몇 시간씩 그리는데 이걸 직업으로 밀어줘도 될지 모르겠어요.",
     },
-    cover: "thumbChild",
+    cover: "thumbDream",
   },
   {
     slug: "child-talent",
@@ -503,7 +503,7 @@ export const REPORTS = [
       prompt: "아이에게서 유난히 눈에 띄는 모습이 있다면 적어 주세요.",
       placeholder: "(예) 다섯 살인데 한글을 혼자 떼고 책을 하루 종일 읽어요.",
     },
-    cover: "thumbChild",
+    cover: "thumbTalent",
   },
   {
     slug: "consult",

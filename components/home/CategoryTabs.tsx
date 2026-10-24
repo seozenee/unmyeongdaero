@@ -7,13 +7,15 @@ type TabId = "all" | ReportCategory;
 
 const TABS: ReadonlyArray<{ id: TabId; label: string }> = [
   { id: "all", label: "전체" },
-  { id: "reunion", label: "재회 사주" },
-  { id: "romance", label: "연애 사주" },
-  { id: "chemistry", label: "궁합 사주" },
-  { id: "destiny", label: "평생 사주" },
-  { id: "year", label: "신년 운세" },
-  { id: "wealth", label: "직업·재물" },
-  { id: "study", label: "학업·자녀" },
+  { id: "child", label: "우리 아이" },
+  { id: "reunion", label: "재회" },
+  { id: "romance", label: "연애" },
+  { id: "chemistry", label: "궁합" },
+  { id: "destiny", label: "평생" },
+  { id: "year", label: "신년" },
+  { id: "wealth", label: "재물" },
+  { id: "work", label: "일·사업" },
+  { id: "study", label: "공부" },
 ];
 
 // code.html 바닐라 JS 가 토글하던 두 className 그대로
@@ -26,7 +28,7 @@ interface CategoryTabsProps {
   defaultTab?: TabId;
 }
 
-export function CategoryTabs({ defaultTab = "reunion" }: CategoryTabsProps) {
+export function CategoryTabs({ defaultTab = "all" }: CategoryTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>(defaultTab);
 
   return (

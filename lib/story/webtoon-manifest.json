@@ -78,6 +78,9 @@
     },
     "report-cover": {
       "image": "/webtoon/yunseul/report-cover.webp"
+    },
+    "cover-talent": {
+      "image": "/webtoon/yunseul/cover-talent.webp"
     }
   },
   "doham": {
@@ -120,6 +123,15 @@
     "panel-unfold": {
       "image": "/webtoon/doham/panel-unfold.webp",
       "video": "/webtoon/doham/panel-unfold.mp4"
+    },
+    "cover-admission": {
+      "image": "/webtoon/doham/cover-admission.webp"
+    },
+    "cover-dream": {
+      "image": "/webtoon/doham/cover-dream.webp"
+    },
+    "cover-business": {
+      "image": "/webtoon/doham/cover-business.webp"
     }
   }
 }

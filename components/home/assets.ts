@@ -21,6 +21,12 @@ export const STITCH_ASSETS = {
   thumbStudy: "/webtoon/doham/panel-brush.webp",
   /** 우리 아이 — 등불을 든 안내자 */
   thumbChild: "/webtoon/yunseul/intro-3.webp",
-  /** 일·사업 — 문서를 건네는 자리 */
-  thumbWork: "/webtoon/doham/report-cover.webp",
+  /** 입시 — 새벽 책상, 붉게 동그라미 친 달력 */
+  thumbAdmission: "/webtoon/doham/cover-admission.webp",
+  /** 진로 — 갈라지는 빛의 길 앞에 선 작은 신발 */
+  thumbDream: "/webtoon/doham/cover-dream.webp",
+  /** 영재 — 저마다 다른 빛을 품은 아이의 물건들 */
+  thumbTalent: "/webtoon/yunseul/cover-talent.webp",
+  /** 사업 — 장부와 저울이 놓인 한밤의 계산대 */
+  thumbWork: "/webtoon/doham/cover-business.webp",
 } as const;

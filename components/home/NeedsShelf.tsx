@@ -43,7 +43,7 @@ export function NeedsShelf({ products }: { products: ReportProduct[] }) {
               className="group relative flex flex-col overflow-hidden rounded-xl bg-surface-container transition-transform active:scale-[0.98] motion-safe:animate-fade-up"
             >
               {/* 표지 — 글자가 읽히도록 아래로 갈수록 어둡게 덮는다 */}
-              <div className="relative h-24 w-full overflow-hidden">
+              <div className="relative aspect-[4/3] w-full overflow-hidden">
                 <div
                   role="img"
                   aria-label=""
@@ -61,7 +61,7 @@ export function NeedsShelf({ products }: { products: ReportProduct[] }) {
 
               <div className="flex flex-1 flex-col gap-space-xs p-space-md pt-space-sm">
                 <span className="font-label-sm text-label-sm text-secondary">{report.title}</span>
-                <span className="line-clamp-2 font-label-md text-label-md leading-snug text-on-surface">{report.tagline}</span>
+                <span className="line-clamp-2 font-headline-sm text-headline-sm leading-snug text-on-surface">{report.tagline}</span>
                 <span className="mt-auto flex items-baseline justify-between pt-space-xs">
                   <span className="flex items-baseline gap-1.5">
                     {report.originalPrice && (
