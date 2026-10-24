@@ -86,31 +86,40 @@
       "video": "/webtoon/doham/intro-0.mp4"
     },
     "intro-1": {
-      "image": "/webtoon/doham/intro-1.webp"
+      "image": "/webtoon/doham/intro-1.webp",
+      "video": "/webtoon/doham/intro-1.mp4"
     },
     "intro-2": {
-      "image": "/webtoon/doham/intro-2.webp"
+      "image": "/webtoon/doham/intro-2.webp",
+      "video": "/webtoon/doham/intro-2.mp4"
     },
     "intro-5": {
-      "image": "/webtoon/doham/intro-5.webp"
+      "image": "/webtoon/doham/intro-5.webp",
+      "video": "/webtoon/doham/intro-5.mp4"
     },
     "panel-brush": {
-      "image": "/webtoon/doham/panel-brush.webp"
+      "image": "/webtoon/doham/panel-brush.webp",
+      "video": "/webtoon/doham/panel-brush.mp4"
     },
     "report-cover": {
-      "image": "/webtoon/doham/report-cover.webp"
+      "image": "/webtoon/doham/report-cover.webp",
+      "video": "/webtoon/doham/report-cover.mp4"
     },
     "intro-3": {
-      "image": "/webtoon/doham/intro-3.webp"
+      "image": "/webtoon/doham/intro-3.webp",
+      "video": "/webtoon/doham/intro-3.mp4"
     },
     "intro-4": {
-      "image": "/webtoon/doham/intro-4.webp"
+      "image": "/webtoon/doham/intro-4.webp",
+      "video": "/webtoon/doham/intro-4.mp4"
     },
     "panel-second": {
-      "image": "/webtoon/doham/panel-second.webp"
+      "image": "/webtoon/doham/panel-second.webp",
+      "video": "/webtoon/doham/panel-second.mp4"
     },
     "panel-unfold": {
-      "image": "/webtoon/doham/panel-unfold.webp"
+      "image": "/webtoon/doham/panel-unfold.webp",
+      "video": "/webtoon/doham/panel-unfold.mp4"
     }
   }
 }
