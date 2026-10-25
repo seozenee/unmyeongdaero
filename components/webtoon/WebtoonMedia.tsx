@@ -8,8 +8,6 @@
 // 뜨기까지 한참 걸렸기 때문이다. 지금은 9:16 으로 자르고 다시 인코딩해 0.3MB 대로 줄었으므로
 // (scripts/optimize-webtoon-videos.sh) 다시 튼다. 정지 이미지의 CSS 팬으로는 인물이 숨 쉬고
 // 등불이 흔들리는 결까지 흉내 낼 수 없다.
-//
-// poster 에 같은 컷의 이미지를 넣어, 영상이 첫 프레임을 받기 전에도 화면이 비지 않게 한다.
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import type { WebtoonAsset } from "./assets";
@@ -28,6 +26,24 @@ function motionFor(src: string) {
   return MOTIONS[hash % MOTIONS.length]!;
 }
 
+/**
+ * 한 컷.
+ *
+ * 그림은 늘 깔려 있고, 보이는 동안에만 그 위에 영상이 올라온다.
+ *
+ * 한동안 <video> 를 항상 붙여 두고 preload 로만 아꼈다. 화면 밖에서 <img> 로 갈아 끼우면
+ * 미는 동안 요소가 통째로 바뀌면서 영상이 끊겨 보일까 봐서였다. 그런데 첫 화면이 포스터
+ * 카드로 채워지면서 한 장에 <video> 가 예순 개 넘게 붙었고, 브라우저는 동시에 둘 수 있는
+ * 미디어 요소 수가 정해져 있어서 전부 멈춰 세웠다 — 정작 보고 있는 카드가 정지 사진이 됐다.
+ * 폰에서는 한도가 훨씬 낮아 더 빨리 그렇게 된다.
+ *
+ * 그래서 보이는 컷만 <video> 를 붙이고 나가면 떼어 낸다. 떼어 내도 같은 그림의 <img> 가
+ * 그 자리에 그대로 남아 있으므로 깜빡이지 않는다 — 처음에 걱정했던 일은 그림을 밑에
+ * 깔아 두는 것으로 해결된다.
+ *
+ * 움직임을 줄여 쓰는 사람에게는 영상을 붙이지 않는다 — 5초짜리 반복 재생은 전정기관을
+ * 자극할 수 있다. 그 경우 그림에 CSS 모션조차 걸지 않는다(motion-safe).
+ */
 export function WebtoonMedia({
   asset,
   still = false,
@@ -41,25 +57,19 @@ export function WebtoonMedia({
   active?: boolean;
   className?: string;
 }) {
-  // 보이지 않는 카드까지 <video> 로 두면 안 된다. 스물두 장을 한꺼번에 받으려다
-  // 브라우저가 로딩을 조르고, 준비가 안 된 영상은 투명한 채로 남아 까만 칸이 된다.
-  // 화면 밖에서는 정지컷을 깔고, 들어온 카드만 영상으로 바꾼다.
   const playVideo = Boolean(asset.video) && !still && active;
 
   return (
     <div aria-hidden className={cn("absolute inset-0 overflow-hidden bg-surface-container-lowest", className)}>
-      {playVideo ? (
-        <SceneVideo src={asset.video!} poster={asset.image} active={active} />
-      ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={asset.image}
-          alt=""
-          loading="lazy"
-          decoding="async"
-          className={cn("h-full w-full object-cover", !still && motionFor(asset.image))}
-        />
-      )}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={asset.image}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        className={cn("h-full w-full object-cover", !still && !asset.video && motionFor(asset.image))}
+      />
+      {playVideo && <SceneVideo src={asset.video!} poster={asset.image} />}
     </div>
   );
 }
@@ -67,49 +77,31 @@ export function WebtoonMedia({
 /**
  * 한 컷의 영상.
  *
- * 받아 온 첫 프레임이 뜨기 전까지는 poster 이미지가 보이고, 준비되면 조용히 겹쳐 올라온다.
- * 바로 바꾸면 이미지와 영상의 밝기 차이가 깜빡임처럼 보인다.
- *
- * 움직임을 줄여 쓰는 사람에게는 영상을 틀지 않고 첫 프레임만 보여 준다 —
- * 5초짜리 반복 재생은 전정기관을 자극할 수 있다.
- *
- * 여러 장이 한 화면에 깔리면(캐러셀) 보이는 것만 재생한다. 넷을 동시에 틀면
- * 브라우저가 디코더를 아끼려고 제멋대로 멈춰 세워, 정작 보고 있는 카드가 정지한다.
+ * 밑에 같은 그림이 깔려 있으므로 받아 오는 동안에도 화면이 비지 않는다. poster 까지
+ * 함께 걸어, 자동재생이 막히거나 데이터를 아끼는 설정에서도 첫 그림이 남게 한다.
  */
-function SceneVideo({ src, poster, active }: { src: string; poster: string; active: boolean }) {
+function SceneVideo({ src, poster }: { src: string; poster: string }) {
   const ref = useRef<HTMLVideoElement>(null);
-  const [ready, setReady] = useState(false);
   const [reduced, setReduced] = useState(false);
 
   useEffect(() => {
     setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   }, []);
 
-  // 서버에서 내려온 <video> 는 React 가 붙기 전에 이미 다 받아 둘 수 있다. 그러면 canplay 는
-  // 이미 지나가 버렸고, 그 한 번을 놓치면 영상이 투명한 채로 깔려 까만 화면만 남는다.
-  // 지금 상태를 직접 보고, 앞으로 올 이벤트도 함께 듣는다.
-  useEffect(() => {
-    const video = ref.current;
-    if (!video) return;
-    const show = () => setReady(true);
-    if (video.readyState >= 2) show();
-    video.addEventListener("loadeddata", show);
-    video.addEventListener("canplay", show);
-    return () => {
-      video.removeEventListener("loadeddata", show);
-      video.removeEventListener("canplay", show);
-    };
-  }, [src]);
-
   useEffect(() => {
     const video = ref.current;
     if (!video || reduced) return;
-    if (!active) {
-      video.pause();
-      return;
-    }
-    // 자동재생이 막히는 환경(저전력 모드 등)에서는 poster 가 그대로 남는다 — 화면이 비지는 않는다
-    const play = () => void video.play().catch(() => undefined);
+
+    // 자동재생이 막히는 자리가 있다(브라우저 정책, 데이터 절약 설정). 그러면 첫 그림만
+    // 남고 멈춰 있는데, 손님이 화면을 한 번 건드리는 순간은 재생이 허용되는 순간이기도
+    // 하다. 막혔을 때만 그 한 번을 기다렸다 다시 튼다.
+    const retryOnGesture = () => {
+      const once = () => void video.play().catch(() => undefined);
+      document.addEventListener("pointerdown", once, { once: true });
+      return () => document.removeEventListener("pointerdown", once);
+    };
+    let cancelGesture: (() => void) | undefined;
+    const play = () => void video.play().catch(() => (cancelGesture ??= retryOnGesture()));
     play();
 
     // 탭을 숨기면 브라우저가 재생을 멈춰 세운다. 돌아왔을 때 아무도 다시 틀어 주지 않으면
@@ -118,26 +110,25 @@ function SceneVideo({ src, poster, active }: { src: string; poster: string; acti
       if (!document.hidden) play();
     };
     document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [src, reduced, active]);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      cancelGesture?.();
+    };
+  }, [src, reduced]);
+
+  if (reduced) return null;
 
   return (
     <video
       ref={ref}
-      key={src}
       src={src}
       poster={poster}
-      autoPlay={!reduced && active}
+      autoPlay
       loop
       muted
       playsInline
       preload="auto"
-      className={cn(
-        "h-full w-full object-cover transition-opacity duration-700",
-        ready ? "opacity-100" : "opacity-0",
-      )}
-      // 영상이 아직이면 poster 가 보이도록 배경에 같은 그림을 깔아 둔다
-      style={{ backgroundImage: `url(${poster})`, backgroundSize: "cover", backgroundPosition: "center" }}
+      className="absolute inset-0 h-full w-full object-cover"
     />
   );
 }
