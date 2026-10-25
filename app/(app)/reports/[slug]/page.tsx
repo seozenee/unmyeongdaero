@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { StoryFunnel } from "@/components/story/StoryFunnel";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getRepository } from "@/lib/db";
-import { loadReport } from "@/lib/reports/store";
+import { loadReport, loadReports } from "@/lib/reports/store";
 
 export const dynamic = "force-dynamic";
 
@@ -21,5 +21,13 @@ export default async function ReportStoryPage({ params }: { params: { slug: stri
     redirect(`/reports/${report.slug}/read`);
   }
 
-  return <StoryFunnel report={report} />;
+  // 상세 화면 아래의 "이것도 함께 봐요". 같은 고민을 먼저 세우고, 모자라면 다른 주제로 채운다 —
+  // 재회를 보던 사람에게 건강사주를 먼저 들이밀지 않는다.
+  const products = await loadReports("report");
+  const related = [
+    ...products.filter((item) => item.category === report.category),
+    ...products.filter((item) => item.category !== report.category),
+  ];
+
+  return <StoryFunnel report={report} related={related} />;
 }

@@ -65,6 +65,8 @@ const config: Config = {
           "75%": { transform: "translate(-1px, -2px) rotate(var(--sfx-rotate, -6deg))" },
         },
         "rise-in": { "0%": { transform: "translate(-50%, 18%)", opacity: "0" }, "100%": { transform: "translate(-50%, 0)", opacity: "1" } },
+        // 띠처럼 흘러가는 글자. 같은 내용을 두 번 이어 붙여 두고 절반만 밀면 끊김 없이 돈다
+        marquee: { "0%": { transform: "translateX(0)" }, "100%": { transform: "translateX(-50%)" } },
       },
       animation: {
         "ken-burns": "ken-burns 9s ease-out both",
@@ -86,6 +88,7 @@ const config: Config = {
         "fade-in": "fade-in 700ms ease-out both",
         "dot-blink": "dot-blink 1.2s ease-in-out infinite",
         "slow-zoom": "slow-zoom 6s ease-out both",
+        marquee: "marquee 22s linear infinite",
       },
     },
   },

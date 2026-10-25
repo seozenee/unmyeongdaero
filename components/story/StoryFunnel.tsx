@@ -87,7 +87,7 @@ function SheetCard({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function StoryFunnel({ report }: { report: ReportProduct }) {
+export function StoryFunnel({ report, related = [] }: { report: ReportProduct; related?: ReportProduct[] }) {
   const router = useRouter();
   const guide = getGuide(report.guide);
   const steps = useMemo(() => buildFunnel(report), [report]);
@@ -211,7 +211,12 @@ export function StoryFunnel({ report }: { report: ReportProduct }) {
   // ─ 상품 소개 (스테이지를 닫았을 때 보이는 화면) ─
   // 상품 소개는 ProductIntro 가 그린다 — 상품마다 다른 포스터·문구·서체를 쓴다
   const detailPage = (
-    <ProductIntro report={report} onStart={() => setPhase(cursor > 0 ? "chat" : "intro")} resuming={cursor > 0} />
+    <ProductIntro
+      report={report}
+      related={related}
+      onStart={() => setPhase(cursor > 0 ? "chat" : "intro")}
+      resuming={cursor > 0}
+    />
   );
 
   if (phase === "closed") return detailPage;
