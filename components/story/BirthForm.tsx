@@ -34,7 +34,8 @@ function parseBirthDate(digits: string) {
   return { year, month, day };
 }
 
-const formatDigits = (digits: string) =>
+/** 적어 둔 여덟 자를 사람이 읽는 말로 */
+const describeDigits = (digits: string) =>
   [digits.slice(0, 4), digits.slice(4, 6), digits.slice(6, 8)].filter(Boolean).join(".");
 
 function Segmented<T extends string>({
@@ -202,16 +203,24 @@ export function BirthForm({ title, submitLabel = "다 적었어요", initial, on
           />
           <label className="flex flex-col gap-1" htmlFor={`${id}-date`}>
             <span className="font-label-sm text-label-sm text-on-surface-variant">생년월일 여덟 자리</span>
+            {/*
+              한동안 치는 동안에도 값을 "1995.03.1" 처럼 다시 찍어 보여 줬다. 보기에는 친절한데,
+              글자를 칠 때마다 값이 통째로 바뀌는 입력칸이라 폰에서는 커서가 맨 앞으로 튄다.
+              그 다음 숫자가 앞에 붙으면서 "입력이 안 된다" 가 된다.
+              그래서 칸에는 손이 친 여덟 자를 그대로 두고, 읽는 말은 아래 줄에서 만든다.
+            */}
             <input
               id={`${id}-date`}
-              className={cn(FIELD, "text-center font-headline-sm text-headline-sm tracking-[0.2em]")}
-              value={formatDigits(digits)}
+              className={cn(FIELD, "text-center font-headline-sm text-headline-sm tracking-[0.3em]")}
+              value={digits}
               inputMode="numeric"
               // iOS 는 inputMode 만으로는 전체 자판을 띄우는 경우가 있다. pattern 까지 있어야 숫자 키패드로 연다.
               pattern="[0-9]*"
+              maxLength={8}
+              autoComplete="off"
               autoFocus
               enterKeyHint="next"
-              placeholder="1995.03.12"
+              placeholder="19950312"
               aria-describedby={`${id}-date-help`}
               onChange={(event) => {
                 setDigits(event.target.value.replace(/\D/g, "").slice(0, 8));
@@ -221,7 +230,9 @@ export function BirthForm({ title, submitLabel = "다 적었어요", initial, on
             <span id={`${id}-date-help`} className="font-body-sm text-body-sm text-outline">
               {dateTyped && date
                 ? `${date.year}년 ${date.month}월 ${date.day}일 (${calendar === "lunar" ? "음력" : "양력"})`
-                : "숫자만 눌러 주세요. 1995년 3월 12일이면 19950312"}
+                : digits
+                  ? `${describeDigits(digits)}… 여덟 자리를 채워 주세요`
+                  : "숫자만 눌러 주세요. 1995년 3월 12일이면 19950312"}
             </span>
           </label>
           {calendar === "lunar" && (
