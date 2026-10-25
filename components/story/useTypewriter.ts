@@ -10,7 +10,9 @@ function prefersReducedMotion() {
  * 텍스트를 한 글자씩 드러낸다. 스트리밍으로 text 가 길어지면 이어서 타이핑한다.
  * skip() 을 부르면 즉시 끝까지 보여준다.
  */
-export function useTypewriter(text: string, { charsPerSecond = 38, enabled = true } = {}) {
+// 초당 몇 글자. 38자는 눈으로 좇기 벅찬 속도였다 — 결제하고 처음 받아 보는 말인데
+// 다 읽기 전에 다음 줄이 올라와 버렸다. 소리 내어 읽는 속도(초당 20자 안팎)에 맞춘다.
+export function useTypewriter(text: string, { charsPerSecond = 21, enabled = true } = {}) {
   const [shown, setShown] = useState(() => (enabled && !prefersReducedMotion() ? 0 : text.length));
   const skipped = useRef(false);
 

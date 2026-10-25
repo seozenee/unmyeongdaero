@@ -151,7 +151,8 @@ export function ReadingExperience(props: ReadingExperienceProps) {
   const briefingShown = briefingDone && cursor >= beats.length;
 
   const advance = useCallback(() => {
-    window.setTimeout(() => setCursor((value) => value + 1), 420);
+    // 한 줄을 다 쓰고 나서 다음 줄까지의 틈. 사람이 말을 마치고 숨을 고르는 만큼 둔다.
+    window.setTimeout(() => setCursor((value) => value + 1), 900);
   }, []);
 
   useEffect(() => {

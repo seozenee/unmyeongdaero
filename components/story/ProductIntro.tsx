@@ -183,10 +183,7 @@ export function ProductIntro({ report, soldCount, onStart, resuming = false }: P
       {/* ─ 목차 ─ */}
       <Reveal className="mt-space-xl">
         <section className="flex flex-col gap-space-sm rounded-2xl bg-surface-container-low p-space-lg">
-          <div className="flex items-baseline justify-between">
-            <h2 className="font-headline-sm text-headline-sm text-on-surface">보고서 목차</h2>
-            <span className="font-label-sm text-label-sm text-outline">{report.chapters.length}장</span>
-          </div>
+          <h2 className="font-headline-sm text-headline-sm text-on-surface">보고서 목차</h2>
           <ol className="flex flex-col gap-space-sm">
             {report.chapters.map((chapter, index) => (
               <li key={chapter} className="flex gap-space-sm">

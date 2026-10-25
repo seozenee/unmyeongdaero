@@ -207,6 +207,8 @@ export function BirthForm({ title, submitLabel = "다 적었어요", initial, on
               className={cn(FIELD, "text-center font-headline-sm text-headline-sm tracking-[0.2em]")}
               value={formatDigits(digits)}
               inputMode="numeric"
+              // iOS 는 inputMode 만으로는 전체 자판을 띄우는 경우가 있다. pattern 까지 있어야 숫자 키패드로 연다.
+              pattern="[0-9]*"
               autoFocus
               enterKeyHint="next"
               placeholder="1995.03.12"

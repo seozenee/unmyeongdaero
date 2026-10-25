@@ -36,7 +36,7 @@ interface Scene {
 }
 
 const storageKey = (slug: string) => `sazudaero:funnel2:${slug}`;
-const LINE_PAUSE_MS = 420;
+const LINE_PAUSE_MS = 760;
 const PANEL_HOLD_MS = 2600;
 const BASE_SCENE: Scene = { place: "room", camera: "close", figure: "close", asset: "intro-5" };
 

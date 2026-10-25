@@ -30,7 +30,7 @@ function sentences(text: string | null, count: number) {
   return parts.slice(0, count).join(" ") || null;
 }
 
-const endWithPeriod = (text: string) => (/[.!?…"」]$/.test(text) ? text : `${text}.`);
+const endWithPeriod = (text: string) => (/[.!?…"」)\]]$/.test(text) ? text : `${text}.`);
 
 /** 비어 있을 수 있는 조각들을 잇는다. 빈 값이 섞여도 마침표만 남는 문장이 생기지 않게. */
 const join = (...parts: Array<string | null>) => parts.filter(Boolean).join(" ") || null;
@@ -294,20 +294,63 @@ function pillarEvidence(chart: Chart, position: "year" | "month" | "day" | "hour
   };
 }
 
+
+// ─── 겪었을 법한 장면 ───────────────────────────────────────────────────────
+//
+// 용어로 시작하는 문장은 읽히지 않고 넘겨진다. "을목 일간에 신약이라" 로 시작하면
+// 읽는 사람은 두 글자째에서 멈춘다. 먼저 겪었을 법한 장면을 보여 주고, 용어는
+// 근거 카드로 내린다. 아래 장면들은 명식에서 바로 나오는 값(신강약·두드러진 오행)에만
+// 기대므로 없는 사실을 지어내지 않는다.
+
+const STRENGTH_SCENE: Record<string, string> = {
+  신강:
+    "하고 싶은 말이 있으면 결국 하고야 마는 쪽이라, 끝내 밀어붙였다가 \u2018굳이 그렇게까지 했어야 했나\u2019 하고 혼자 곱씹은 밤이 있으셨을 거예요.",
+  신약:
+    "해야 할 일을 혼자 끌어안고 있다가, 정작 도와 달라는 말은 못 하고 지쳐 버린 적 있으셨을 거예요.",
+  중화:
+    "어느 쪽으로도 크게 기울지 않아서, 주변 사람에 따라 전혀 다른 사람처럼 보인다는 말을 들어 보셨을 거예요.",
+};
+
+/** 넘치는 기운이 일상에서 어떤 장면으로 나오는지 */
+const ELEMENT_SCENE: Record<FiveElement, string> = {
+  wood: "새로 벌여 놓은 것이 여럿인데 끝맺은 건 몇 없어서, 스스로도 답답해지는 때가 있어요.",
+  fire: "마음이 확 달아올랐다가 며칠 뒤엔 그 일이 시들해져 있어서, 변덕스럽다는 말을 들어 보셨을 거예요.",
+  earth: "결정을 앞두고 며칠씩 미루다가, 정작 정하고 나면 그 자리를 오래 지키는 편이에요.",
+  metal: "아니다 싶은 건 분명히 선을 긋는 편이라, 맺고 끊는 게 차갑다는 오해를 받아 보셨을 거예요.",
+  water: "생각이 깊어 밤에 잠이 늦고, 말하기 전에 몇 번씩 속으로 굴려 보다 때를 놓친 적이 있어요.",
+};
+
 const natal: Builder = ({ me, reading }, title) => {
   const { dominant, missing } = dominantAndMissing(me);
   const day = me.pillar("day");
+  const scene = me.strength ? STRENGTH_SCENE[me.strength] : null;
+  const over = dominant[0] ? toFiveElement(dominant[0]) : null;
   return section(
     title,
-    `${me.name}님은 ${me.dayMaster ? `${me.dayMaster.char}${me.dayMaster.element} 일간` : "고유한 일간"}${me.gyeokguk ? `, ${me.gyeokguk.name}` : ""}${me.strength ? ` · ${me.strength}` : ""}의 그릇이에요`,
+    scene ?? `${me.name}님이 타고난 결을 먼저 짚어 볼게요`,
     [
-      me.strengthAnalysis,
+      // 장면 → 왜 그런지 → 용어는 근거 카드로
+      scene
+        ? join(
+            me.strength === "신강"
+              ? `${me.name}님은 스스로 밀고 나가는 힘이 넉넉한 쪽이에요.`
+              : me.strength === "신약"
+                ? `${me.name}님은 곁에 사람이 있을 때 훨씬 멀리 가는 결이에요. 혼자 버티는 방식이 제일 손해예요.`
+                : `${me.name}님은 한쪽으로 크게 기울지 않아, 때와 자리에 따라 결이 달라지는 쪽이에요.`,
+            me.strength ? `(명리로는 이걸 ${me.strength}이라고 불러요.)` : null,
+          )
+        : null,
+      over ? ELEMENT_SCENE[over] : null,
       day
-        ? join(`나를 뜻하는 일주는 ${str(day.full)}이고, 일지(배우자·내 속마음의 자리)에는 ${str(day.earthSippiSeong) ?? "고유한"} 기운이 앉아 있어요.`, sentences(str(at(day, "twelveFortuneInterpretation.energy")), 1))
+        ? join(
+            `가장 가까운 사람 앞에서, 그리고 혼자 있을 때 나오는 모습이 따로 있어요.`,
+            sentences(str(at(day, "twelveFortuneInterpretation.energy")), 1),
+            `(여덟 글자 가운데 ${str(day.full)} 두 글자가 그 자리예요.)`,
+          )
         : null,
       dominant.length
         ? join(
-            `오행으로는 ${dominant.join("·")} 기운이 두드러지고${missing.length ? ` ${missing.join("·")} 기운은 원국에 드러나지 않아요` : " 전체가 고르게 흐르는 편이에요"}.`,
+            `타고난 기운은 ${dominant.join("·")} 쪽으로 몰려 있어요${missing.length ? `. 반대로 ${missing.join("·")} 기운은 거의 없는 편이고요` : ". 한쪽으로 크게 치우치지는 않았어요"}.`,
             me.keywords.length ? `그래서 "${me.keywords.slice(0, 3).join(", ")}" 같은 결이 먼저 보여요.` : null,
           )
         : null,
@@ -407,7 +450,7 @@ const partnerHeart: Builder = ({ partner, reading, me }, title) => {
   const day = partner.pillar("day");
   return section(
     title,
-    `${partner.name}님은 ${partner.dayMaster ? `${partner.dayMaster.char}${partner.dayMaster.element} 일간` : "고유한 일간"}${partner.strength ? ` · ${partner.strength}` : ""}, 마음을 쉽게 드러내기보다 안에서 정리하는 결이에요`,
+    `${partner.name}님은 마음을 바로 말하기보다 안에서 한참 정리한 뒤에 꺼내는 쪽이에요`,
     [
       day
         ? join(
@@ -417,7 +460,9 @@ const partnerHeart: Builder = ({ partner, reading, me }, title) => {
           )
         : null,
       day && str(at(day, "twelveFortuneInterpretation.positionMeaning")) ? `전통적으로 이 자리는 "${soften(str(at(day, "twelveFortuneInterpretation.positionMeaning"))!)}"로 읽어요. 관계를 오래 안정적으로 끌고 가는 데 스스로도 부담을 느끼기 쉬운 결이에요.` : null,
-      partner.yongsin.reasoning ? `${partner.name}님에게 필요한 기운은 ${josa(elementKo(partner.yongsin.yong) ?? "", "이에요/예요")}. ${partner.yongsin.reasoning} 그래서 몰아붙이는 말보다 기댈 수 있는 안정감에 반응해요.` : null,
+      partner.yongsin.yong
+        ? `${partner.name}님은 ${ELEMENT_VIRTUE[partner.yongsin.yong].good}이 느껴질 때 마음이 열려요. 다그치는 말에는 더 닫히고, 기댈 만하다 싶을 때 먼저 다가오는 쪽이에요.`
+        : null,
       answerLine(reading, "contactStatus"),
     ],
     [
@@ -1358,7 +1403,11 @@ export function buildTemplateReport(report: ReportProduct, reading: Reading, saz
         ? `재물의 문은 ${favorableLayer ? `${str(favorableLayer.label)} ${str(favorableLayer.ganji)}에` : "흐름이 바뀔 때"} 열리고, ${at(ctx.wealth, "natalWealth.talJaeRisk") === true ? "사람과 섞이면 새기 쉬운" : "담아 둘수록 커지는"} 구조`
         : report.slug === "health"
           ? `${dominant.join("·") || "한쪽"} 기운이 넘치는 몸, ${missing.length ? `${missing.join("·")} 기운을 채우며` : "균형을 지키며"} 과열을 덜어낼 때`
-          : `${me.dayMaster ? `${me.dayMaster.char}${me.dayMaster.element} 일간` : name}${me.gyeokguk ? ` · ${me.gyeokguk.name}` : ""}, ${decadeKeyword ? `지금은 "${decadeKeyword}"의 대운을 지나는 중` : "지금의 흐름을 읽을 때"}`;
+          : me.strength === "신강"
+            ? `혼자 밀고 나가는 힘이 넉넉한 사람, ${decadeKeyword ? `지금은 "${decadeKeyword}"의 열 해를 지나는 중` : "지금의 흐름을 읽을 때"}`
+            : me.strength === "신약"
+              ? `곁에 사람이 있을 때 멀리 가는 사람, ${decadeKeyword ? `지금은 "${decadeKeyword}"의 열 해를 지나는 중` : "지금의 흐름을 읽을 때"}`
+              : `${name}님의 결과 지금 지나는 흐름${decadeKeyword ? ` — "${decadeKeyword}"의 때` : ""}`;
 
   const summary = [
     sections[0]?.lead,
