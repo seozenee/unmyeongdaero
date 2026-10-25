@@ -5,6 +5,7 @@
 // 여기서는 wrap={false} 로 "잘리면 곤란한 덩어리"를 직접 지정한다.
 //
 // 순서: 표지 → 결론 → 명식 한 벌 → 각 장 → 시기 → 실천 → 맺음 → 용어.
+import React from "react";
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { BirthProfile } from "@/lib/db/types";
 import type { StoryReport } from "@/lib/story/report";
@@ -52,6 +53,15 @@ const styles = StyleSheet.create({
   // ─ 본문 ─
   block: { marginBottom: space.xl },
   headline: { ...type.headlineLg, fontWeight: 700, color: palette.ink, marginBottom: space.md },
+
+  // ─ 장 표제지 ─
+  // 쪽 높이를 다 쓰고 가운데에 세운다. 다음 덩어리가 break 로 넘어가므로
+  // 이 뷰 하나가 한 쪽을 온전히 차지한다.
+  chapterCover: { height: 680, justifyContent: "center", alignItems: "flex-start" },
+  chapterNumber: { ...type.headlineLg, fontSize: 64, fontWeight: 700, color: palette.accent, opacity: 0.35 },
+  chapterRule: { width: 48, height: 2, backgroundColor: palette.accent, marginVertical: space.md },
+  chapterTitle: { ...type.headlineLg, fontWeight: 700, color: palette.ink, marginBottom: space.sm },
+  chapterLead: { ...type.bodyLg, color: palette.inkMuted, maxWidth: 360 },
   summary: { ...type.bodyLg, color: palette.ink, marginBottom: space.md },
   keywordRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   keyword: {
@@ -158,18 +168,29 @@ export function ReportDocument(input: ReportPdfInput) {
           <ElementBars counts={elements} />
         </View>
 
+        {/* 장마다 표제지를 한 장 두고, 본문은 그다음 쪽부터 시작한다.
+            종이로 읽을 때 장이 바뀌는 자리가 눈에 보이고, 소장용 두께도 나온다.
+            break 는 '이 덩어리 앞에서 쪽을 넘겨라'는 뜻이라 빈 쪽이 생기지 않는다. */}
         {report.sections.map((section, index) => (
-          <View key={section.title} style={styles.block}>
-            <Eyebrow>{`${index + 1}장`}</Eyebrow>
-            <SectionTitle>{section.title}</SectionTitle>
-            <Text style={styles.lead}>{section.lead}</Text>
-            {section.body.map((paragraph, paragraphIndex) => (
-              <Text key={paragraphIndex} style={styles.paragraph}>
-                {paragraph}
-              </Text>
-            ))}
-            <Evidence items={section.evidence} />
-          </View>
+          <React.Fragment key={section.title}>
+            <View style={styles.chapterCover} break>
+              <Text style={styles.chapterNumber}>{String(index + 1).padStart(2, "0")}</Text>
+              <View style={styles.chapterRule} />
+              <Text style={styles.chapterTitle}>{section.title}</Text>
+              <Text style={styles.chapterLead}>{section.lead}</Text>
+            </View>
+
+            <View style={styles.block} break>
+              <Eyebrow>{`${index + 1}장`}</Eyebrow>
+              <SectionTitle>{section.title}</SectionTitle>
+              {section.body.map((paragraph, paragraphIndex) => (
+                <Text key={paragraphIndex} style={styles.paragraph}>
+                  {paragraph}
+                </Text>
+              ))}
+              <Evidence items={section.evidence} />
+            </View>
+          </React.Fragment>
         ))}
 
         <View style={styles.block} break>
