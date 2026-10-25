@@ -41,7 +41,10 @@ export function WebtoonMedia({
   active?: boolean;
   className?: string;
 }) {
-  const playVideo = Boolean(asset.video) && !still;
+  // 보이지 않는 카드까지 <video> 로 두면 안 된다. 스물두 장을 한꺼번에 받으려다
+  // 브라우저가 로딩을 조르고, 준비가 안 된 영상은 투명한 채로 남아 까만 칸이 된다.
+  // 화면 밖에서는 정지컷을 깔고, 들어온 카드만 영상으로 바꾼다.
+  const playVideo = Boolean(asset.video) && !still && active;
 
   return (
     <div aria-hidden className={cn("absolute inset-0 overflow-hidden bg-surface-container-lowest", className)}>
