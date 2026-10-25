@@ -83,7 +83,10 @@ function plan() {
   let images = 0;
   let videos = 0;
   for (const guide of guides) {
-    if (force || !existsSync(resolve(root, `public/webtoon/${guide}/character.webp`))) images += 1;
+    // 캐릭터 시트는 --force 로도 다시 뽑지 않는다. 모든 캐릭터 컷이 이 한 장을 기준으로
+    // 그려져 있어, 여기서 얼굴이 바뀌면 이미 만들어 둔 컷들과 다른 사람이 된다.
+    // 정말 새 얼굴이 필요하면 character.webp 를 직접 지운다.
+    if (!existsSync(resolve(root, `public/webtoon/${guide}/character.webp`))) images += 1;
     for (const shot of SHOTS[guide].filter((item) => !only || only.includes(item.key))) {
       if (force || !existsSync(resolve(root, `public/webtoon/${guide}/${shot.key}.webp`))) images += 1;
       if (withVideo && (force || !existsSync(resolve(root, `public/webtoon/${guide}/${shot.key}.mp4`)))) videos += 1;
@@ -138,7 +141,8 @@ async function main() {
     const characterPath = resolve(root, `public/webtoon/${guide}/character.webp`);
     let characterUrl: string | null = null;
     try {
-      if (force || !existsSync(characterPath)) {
+      // plan() 과 같은 이유로 --force 를 보지 않는다 — 얼굴의 원본은 한 번만 뽑는다
+      if (!existsSync(characterPath)) {
         console.log("  👤 캐릭터 시트 생성…");
         const url = await generateImage(IMAGE_MODEL, {
           prompt: `${WEBTOON_STYLE} Character reference sheet, full body front view and a clear face close-up side by side on a plain dark background. ${CHARACTERS[guide]}`,
