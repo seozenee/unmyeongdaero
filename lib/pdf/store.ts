@@ -25,6 +25,12 @@ export async function ensureReadingPdf(reading: Reading): Promise<{ token: strin
   const report = getReport(reading.reportSlug);
   if (!report || report.kind !== "report") return null;
 
+  // 손에 든 reading 은 몇 초 전의 사본일 수 있다. 완성 직후에 굽고, 곧이어 알림이 또
+  // 부르는 길이 있어서다. 저장된 행을 한 번 더 보고 이미 구워져 있으면 그대로 쓴다 —
+  // 그러지 않으면 같은 풀이를 두 번 굽고, 카톡에 넣은 코드가 두 번째 것으로 바뀐다.
+  const current = await getRepository().getReading(reading.id);
+  if (current?.pdfToken && current.pdfPath) return { token: current.pdfToken, path: current.pdfPath };
+
   // 로컬 개발(스토리지 없음)에서는 굽지 않는다. 알림도 어차피 모의 발송이다.
   if (modes.data() !== "supabase") {
     console.info(`[pdf] 스토리지가 없어 보관을 건너뜁니다 (reading ${reading.id})`);
@@ -52,6 +58,21 @@ export async function ensureReadingPdf(reading: Reading): Promise<{ token: strin
     pdfCreatedAt: new Date().toISOString(),
   });
   return { token, path };
+}
+
+/**
+ * 스토리지에 둔 PDF 를 그대로 가져온다.
+ *
+ * 내려받기 요청마다 다시 굽지 않기 위한 것이다. 조판은 몇 초가 걸리고 서체를 통째로
+ * 심어야 해서, 같은 파일을 받을 때마다 치르기에는 비싸다.
+ */
+export async function readStoredPdf(path: string): Promise<Buffer | null> {
+  const { data, error } = await getSupabaseAdmin().storage.from(BUCKET).download(path);
+  if (error || !data) {
+    console.error(`[pdf] 보관본 읽기 실패 (${path})`, error);
+    return null;
+  }
+  return Buffer.from(await data.arrayBuffer());
 }
 
 /** 짧은 주소가 가리킬 실제 내려받기 주소. 잠깐만 살아 있다 */

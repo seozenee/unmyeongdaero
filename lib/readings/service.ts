@@ -7,6 +7,7 @@ import type { AppUser } from "@/lib/auth/session";
 import { getRepository, type BirthProfile, type Reading, type StoredSazu } from "@/lib/db";
 import { modes } from "@/lib/env";
 import { AppError } from "@/lib/errors";
+import { ensureReadingPdf } from "@/lib/pdf/store";
 import { getReport, type ReportProduct } from "@/lib/reports/catalog";
 import { buildManseTopics } from "@/lib/manse";
 import { SazuApiError } from "@/lib/sazu/errors";
@@ -179,7 +180,15 @@ async function runGeneration(reading: Reading, report: ReportProduct, live: Retu
 
     // PDF 를 굽고 카톡으로 알린다. 화면을 이미 닫은 사람도 결과를 받게 하는 것이 목적이므로,
     // 스트림을 닫은 뒤에 한다. 오래 걸려도 사용자를 기다리게 하지 않는다.
-    await notifyReading({ ...reading, script: result, generatedAt }, report, "reading-ready").catch((error) =>
+    //
+    // 굽는 일을 알림 안에 두지 않고 여기서 먼저 한다. 알림은 번호를 남긴 사람에게만 가는데,
+    // 번호를 남기지 않았다고 해서 보관본이 없어야 할 이유는 없다. 그 사람도 나중에
+    // 내려받기를 누르면 조판이 끝나기를 기다려야 했다.
+    const finished = { ...reading, script: result, generatedAt };
+    await ensureReadingPdf(finished).catch((error) =>
+      console.error(`[reading ${reading.id}] PDF 보관 실패`, error),
+    );
+    await notifyReading(finished, report, "reading-ready").catch((error) =>
       console.error(`[reading ${reading.id}] 완료 알림 실패`, error),
     );
   } catch (error) {
