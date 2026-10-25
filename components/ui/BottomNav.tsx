@@ -5,9 +5,12 @@ import { usePathname } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
 import { cn } from "@/lib/cn";
 
+// 가운데 자리를 검색이 쓰고 있었다. 상품이 열일곱 개뿐이고 첫 화면이 주제별 줄로
+// 깔려 있어, 검색어를 치러 들어오는 사람보다 "물어볼 데가 없나" 하고 누르는 사람이
+// 훨씬 많다. 그 자리를 안내자에게 직접 묻는 채팅에 내준다.
 const NAV_ITEMS = [
   { href: "/", label: "홈", icon: "home" },
-  { href: "/search", label: "검색", icon: "search" },
+  { href: "/consult", label: "채팅", icon: "chat" },
   { href: "/library", label: "보관함", icon: "auto_stories" },
 ] as const;
 
