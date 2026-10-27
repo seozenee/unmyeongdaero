@@ -52,7 +52,6 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const METHODS = [
   { id: "CARD", label: "신용·체크카드", icon: "credit_card" },
   { id: "TRANSFER", label: "계좌이체", icon: "account_balance" },
-  { id: "MOBILE_PHONE", label: "휴대폰", icon: "smartphone" },
 ] as const;
 
 type PaymentMethod = (typeof METHODS)[number]["id"];
@@ -188,9 +187,7 @@ export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice 
             method: "CARD",
             card: { useEscrow: false, flowMode: "DEFAULT", useCardPoint: false, useAppCardOnly: false },
           })
-        : method === "TRANSFER"
-          ? payment.requestPayment({ ...common, method: "TRANSFER", transfer: { cashReceipt: { type: "소득공제" } } })
-          : payment.requestPayment({ ...common, method: "MOBILE_PHONE" }));
+        : payment.requestPayment({ ...common, method: "TRANSFER", transfer: { cashReceipt: { type: "소득공제" } } }));
     } catch (error) {
       // 구매자가 결제창을 닫은 것도 여기로 온다 — 실패로 기록하되 조용히 넘긴다
       console.error(error);
@@ -253,7 +250,7 @@ export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice 
 
       <fieldset className="flex flex-col gap-space-sm">
         <legend className="mb-space-sm font-label-md text-label-md text-on-surface">결제수단</legend>
-        <div className="grid grid-cols-3 gap-space-xs">
+        <div className="grid grid-cols-2 gap-space-xs">
           {METHODS.map((item) => {
             const active = item.id === method;
             return (
