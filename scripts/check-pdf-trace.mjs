@@ -10,7 +10,7 @@
 //
 // 그래서 추적 결과(.nft.json)를 열어 "런타임이 집을 파일"이 그 안에 있는지 본다.
 // 빌드 뒤에 돌고, 없으면 빌드를 실패시킨다 — 배포하고 나서 아는 것보다 낫다.
-import { readFileSync, existsSync, globSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 
@@ -47,10 +47,16 @@ function manifestPath(pkg) {
   try {
     return require.resolve(`${pkg}/package.json`);
   } catch {
+    // glob 을 쓰지 않는다 — fs.globSync 는 Node 22 부터라서, 그보다 낮은 데서 빌드하면
+    // 이 검사가 터지며 배포까지 함께 세운다. 막으려고 둔 것이 막는 일이 되면 안 된다.
     const flat = pkg.replace("/", "+");
-    const [found] = globSync(`node_modules/.pnpm/${flat}@*/node_modules/${pkg}/package.json`);
-    if (!found) throw new Error(`${pkg} 를 찾을 수 없다 — 설치되어 있는가?`);
-    return found;
+    const prefix = `${flat}@`;
+    const versions = readdirSync("node_modules/.pnpm").filter((dir) => dir.startsWith(prefix));
+    for (const version of versions) {
+      const found = path.join("node_modules/.pnpm", version, "node_modules", pkg, "package.json");
+      if (existsSync(found)) return found;
+    }
+    throw new Error(`${pkg} 를 찾을 수 없다 — 설치되어 있는가?`);
   }
 }
 
