@@ -279,6 +279,19 @@ export function cityInfo(name: string | undefined): CityInfo {
 }
 
 /**
+ * 우리가 경도를 아는 곳인가.
+ *
+ * 모르는 이름이 들어오면 cityInfo 는 서울로 계산한다. 그 자체는 어쩔 수 없지만,
+ * 화면에는 입력한 이름이 그대로 적히면 서울로 계산한 것을 그 도시로 계산한 것처럼
+ * 보여 주게 된다. 틀린 값을 맞다고 보여 주는 쪽이 비어 있는 것보다 나쁘다.
+ *
+ * 그래서 계산에 실제로 쓴 곳을 적을 수 있게, 아는 이름인지 따로 물을 수 있게 둔다.
+ */
+export function isKnownCity(name: string | undefined): boolean {
+  return Boolean(name && CITIES[name]);
+}
+
+/**
  * 시계 시각과 진태양시의 차이(분).
  * 표준시 자오선보다 서쪽에 있으면 태양이 늦게 뜨므로 음수가 된다.
  * (예: 서울 126.98도, 표준시 135도 → 약 -32분)

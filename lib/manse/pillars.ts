@@ -9,7 +9,7 @@
 //  2) 진태양시: 시계 시각이 아니라 태양 위치로 시주를 정한다(서울 기준 약 -32분).
 //  3) 야자시: 23시부터 다음 날로 넘긴다(한국 만세력 다수 관행).
 import { Lunar, Solar } from "lunar-typescript";
-import { cityInfo } from "./cities";
+import { cityInfo, isKnownCity } from "./cities";
 import { koreanClock } from "./korea-time";
 
 export interface BirthInput {
@@ -166,7 +166,8 @@ export function computeFourPillars(input: BirthInput): PillarsResult {
       solarTimeOffsetMinutes: Math.round(offset),
       standardMeridian: meridian,
       summerTime: dstMinutes !== 0,
-      city: input.city ?? "서울",
+      // 경도를 모르는 이름이면 서울로 계산했다 — 그 사실을 그대로 적는다
+      city: isKnownCity(input.city) ? input.city! : "서울",
       dayChangedByNightZi: dayChanged,
     },
   };

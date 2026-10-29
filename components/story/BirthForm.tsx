@@ -320,6 +320,15 @@ export function BirthForm({ title, submitLabel = "다 적었어요", initial, on
                     ))}
                   </optgroup>
                 ))}
+                {/*
+                  목록에 없는 곳에서 태어난 사람에게 직접 쓰게 하지 않는 이유가 있다.
+                  우리가 경도를 모르는 이름을 받으면 계산은 서울로 떨어지는데, 화면에는
+                  적어 넣은 도시가 그대로 남는다. 서울로 계산한 것을 그 도시로 계산한 것처럼
+                  보여 주는 셈이다. 그래서 값은 서울로 두고, 무슨 일이 일어나는지 이름에 적는다.
+                */}
+                <optgroup label="그 밖">
+                  <option value="서울">목록에 없어요 — 서울 기준으로 계산</option>
+                </optgroup>
               </select>
             </label>
           </div>
