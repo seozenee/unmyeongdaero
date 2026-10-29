@@ -43,9 +43,24 @@ describe("템플릿", () => {
 
   it("빠진 치환값을 집어낸다", () => {
     expect(missingVariables("reading-ready", { "#{이름}": "김서진" })).toEqual([
-      "#{상품}", "#{발행일}", "#{주문번호}",
+      "#{상품}", "#{발행일}", "#{주문번호}", "#{코드}",
     ]);
-    expect(missingVariables("reading-ready", values)).toEqual([]);
+    expect(missingVariables("reading-ready", { ...values, "#{코드}": "abc" })).toEqual([]);
+  });
+
+  it("버튼 주소 변수도 빠지면 집어낸다 — 안 채우면 링크가 404 가 된다", () => {
+    // 본문 변수는 다 찼는데도 통과시키면 안 된다. 글은 멀쩡히 가고 링크만 죽는다.
+    for (const kind of ["reading-started", "reading-ready"] as const) {
+      expect(missingVariables(kind, values), kind).toContain(TEMPLATES[kind].linkVariable);
+    }
+  });
+
+  it("버튼 주소 변수는 본문에 없는 것이어야 한다", () => {
+    // 본문에 있는 변수를 링크 변수로 적어 두면 둘을 구분한 뜻이 사라진다
+    for (const template of Object.values(TEMPLATES)) {
+      expect(template.variables, template.name).not.toContain(template.linkVariable);
+      expect(template.body, template.name).not.toContain(template.linkVariable);
+    }
   });
 
   it("원문에 쓴 치환 자리와 선언한 변수 목록이 일치한다", () => {

@@ -38,6 +38,11 @@ export class SolapiSender implements NotifySender {
     }
 
     // 버튼은 템플릿에 등록된 순서·이름 그대로여야 한다. 주소만 여기서 채운다.
+    //
+    // 다만 카카오는 이 주소를 쓰지 않는다 — 실제로 눌리는 것은 템플릿에 등록된
+    // `…/v/#{코드}` 이고, 그 `#{코드}` 는 variables 로만 채워진다. 여기서 보내는 주소는
+    // 받아들여지지만 무시된다(그래서 발송은 성공하는데 링크만 404 가 났다).
+    // 그래도 남겨 둔다 — 솔라피 로그에 "어디로 보냈어야 하는지"가 함께 남는다.
     const buttons = template.buttons
       .map((button) => {
         const url = request.links[button.kind];

@@ -11,16 +11,32 @@ const read = (name: string) => {
 /**
  * 배포 환경변수에는 "example.com" 처럼 프로토콜 없이 넣기 쉽다.
  * 그대로 new URL() 에 넘기면 예외가 나고 빌드가 통째로 깨지므로 여기서 한 번 보정한다.
+ *
+ * 비어 있을 때 곧장 localhost 로 떨어뜨리지는 않는다. 이 주소는 결제 복귀 주소와
+ * 카카오톡 버튼 주소에 그대로 박히는데, localhost 가 박히면 개발 중에는 아무 일도
+ * 없고 손님 휴대폰에서만 죽는다. 배포 환경이 알려 주는 주소를 먼저 쓰고,
+ * 그것도 없을 때만 localhost 로 간다.
  */
 function normalizeSiteUrl(value: string | undefined) {
-  const fallback = "http://localhost:3001";
-  if (!value) return fallback;
-  const withProtocol = /^https?:\/\//i.test(value) ? value : `https://${value}`;
-  try {
-    return new URL(withProtocol).origin;
-  } catch {
-    return fallback;
+  const candidates = [
+    value,
+    read("NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL"),
+    read("VERCEL_PROJECT_PRODUCTION_URL"),
+    read("NEXT_PUBLIC_VERCEL_URL"),
+    read("VERCEL_URL"),
+  ];
+
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    const withProtocol = /^https?:\/\//i.test(candidate) ? candidate : `https://${candidate}`;
+    try {
+      return new URL(withProtocol).origin;
+    } catch {
+      // 다음 후보로 넘어간다
+    }
   }
+
+  return "http://localhost:3001";
 }
 
 export const env = {
