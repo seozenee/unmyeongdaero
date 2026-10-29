@@ -2,7 +2,9 @@ import "server-only";
 
 import { waitUntil } from "@vercel/functions";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { z } from "zod";
 import { claudeBaseParams, finalText, getAnthropic } from "@/lib/ai/anthropic";
+import { callGemini, geminiText } from "@/lib/ai/gemini";
 import type { AppUser } from "@/lib/auth/session";
 import { getRepository, type BirthProfile, type Reading, type StoredSazu } from "@/lib/db";
 import { modes } from "@/lib/env";
@@ -118,6 +120,30 @@ export async function getOwnedPurchasedReading(user: AppUser, readingId: string)
 const STALE_GENERATION_MS = 3 * 60 * 1000;
 const today = () => new Date().toISOString().slice(0, 10);
 
+/**
+ * 제미나이로 보고서를 쓴다.
+ *
+ * Interactions API 는 조각을 흘려보내 주지 않으므로, 다 받은 뒤 한 번에 밀어 넣는다.
+ * 화면은 글자가 차오르는 연출을 그대로 쓰되 실제로는 완성본이 한 번에 들어간다 —
+ * 중간에 끊긴 JSON 을 파싱하려다 깨지는 것보다 낫다.
+ */
+async function generateWithGemini(
+  report: ReportProduct,
+  reading: Reading,
+  sazu: StoredSazu,
+  onDelta: (delta: string) => void,
+): Promise<StoryReport> {
+  const result = await callGemini({
+    input: `${buildReportSystemPrompt(report)}\n\n---\n\n${buildReportUserPrompt(report, reading, sazu, today())}`,
+    schema: z.toJSONSchema(storyReportSchema) as Record<string, unknown>,
+  });
+
+  const text = geminiText(result);
+  if (!text) throw new Error("[gemini] 빈 응답");
+  onDelta(text);
+  return softenDeep(storyReportSchema.parse(JSON.parse(text)));
+}
+
 async function generateWithClaude(
   report: ReportProduct,
   reading: Reading,
@@ -162,7 +188,9 @@ async function runGeneration(reading: Reading, report: ReportProduct, live: Retu
     }
 
     let result: StoryReport;
-    if (modes.ai() === "anthropic") {
+    if (modes.ai() === "gemini") {
+      result = await generateWithGemini(report, reading, sazu, live.push);
+    } else if (modes.ai() === "anthropic") {
       result = await generateWithClaude(report, reading, sazu, live.push);
     } else {
       result = buildTemplateReport(report, reading, sazu);

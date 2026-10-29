@@ -27,6 +27,8 @@ export const env = {
   siteUrl: normalizeSiteUrl(read("NEXT_PUBLIC_SITE_URL")),
   anthropicApiKey: read("ANTHROPIC_API_KEY"),
   anthropicModel: read("ANTHROPIC_MODEL"),
+  geminiApiKey: read("GEMINI_API_KEY"),
+  geminiModel: read("GEMINI_MODEL"),
   supabaseUrl: read("SUPABASE_URL"),
   supabaseAnonKey: read("SUPABASE_ANON_KEY"),
   supabaseServiceRoleKey: read("SUPABASE_SERVICE_ROLE_KEY"),
@@ -59,7 +61,7 @@ const tossReady = Boolean(env.tossClientKey && env.tossSecretKey);
 
 export type DataMode = "supabase" | "local";
 export type PaymentMode = "toss" | "mock";
-export type AiMode = "anthropic" | "template";
+export type AiMode = "gemini" | "anthropic" | "template";
 
 export class ServiceNotConfiguredError extends Error {
   constructor(service: string, variables: string[]) {
@@ -82,7 +84,11 @@ export const modes = {
     isFreeAccess
       ? "mock"
       : pick(tossReady, "toss", "mock", "토스페이먼츠", ["NEXT_PUBLIC_TOSS_CLIENT_KEY", "TOSS_SECRET_KEY"]),
-  ai: (): AiMode => pick(Boolean(env.anthropicApiKey), "anthropic", "template", "Anthropic", ["ANTHROPIC_API_KEY"]),
+  // 제미나이가 있으면 그쪽을 먼저 쓴다. 둘 다 없으면 규칙 기반 템플릿으로 떨어진다.
+  ai: (): AiMode =>
+    env.geminiApiKey
+      ? "gemini"
+      : pick(Boolean(env.anthropicApiKey), "anthropic", "template", "Anthropic", ["ANTHROPIC_API_KEY"]),
 };
 
 /** sazu Free 키는 5개 샘플 프로필만 계산하는 샌드박스로 동작한다 */
