@@ -1,5 +1,23 @@
-// pdfkit 의 표준 14서체. pnpm 은 실제 파일을 .pnpm 아래 버전 폴더에 두므로 glob 으로 집는다.
-const PDFKIT_FONTS = "./node_modules/.pnpm/pdfkit@*/node_modules/pdfkit/js/standard-fonts/**";
+// pdfkit 에서 람다에 함께 실어야 하는 파일. pnpm 은 실제 파일을 .pnpm 아래 버전 폴더에
+// 두므로 glob 으로 집는다.
+//
+// `js/pdfkit.js` 가 목록의 첫 줄인 이유가 있다. pdfkit 의 package.json 은 진입점을
+// 조건별로 둘로 나눠 둔다.
+//
+//   "." : { node: { import: "./js/pdfkit.node.mjs", require: "./js/pdfkit.js" } }
+//
+// Next 의 파일 추적은 `import` 쪽을 따라가 .mjs 만 챙겨 간다. 그런데 서버 번들은
+// CommonJS 라서 런타임에는 `require` 쪽, 즉 `js/pdfkit.js` 를 집는다. 추적이 간 길과
+// 실행이 가는 길이 엇갈려서, 번들에서 빼내고 서체까지 챙겨 넣어도 정작 본체가 없었다.
+//
+// 로컬에서는 node_modules 가 통째로 있어 드러나지 않는다. 서버리스에 올라간 뒤에만
+// MODULE_NOT_FOUND 로 터지므로, 어긋났는지 빌드 때 확인한다(scripts/check-pdf-trace.mjs).
+const PDFKIT_FILES = [
+  "./node_modules/.pnpm/pdfkit@*/node_modules/pdfkit/js/pdfkit.js",
+  "./node_modules/.pnpm/pdfkit@*/node_modules/pdfkit/js/output.cjs",
+  "./node_modules/.pnpm/pdfkit@*/node_modules/pdfkit/js/data/**",
+  "./node_modules/.pnpm/pdfkit@*/node_modules/pdfkit/js/standard-fonts/**",
+];
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -26,10 +44,10 @@ const nextConfig = {
 
     outputFileTracingIncludes: {
       // PDF 를 굽는 모든 길. 한 곳이라도 빠지면 그 길에서만 터진다.
-      "/api/readings/[id]/pdf": [PDFKIT_FONTS],
-      "/api/readings/[id]/generate": [PDFKIT_FONTS],
-      "/r/[token]": [PDFKIT_FONTS],
-      "/v/[token]": [PDFKIT_FONTS],
+      // (/v/[token] 은 보고서 화면으로 되돌려 보내기만 하므로 넣지 않는다)
+      "/api/readings/[id]/pdf": PDFKIT_FILES,
+      "/api/readings/[id]/generate": PDFKIT_FILES,
+      "/r/[token]": PDFKIT_FILES,
     },
   },
   async headers() {

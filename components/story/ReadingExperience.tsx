@@ -77,7 +77,23 @@ export function ReadingExperience(props: ReadingExperienceProps) {
     setDownloading(true);
     try {
       const response = await fetch(`/api/readings/${props.readingId}/pdf`, { cache: "no-store" });
-      if (!response.ok) throw new Error(String(response.status));
+
+      // 서버가 왜 안 됐는지 말해 주면 그대로 보여 준다.
+      //
+      // 전에는 응답을 보지 않고 한 문장으로 덮었다. "문제가 생겼어요"만 남으니 손님은
+      // 다시 눌러 볼 수밖에 없고, 우리도 로그인이 풀린 것인지 풀이가 덜 된 것인지
+      // 서버가 터진 것인지 알 수 없었다. 같은 신고를 세 번 받고도 원인을 못 찾은 이유다.
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as
+          | { error?: { code?: string; message?: string } }
+          | null;
+        const code = body?.error?.code;
+        setFailure(
+          body?.error?.message ??
+            (code ? `PDF 를 만들지 못했어요. (${code})` : `PDF 를 만들지 못했어요. (${response.status})`),
+        );
+        return;
+      }
 
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
@@ -87,8 +103,10 @@ export function ReadingExperience(props: ReadingExperienceProps) {
       link.click();
       // 곧바로 지우면 내려받기가 시작되기 전에 취소되는 브라우저가 있다
       setTimeout(() => URL.revokeObjectURL(url), 10_000);
-    } catch {
-      setFailure("PDF 를 만드는 중 문제가 생겼어요. 잠시 뒤 다시 시도해 주세요.");
+    } catch (error) {
+      // 여기까지 오는 것은 네트워크가 끊긴 경우다 — 서버는 아무 말도 하지 않았다
+      console.error("[pdf] 내려받기 실패", error);
+      setFailure("연결이 끊겼어요. 잠시 뒤 다시 시도해 주세요.");
     } finally {
       setDownloading(false);
     }

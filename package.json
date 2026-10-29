@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "pnpm tokens:check && pnpm db:seed:check && next build",
+    "build": "pnpm tokens:check && pnpm db:seed:check && next build && pnpm pdf:trace:check",
     "webtoon:generate": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/generate-webtoon-assets.mts",
     "db:seed": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/generate-report-seed.mts",
     "db:seed:check": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/generate-report-seed.mts --check",
@@ -20,6 +20,7 @@
     "tokens": "node scripts/extract-design-tokens.mjs",
     "tokens:check": "node scripts/extract-design-tokens.mjs --check",
     "pdf:preview": "PDF_PREVIEW=1 vitest run lib/pdf/__tests__/render.test.ts",
+    "pdf:trace:check": "node scripts/check-pdf-trace.mjs",
     "account:review": "tsx --env-file=.env.local scripts/create-review-account.mts",
     "notify:status": "tsx --env-file=.env.local scripts/notify-status.mts"
   },
