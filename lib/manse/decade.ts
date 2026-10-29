@@ -7,6 +7,7 @@
 //
 // 절기는 24절기 가운데 '절(節)' 12개만 쓴다. 중기(中氣)는 대운을 가르지 않는다.
 import { Solar } from "lunar-typescript";
+import { koreanClock } from "./korea-time";
 import type { FourPillars } from "./pillars";
 import { BRANCHES, STEM_POLARITY, STEMS, type Branch, type Stem } from "./tables";
 
@@ -89,8 +90,18 @@ export function computeDecadeFortune(input: DecadeInput): DecadeResult {
   const direction: "순행" | "역행" = forward ? "순행" : "역행";
 
   // 2) 시작 나이 — 절기까지의 거리를 3일 = 1년으로 환산
-  //    절기 시각은 중국시 기준이므로 한국시 출생 시각을 같은 기준으로 맞춘다
-  const birthUtc = Date.UTC(birth.year, birth.month - 1, birth.day, birth.hour ?? 0, birth.minute ?? 0) - 60 * 60_000;
+  //
+  //    절기 시각은 중국시(동경 120도) 기준이므로 출생 시각을 같은 기준으로 옮긴다.
+  //    한동안 무조건 한 시간을 뺐는데, 그건 지금의 한국 표준시(동경 135도)만 맞는 값이다.
+  //    1954-03-21 ~ 1961-08-09 에는 동경 127.5도를 써서 차이가 30분이었고, 서머타임이
+  //    돌던 해에는 적힌 시각 자체가 한 시간 앞서 있다. 둘을 빼먹으면 대운수가 한 살
+  //    어긋나는 자리가 생긴다.
+  const clock = koreanClock(birth.year, birth.month, birth.day);
+  const toChinaMinutes = clock.meridian / 15 - 8; // 지금은 1시간, 1954~61 은 30분
+  const birthUtc =
+    Date.UTC(birth.year, birth.month - 1, birth.day, birth.hour ?? 0, birth.minute ?? 0) +
+    clock.dstMinutes * 60_000 -
+    toChinaMinutes * 60 * 60_000;
   const terms = majorTermsAround(birth.year);
 
   const target = forward

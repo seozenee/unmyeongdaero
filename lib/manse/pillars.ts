@@ -145,7 +145,14 @@ export function computeFourPillars(input: BirthInput): PillarsResult {
   const hour = input.hour === null ? null : toPillar(localLunar.getTimeInGanZhi());
 
   const pad = (n: number) => String(n).padStart(2, "0");
-  const dayChanged = localLunar.getSolar().getDay() !== trueTime.day;
+  // 야자시로 날이 넘어갔는가.
+  //
+  // 전에는 lunar 가 돌려준 양력 날짜와 보정 시각의 날짜를 견주었는데, 그 둘은 같은 날을
+  // 가리켜서 날이 넘어가도 false 가 나왔다. 일주는 실제로 다음 날 것으로 바뀌는데
+  // 화면에는 "안 넘어갔다"고 적히던 셈이다.
+  //
+  // 기준은 하나다 — 진태양시로 23시를 넘겼는가. 그게 이 엔진이 쓰는 야자시 관행이다.
+  const dayChanged = input.hour !== null && trueTime.hour >= 23;
 
   return {
     year,
