@@ -145,6 +145,16 @@ export default async function MansePage({
               reading.subject.isLunar ? `음력${reading.subject.isLeapMonth ? " 윤달" : ""}` : "양력"
             })`,
           },
+          // 음력으로 적은 사람에게는 이 줄이 가장 중요하다. 변환이 맞았는지 확인할 길이
+          // 없으면 "음력이 이상하다"는 말이 나온다. 접힌 근거 안에 두지 않고 위로 올린다.
+          ...(reading.subject.isLunar && raw.solarDate
+            ? [
+                {
+                  label: "양력으로는",
+                  value: `${raw.solarDate.replace(/-/g, ".")} — 이 날짜로 계산했어요`,
+                },
+              ]
+            : []),
           {
             label: "태어난 시각",
             value:

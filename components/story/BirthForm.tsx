@@ -3,6 +3,7 @@
 import { useId, useMemo, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { cn } from "@/lib/cn";
+import { Lunar } from "lunar-typescript";
 import type { BirthProfile } from "@/lib/db/types";
 import birthCities from "@/lib/saju/birth-cities.json";
 
@@ -20,8 +21,13 @@ const FIELD =
 /** 그 해 그 달이 며칠까지 있는지 */
 const daysInMonth = (year: number, month: number) => new Date(year, month, 0).getDate();
 
-/** "19950312" → { year, month, day }. 달력에 없는 날이면 null */
-function parseBirthDate(digits: string) {
+/**
+ * "19950312" → { year, month, day }. 달력에 없는 날이면 null.
+ *
+ * 음력은 달마다 29일이거나 30일이라, 양력 달 길이로 재면 없는 날을 통과시킨다.
+ * 음력일 때는 실제 그 달이 며칠까지 있는지 달력에 물어본다.
+ */
+function parseBirthDate(digits: string, isLunar: boolean, isLeap: boolean) {
   if (digits.length !== 8) return null;
   const year = Number(digits.slice(0, 4));
   const month = Number(digits.slice(4, 6));
@@ -29,9 +35,20 @@ function parseBirthDate(digits: string) {
   const thisYear = new Date().getFullYear();
   if (year < 1900 || year > thisYear) return null;
   if (month < 1 || month > 12) return null;
-  // 음력은 윤달 때문에 양력 달력보다 하루 모자랄 수 있어 30일까지는 받아 준다
-  if (day < 1 || day > Math.max(daysInMonth(year, month), 30)) return null;
-  return { year, month, day };
+  if (day < 1) return null;
+
+  if (!isLunar) return day <= daysInMonth(year, month) ? { year, month, day } : null;
+
+  // 윤달은 음수 월로 적는다
+  try {
+    const lunar = Lunar.fromYmdHms(year, isLeap ? -month : month, day, 12, 0, 0);
+    const solar = lunar.getSolar();
+    // 없는 날을 넣으면 라이브러리가 조용히 다른 날로 굴러간다 — 되돌려 보고 같은지 확인한다
+    if (lunar.getDay() !== day || Math.abs(lunar.getMonth()) !== month) return null;
+    return { year, month, day, solar: `${solar.getYear()}.${solar.getMonth()}.${solar.getDay()}` };
+  } catch {
+    return null;
+  }
 }
 
 /** 적어 둔 여덟 자를 사람이 읽는 말로 */
@@ -104,7 +121,7 @@ export function BirthForm({ title, submitLabel = "다 적었어요", initial, on
   const [city, setCity] = useState(initial?.birthCity ?? "서울");
   const [error, setError] = useState<string | null>(null);
 
-  const date = useMemo(() => parseBirthDate(digits), [digits]);
+  const date = useMemo(() => parseBirthDate(digits, calendar === "lunar", leap), [digits, calendar, leap]);
   const dateTyped = digits.length === 8;
 
   const STEPS = [
@@ -229,7 +246,9 @@ export function BirthForm({ title, submitLabel = "다 적었어요", initial, on
             />
             <span id={`${id}-date-help`} className="font-body-sm text-body-sm text-outline">
               {dateTyped && date
-                ? `${date.year}년 ${date.month}월 ${date.day}일 (${calendar === "lunar" ? "음력" : "양력"})`
+                ? calendar === "lunar" && "solar" in date && date.solar
+                  ? `음력 ${date.year}.${date.month}.${date.day}${leap ? " (윤달)" : ""} = 양력 ${date.solar}`
+                  : `${date.year}년 ${date.month}월 ${date.day}일 (양력)`
                 : digits
                   ? `${describeDigits(digits)}… 여덟 자리를 채워 주세요`
                   : "숫자만 눌러 주세요. 1995년 3월 12일이면 19950312"}
