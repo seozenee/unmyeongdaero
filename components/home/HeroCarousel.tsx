@@ -116,8 +116,13 @@ export function HeroCarousel({ products }: HeroCarouselProps) {
                   <span className="rounded-full bg-secondary px-3 py-1 font-label-sm text-label-sm text-on-secondary">
                     {report.categoryLabel}
                   </span>
+                  {/*
+                    제목에 브랜드 색 번짐을 한 겹 더 얹는다. 검은 그림자만 두면 글자가
+                    그림 위에 얹혀 있기만 하고, 불이 켜진 것처럼 보이지는 않는다.
+                    간판은 읽히는 것으로 모자라고 켜져 있어야 한다.
+                  */}
                   <span
-                    className="text-[2.75rem] leading-[1.08] text-on-surface [text-shadow:0_2px_16px_rgb(0_0_0/0.95),0_0_40px_rgb(0_0_0/0.7)]"
+                    className="text-[3rem] leading-[1.06] text-on-surface [text-shadow:0_2px_16px_rgb(0_0_0/0.95),0_0_40px_rgb(0_0_0/0.7),0_0_30px_rgb(240_82_46/0.55)]"
                     style={font ? { fontFamily: font } : undefined}
                   >
                     {report.title}

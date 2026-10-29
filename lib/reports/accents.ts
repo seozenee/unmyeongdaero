@@ -41,7 +41,7 @@ export const PRODUCT_ACCENT: Record<string, string> = {
   "child-dream": "242 112 58",
 };
 
-/** 기본값은 브랜드 보라. 모르는 상품도 화면이 비뚜로 보이지 않게 한다 */
-export const DEFAULT_ACCENT = "154 123 255";
+/** 기본값은 브랜드 주홍(인주). 모르는 상품도 화면이 비뚜로 보이지 않게 한다 */
+export const DEFAULT_ACCENT = "240 82 46";
 
 export const productAccent = (slug: string) => PRODUCT_ACCENT[slug] ?? DEFAULT_ACCENT;

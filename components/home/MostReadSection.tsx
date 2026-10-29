@@ -76,7 +76,7 @@ function DossierCard({ report }: { report: ReportProduct }) {
 
         <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 px-space-md pb-space-md">
           <span
-            className="text-[2rem] leading-tight text-on-surface [text-shadow:0_2px_12px_rgb(0_0_0/0.95)]"
+            className="text-[2rem] leading-tight text-on-surface [text-shadow:0_2px_12px_rgb(0_0_0/0.95),0_0_22px_rgb(240_82_46/0.5)]"
             style={font ? { fontFamily: font } : undefined}
           >
             {report.title}

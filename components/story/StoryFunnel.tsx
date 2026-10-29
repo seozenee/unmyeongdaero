@@ -328,6 +328,8 @@ export function StoryFunnel({ report, related = [] }: { report: ReportProduct; r
             key={`${step.target}-${cursor}`}
             title={birthTitle(report, step.target)}
             initial={(step.target === "subject" ? subject : partner) ?? undefined}
+            // 아이·상대의 생일을 기억해 두면 다음에 홈에서 그 원국이 내 것인 양 펼쳐진다
+            remember={step.target === "subject" && (report.roles?.subject ?? "self") === "self"}
             onSkip={
               step.optional
                 ? () => {

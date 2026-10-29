@@ -5,6 +5,7 @@ import { Icon } from "@/components/ui/Icon";
 import { cn } from "@/lib/cn";
 import { Lunar } from "lunar-typescript";
 import type { BirthProfile } from "@/lib/db/types";
+import { writeLocalProfile } from "@/lib/me/local-profile";
 import birthCities from "@/lib/saju/birth-cities.json";
 
 interface BirthFormProps {
@@ -13,6 +14,13 @@ interface BirthFormProps {
   initial?: Partial<BirthProfile>;
   onSubmit: (profile: BirthProfile) => void;
   onSkip?: () => void;
+  /**
+   * 이 사람이 "나"인가.
+   *
+   * 같은 양식으로 아이·상대의 생일도 받는다. 그건 내가 아니므로 기억해 두면 안 된다
+   * — 다음에 홈에 들렀을 때 아이의 원국이 내 것인 양 펼쳐지면 곤란하다.
+   */
+  remember?: boolean;
 }
 
 const FIELD =
@@ -99,7 +107,14 @@ function Segmented<T extends string>({
  *  · 날짜는 숫자로 바로 친다. 아는 사람은 여덟 자를 치는 게 가장 빠르다.
  *  · 달력에 없는 날은 그 자리에서 막는다. 결제 뒤에 알려 주는 건 늦다.
  */
-export function BirthForm({ title, submitLabel = "다 적었어요", initial, onSubmit, onSkip }: BirthFormProps) {
+export function BirthForm({
+  title,
+  submitLabel = "다 적었어요",
+  initial,
+  onSubmit,
+  onSkip,
+  remember = false,
+}: BirthFormProps) {
   const id = useId();
   const [step, setStep] = useState(0);
 
@@ -152,7 +167,7 @@ export function BirthForm({ title, submitLabel = "다 적었어요", initial, on
       return;
     }
     const [hourText, minuteText] = time.split(":");
-    onSubmit({
+    const profile: BirthProfile = {
       name: name.trim(),
       birthYear: date.year,
       birthMonth: date.month,
@@ -163,7 +178,10 @@ export function BirthForm({ title, submitLabel = "다 적었어요", initial, on
       isLunar: calendar === "lunar",
       isLeapMonth: calendar === "lunar" ? leap : undefined,
       birthCity: city,
-    });
+    };
+    // 다음에 홈에 들렀을 때 목록 대신 자기 원국부터 보이게 한다
+    if (remember) writeLocalProfile(profile);
+    onSubmit(profile);
   };
 
   return (

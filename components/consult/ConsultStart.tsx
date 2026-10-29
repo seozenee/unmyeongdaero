@@ -44,6 +44,7 @@ export function ConsultStart({ initialSubject }: { initialSubject: BirthProfile 
         submitLabel={busy ? "명식을 확인하고 있어요…" : "이 명식으로 상담 결제하기"}
         initial={initialSubject ?? undefined}
         onSubmit={start}
+        remember
       />
     </div>
   );

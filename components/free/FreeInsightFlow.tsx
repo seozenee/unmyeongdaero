@@ -69,7 +69,7 @@ export function FreeInsightFlow({ kind, title, description }: { kind: string; ti
         <>
           <p className="font-body-md text-body-md text-on-surface-variant">{description}</p>
           {error && <p className="rounded-lg bg-error-container/30 p-space-sm font-body-sm text-body-sm text-on-surface">{error}</p>}
-          <BirthForm title="나의 정보" submitLabel={busy ? "명식을 펼치고 있어요…" : "무료로 보기"} onSubmit={submit} />
+          <BirthForm title="나의 정보" submitLabel={busy ? "명식을 펼치고 있어요…" : "무료로 보기"} onSubmit={submit} remember />
         </>
       ) : (
         <>

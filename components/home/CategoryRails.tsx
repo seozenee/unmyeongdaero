@@ -251,7 +251,7 @@ function RailCard({ report, hook }: { report: ReportProduct; hook?: string }) {
 
         <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-0.5 px-space-sm pb-space-sm text-center">
           <span
-            className="text-[1.7rem] leading-tight text-on-surface [text-shadow:0_2px_12px_rgb(0_0_0/0.95)]"
+            className="text-[1.7rem] leading-tight text-on-surface [text-shadow:0_2px_12px_rgb(0_0_0/0.95),0_0_18px_rgb(240_82_46/0.45)]"
             style={font ? { fontFamily: font } : undefined}
           >
             {report.title}

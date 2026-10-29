@@ -41,7 +41,7 @@ describe("주제별 줄", () => {
         byslug.set(slug, [...(byslug.get(slug) ?? []), hook]);
       }
     }
-    for (const [slug, hooks] of byslug) {
+    for (const [slug, hooks] of Array.from(byslug)) {
       expect(new Set(hooks).size, `${slug} 가 여러 줄에서 같은 말을 한다`).toBe(hooks.length);
     }
   });
