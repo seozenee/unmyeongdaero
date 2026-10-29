@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
-import { formatKRW } from "@/lib/format";
 import type { ReportProduct } from "@/lib/reports/catalog";
 import { getGuide } from "@/lib/story/guides";
 
@@ -44,7 +43,11 @@ export function SearchCatalog({ products }: { products: ReportProduct[] }) {
               <span className="font-label-sm text-label-sm text-secondary">{report.categoryLabel}</span>
               <span className="font-label-md text-label-md text-on-surface">{report.title}</span>
               <span className="line-clamp-1 font-body-sm text-body-sm text-on-surface-variant">{report.description}</span>
-              <span className="font-label-md text-label-md text-on-surface">{formatKRW(report.price)}</span>
+              {/* 값은 결제 직전에만 — 찾는 자리에서는 들어올 이유를 적는다 */}
+              <span className="flex items-center gap-1 font-label-sm text-label-sm text-tertiary">
+                <Icon name="lock_open_right" className="text-[15px]" />
+                명식까지 무료로 보기
+              </span>
             </Link>
           </li>
         ))}

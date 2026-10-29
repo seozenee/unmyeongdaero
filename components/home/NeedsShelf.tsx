@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { GuideAvatar } from "@/components/story/GuideAvatar";
 import { Icon } from "@/components/ui/Icon";
-import { formatKRW } from "@/lib/format";
 import type { ReportCategory, ReportProduct } from "@/lib/reports/catalog";
 import { getGuide } from "@/lib/story/guides";
 import { STITCH_ASSETS } from "./assets";
@@ -61,14 +60,11 @@ export function NeedsShelf({ products }: { products: ReportProduct[] }) {
 
               <div className="flex flex-1 flex-col gap-space-xs p-space-md pt-space-sm">
                 <span className="line-clamp-2 font-label-md text-label-md text-on-surface">{report.title}</span>
-                <span className="mt-auto flex items-baseline justify-between pt-space-xs">
-                  <span className="flex items-baseline gap-1.5">
-                    {report.originalPrice && (
-                      <span className="font-label-sm text-label-sm text-outline line-through">
-                        {formatKRW(report.originalPrice)}
-                      </span>
-                    )}
-                    <span className="font-label-md text-label-md text-on-surface">{formatKRW(report.price)}</span>
+                <span className="mt-auto flex items-center justify-between pt-space-xs">
+                  {/* 값은 결제 직전에 한 번만 — 여기서는 공짜로 어디까지 보이는지를 적는다 */}
+                  <span className="flex items-center gap-1 font-label-sm text-label-sm text-tertiary">
+                    <Icon name="lock_open_right" className="text-[15px]" />
+                    명식까지 무료
                   </span>
                   <Icon
                     name="chevron_right"

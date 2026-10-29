@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     template: "%s | 운명대로",
   },
   description:
-    "정통 명리 계산 엔진 위에 서사형 해석을 얹은 사주 리포트. 구독 없이 단건 결제, 구매한 리포트는 보관함에서 영구 열람.",
+    "정통 명리 계산 엔진 위에 서사형 해석을 얹은 사주 리포트. 구독 없이 단건 결제, 구매한 리포트는 보관함에서 12개월 열람.",
 };
 
 export const viewport: Viewport = {

@@ -11,7 +11,6 @@ import { Icon } from "@/components/ui/Icon";
 import { getWebtoonAsset } from "@/components/webtoon/assets";
 import { WebtoonMedia } from "@/components/webtoon/WebtoonMedia";
 import { cn } from "@/lib/cn";
-import { formatKRW } from "@/lib/format";
 import { productAccent } from "@/lib/reports/accents";
 import type { ReportProduct } from "@/lib/reports/catalog";
 import { productFont } from "@/lib/reports/fonts";
@@ -132,7 +131,8 @@ export function ProductIntro({ report, soldCount, related = [], onStart, resumin
     `${report.chapters.length}장`,
     "12개월열람",
     "단건결제",
-    ...(report.discountLabel ? [report.discountLabel.replace(/\s+/g, "")] : []),
+    // 할인율은 값 이야기다. 여기는 "이게 나한테 맞는가"를 재는 자리라 값을 끌어오지 않는다
+    "명식까지무료",
   ];
   // 흐르는 띠는 목차 그대로. 띠에서는 띄어쓰기가 살아 있어 길어도 읽힌다
   const marquee = [...report.chapters, ...report.chapters];
@@ -176,14 +176,15 @@ export function ProductIntro({ report, soldCount, related = [], onStart, resumin
           </span>
         )}
 
-        {/* 할인 스티커 — 비뚜로 붙인 종이처럼 */}
-        {report.discountLabel && (
-          <span className="absolute right-space-md top-space-xl -rotate-[8deg] rounded-xl bg-secondary px-3 py-1.5 font-label-md text-label-md font-bold text-on-secondary shadow-xl">
-            {report.discountLabel}
-          </span>
-        )}
+        {/*
+          전에는 여기 할인율 스티커가 비뚜로 붙어 있었다. 눈에 가장 먼저 걸리는 자리에
+          값 이야기를 둔 셈이다. 값은 명식을 다 보여 준 뒤 결제 직전에 한 번만 꺼낸다.
+        */}
+        <span className="absolute right-space-md top-space-xl -rotate-[8deg] rounded-xl bg-secondary px-3 py-1.5 font-label-md text-label-md font-bold text-on-secondary shadow-xl">
+          여덟 글자까지 무료
+        </span>
 
-        {/* 아래 값·버튼 막대(약 9rem)에 해시태그가 가려지지 않게 그만큼 띄운다 */}
+        {/* 아래 버튼 막대(약 9rem)에 해시태그가 가려지지 않게 그만큼 띄운다 */}
         <div className="relative flex flex-col gap-space-sm px-margin pb-[9.5rem]">
           <span className="flex items-center gap-1.5">
             <GuideAvatar guide={guide} size="sm" />
@@ -419,7 +420,7 @@ export function ProductIntro({ report, soldCount, related = [], onStart, resumin
                   text: `${report.chapters.length}장짜리 한 편의 글이에요. 장마다 근거와 시기표가 붙어요.`,
                 },
                 { icon: "download", text: "화면으로도 보고, PDF 로 내려받아 두실 수도 있어요." },
-                { icon: "inventory_2", text: "보관함에 들어가요. 기간 제한 없이 다시 열려요." },
+                { icon: "inventory_2", text: "보관함에 들어가요. 결제일부터 12개월 동안 다시 열려요." },
                 { icon: "chat", text: "번호를 적어 두시면 다 쓰이는 대로 카카오톡으로 알려 드려요." },
               ].map((item) => (
                 <li key={item.icon} className="flex gap-space-sm">
@@ -489,32 +490,25 @@ export function ProductIntro({ report, soldCount, related = [], onStart, resumin
             지금까지 {soldCount.toLocaleString("ko-KR")}명이 이 풀이를 받아 갔어요
           </p>
         )}
-        <div className="flex items-center gap-space-md">
-          <div className="flex min-w-0 flex-col">
-            <span className="flex items-baseline gap-1.5">
-              {report.originalPrice && (
-                <span className="font-label-sm text-label-sm text-outline line-through">
-                  {formatKRW(report.originalPrice)}
-                </span>
-              )}
-              {report.discountLabel && (
-                <span className="rounded bg-secondary px-1.5 py-0.5 font-label-sm text-label-sm font-bold text-on-secondary">
-                  {report.discountLabel}
-                </span>
-              )}
-            </span>
-            <span className="font-price-display text-price-display text-on-surface">{formatKRW(report.price)}</span>
-          </div>
-          <button
-            type="button"
-            onClick={onStart}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-secondary py-4 font-label-md text-label-md font-bold text-on-secondary shadow-[0_6px_28px_rgb(var(--accent)/0.5)] transition-transform active:scale-[0.98]"
-          >
-            {resuming ? "이어서 보기" : `${josa(guide.name, "을/를")} 만나러 가기`}
-            <Icon name="arrow_forward" className="text-[18px]" />
-          </button>
-        </div>
-        <p className="mt-1 text-center font-label-sm text-label-sm text-outline">대화 입력은 무료 · 결제는 마지막에</p>
+        {/*
+          값을 여기서 뺐다. 상세페이지는 "이게 나한테 맞는가"를 재는 자리인데, 그 자리에
+          값이 크게 박혀 있으면 맞는지보다 싼지를 먼저 재게 된다. 값은 명식을 다 보고
+          결제 직전에 한 번만 보여 준다.
+
+          비운 자리는 버튼이 통째로 쓴다. 누르기 전에 알아야 하는 것은 값이 아니라
+          "여기서 돈이 나가지 않는다"는 것이다.
+        */}
+        <button
+          type="button"
+          onClick={onStart}
+          className="flex w-full items-center justify-center gap-1.5 rounded-2xl bg-secondary py-4 font-label-md text-label-md font-bold text-on-secondary shadow-[0_6px_28px_rgb(var(--accent)/0.5)] transition-transform active:scale-[0.98]"
+        >
+          {resuming ? "이어서 보기" : `${josa(guide.name, "을/를")} 만나러 가기`}
+          <Icon name="arrow_forward" className="text-[18px]" />
+        </button>
+        <p className="mt-1.5 text-center font-label-sm text-label-sm text-outline">
+          내 여덟 글자까지 무료로 봐요 · 결제는 맨 마지막에 한 번
+        </p>
       </div>
     </div>
   );
@@ -547,7 +541,7 @@ function RelatedCard({ report }: { report: ReportProduct }) {
           {report.title}
         </span>
       </div>
-      <span className="px-0.5 font-label-sm text-label-sm text-on-surface-variant">{formatKRW(report.price)}</span>
+      <span className="px-0.5 font-label-sm text-label-sm text-on-surface-variant">{report.categoryLabel}</span>
     </Link>
   );
 }

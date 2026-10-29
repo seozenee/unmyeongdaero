@@ -5,7 +5,6 @@ import { getPoster } from "@/components/home/posters";
 import { useInView } from "@/components/home/useInView";
 import { WebtoonMedia } from "@/components/webtoon/WebtoonMedia";
 import { Icon } from "@/components/ui/Icon";
-import { formatKRW } from "@/lib/format";
 import type { ReportProduct } from "@/lib/reports/catalog";
 import { productFont } from "@/lib/reports/fonts";
 import { getPitch } from "@/lib/reports/pitch";
@@ -95,13 +94,10 @@ function DossierCard({ report }: { report: ReportProduct }) {
           <Icon name="menu_book" className="text-[15px]" />
           12개월 열람
         </span>
-        <span className="flex items-baseline gap-1.5">
-          {report.originalPrice && (
-            <span className="font-label-sm text-label-sm text-outline line-through">
-              {formatKRW(report.originalPrice)}
-            </span>
-          )}
-          <span className="font-label-md text-label-md font-semibold text-on-surface">{formatKRW(report.price)}</span>
+        {/* 값은 결제 직전에만. 가장 많이 읽힌 자리일수록 값으로 고르게 하면 안 된다 */}
+        <span className="flex items-center gap-1 font-label-sm text-label-sm text-tertiary">
+          <Icon name="lock_open_right" className="text-[15px]" />
+          명식까지 무료
         </span>
       </div>
     </Link>

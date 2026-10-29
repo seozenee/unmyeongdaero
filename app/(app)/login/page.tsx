@@ -37,7 +37,7 @@ export default async function LoginPage({ searchParams }: { searchParams: { next
         <p className="font-body-md text-body-md text-on-surface-variant">
           구매한 리포트와 상담 기록은 계정 보관함에
           <br />
-          기간 제한 없이 안전하게 남아요.
+          12개월 동안 안전하게 남아요.
         </p>
       </div>
 

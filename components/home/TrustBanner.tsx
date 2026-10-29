@@ -18,10 +18,10 @@ const PROMISES: ReadonlyArray<{ icon: string; title: string; body: React.ReactNo
   },
   {
     icon: "inventory_2",
-    title: "영구 열람",
+    title: "12개월 열람",
     body: (
       <>
-        구매한 리포트는 계정 <strong>보관함에서 기간 제한 없이</strong> 다시 열고 내려받을 수 있어요.
+        구매한 리포트는 결제일부터 <strong>12개월 동안</strong> 보관함에서 다시 열고 내려받을 수 있어요.
       </>
     ),
   },

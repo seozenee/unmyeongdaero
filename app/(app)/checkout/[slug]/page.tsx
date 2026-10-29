@@ -132,7 +132,7 @@ export default async function CheckoutPage({
             </li>
           ) : (
             <li>
-              · 완성된 풀이는 <strong className="text-on-surface">보관함에서 기간 제한 없이</strong> 다시 볼 수 있어요.
+              · 완성된 풀이는 <strong className="text-on-surface">보관함에서 12개월 동안</strong> 다시 볼 수 있어요.
             </li>
           )}
           <li>
