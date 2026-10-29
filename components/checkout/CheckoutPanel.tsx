@@ -291,7 +291,7 @@ export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice 
         <span>{busy ? busyLabel[busy] : `${formatKRW(price)} · ${selected.label}로 ${ctaLabel}`}</span>
         {!busy && <Icon name="arrow_forward" className="text-[18px]" />}
       </button>
-      <p className="text-center font-label-sm text-label-sm text-outline">구독 결제 없음 · 영구 소장 단건 열람권</p>
+      <p className="text-center font-label-sm text-label-sm text-outline">구독 결제 없음 · 12개월 열람권</p>
 
       {mock && (
         <div className="fixed inset-0 z-[60] mx-auto flex w-full max-w-md items-end justify-center bg-black/60 motion-safe:animate-fade-in" role="dialog" aria-modal>

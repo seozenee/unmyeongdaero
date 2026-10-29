@@ -3,6 +3,9 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ManseConfirm } from "@/components/manse/ManseConfirm";
 import { ManseSheet, type ManseFact } from "@/components/manse/ManseSheet";
+import { ReadMeAloud } from "@/components/manse/ReadMeAloud";
+import { ELEMENT_SCENE, MISSING_SCENE, STRENGTH_SCENE } from "@/lib/manse/scenes";
+import { FIVE_ELEMENTS } from "@/lib/saju/ganji";
 import { Icon } from "@/components/ui/Icon";
 import { getCurrentUser, loginUrl } from "@/lib/auth/session";
 import { getRepository } from "@/lib/db";
@@ -92,6 +95,16 @@ export default async function MansePage({
     .filter((name): name is string => Boolean(name));
   if (sinsal.length > 0) facts.push({ label: "신살", value: sinsal.join(", "), hint: GLOSSARY.신살 });
 
+  // 돈을 받기 전에 먼저 하나 맞혀 보인다. 점이 아니라 분류다 — 아래 세 줄은 방금 계산한
+  // 신강약과 오행 분포에서만 나온다.
+  const strongest = counts ? [...FIVE_ELEMENTS].sort((a, b) => counts[b] - counts[a])[0] : null;
+  const empty = counts ? FIVE_ELEMENTS.find((element) => counts[element] === 0) : undefined;
+  const scenes = [
+    strength ? STRENGTH_SCENE[strength] : null,
+    strongest ? ELEMENT_SCENE[strongest] : null,
+    empty ? MISSING_SCENE[empty] : null,
+  ].filter((line): line is string => Boolean(line));
+
   // 계산 기준을 사람이 읽을 문장으로 옮긴다. 진태양시 보정처럼 "왜 이 글자가 나왔는지"를
   // 설명해 주는 값이라, 명식이 예상과 다를 때 확인할 수 있어야 한다.
   const raw = (at(modules, "basis") ?? {}) as {
@@ -125,6 +138,8 @@ export default async function MansePage({
           결제를 마치지 못했어요. 다시 시도해 주세요.
         </p>
       )}
+
+      <ReadMeAloud name={reading.subject.name} scenes={scenes} />
 
       <ManseSheet
         name={reading.subject.name}

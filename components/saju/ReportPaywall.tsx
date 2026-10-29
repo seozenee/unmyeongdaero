@@ -50,7 +50,7 @@ export function ReportPaywall({ report, teaser, showTitle = true }: ReportPaywal
           <span>지금 즉시 열람하기</span>
           <Icon name="arrow_forward" className="text-[18px]" />
         </Link>
-        <p className="text-center font-label-sm text-label-sm text-outline">구독 결제 없음 · 영구 소장 단건 열람권</p>
+        <p className="text-center font-label-sm text-label-sm text-outline">구독 결제 없음 · 12개월 열람권</p>
       </div>
     </section>
   );

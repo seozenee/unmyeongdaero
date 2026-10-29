@@ -288,7 +288,7 @@ export function ReportDocument(props: ReportDocumentProps) {
       </details>
 
       <p className="rounded-lg bg-surface-container-low p-space-sm text-center font-label-sm text-label-sm text-outline">
-        참고용 콘텐츠입니다 · 명리 계산을 바탕으로 한 해석이며 미래를 단정하지 않습니다.
+        명리 계산을 바탕으로 읽은 풀이입니다 · 열람 기간 12개월
         {props.disclaimer ? ` ${props.disclaimer}` : ""}
       </p>
 

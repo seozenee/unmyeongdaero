@@ -93,7 +93,7 @@ function DossierCard({ report }: { report: ReportProduct }) {
       <div className="flex items-center justify-between gap-space-sm px-space-md py-space-sm">
         <span className="flex items-center gap-1.5 font-label-sm text-label-sm text-outline">
           <Icon name="menu_book" className="text-[15px]" />
-          {report.chapters.length}장 · 영구 소장
+          12개월 열람
         </span>
         <span className="flex items-baseline gap-1.5">
           {report.originalPrice && (

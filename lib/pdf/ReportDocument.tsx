@@ -130,7 +130,7 @@ export function ReportDocument(input: ReportPdfInput) {
           <Text style={styles.coverTitle}>{productTitle}</Text>
           <Text style={styles.coverSubject}>{subject.name} 님</Text>
           <Text style={styles.coverChart}>{chartLine}</Text>
-          <Text style={styles.coverFooter}>{issuedAt} 발행 · 명리 계산을 바탕으로 한 참고용 풀이입니다</Text>
+          <Text style={styles.coverFooter}>{issuedAt} 발행 · 운명대로</Text>
         </View>
       </Page>
 
@@ -232,7 +232,7 @@ export function ReportDocument(input: ReportPdfInput) {
 
         <Text style={styles.disclaimer}>
           {disclaimer ? `${disclaimer}\n` : ""}
-          이 보고서는 명리 계산을 바탕으로 한 참고용 풀이이며, 의료·법률·투자 판단을 대신하지 않습니다.
+          명리 계산을 바탕으로 읽은 풀이입니다. 발행일로부터 12개월간 다시 열어 보실 수 있습니다.
           선택은 언제나 읽는 분의 몫입니다. · 운명대로 (르노바) · unmyeongdaero.com
         </Text>
 

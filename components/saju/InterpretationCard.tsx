@@ -84,7 +84,7 @@ export function InterpretationCard({ eyebrow, title, paragraphs, facts, glossary
       )}
 
       <p className="font-label-sm text-label-sm text-outline">
-        명리 계산 결과를 바탕으로 한 참고용 콘텐츠이며, 미래를 단정하지 않습니다.
+        명리 계산을 바탕으로 읽은 풀이입니다.
       </p>
     </article>
   );

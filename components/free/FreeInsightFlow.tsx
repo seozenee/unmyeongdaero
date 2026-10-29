@@ -97,7 +97,6 @@ export function FreeInsightFlow({ kind, title, description }: { kind: string; ti
           <button type="button" onClick={() => setResult(null)} className="font-label-md text-label-md text-outline underline">
             다른 명식으로 다시 보기
           </button>
-          <p className="text-center font-label-sm text-label-sm text-outline">참고용 콘텐츠입니다.</p>
         </>
       )}
     </div>

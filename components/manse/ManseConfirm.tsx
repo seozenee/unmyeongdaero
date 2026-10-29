@@ -42,7 +42,7 @@ export function ManseConfirm({
           <div className="min-w-0 flex-1">
             <p className="truncate font-label-md text-label-md text-on-surface">{title}</p>
             <p className="font-label-sm text-label-sm text-outline">
-              {categoryLabel} · {chapterCount}장 · 영구 소장
+              {categoryLabel} · 12개월 열람
             </p>
           </div>
           <div className="flex shrink-0 items-baseline gap-1.5">

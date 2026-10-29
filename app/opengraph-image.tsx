@@ -56,7 +56,7 @@ export default function OpengraphImage() {
         </div>
 
         <div style={{ marginTop: 40, fontSize: 26, color: c.outline }}>
-          구독 결제 없음 · 단건 결제 · 보관함에서 영구 소장
+          구독 결제 없음 · 단건 결제 · 12개월 열람
         </div>
       </div>
     ),

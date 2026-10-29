@@ -103,12 +103,12 @@ export default async function CheckoutPage({
       <section className="flex flex-col gap-space-sm rounded-xl bg-surface-container-low p-space-lg">
         <div className="flex items-center gap-space-xs text-primary">
           <Icon name="verified_user" className="text-[20px]" />
-          <span className="font-label-md text-label-md">구독 결제 없음, 영구 소장 단건 열람권</span>
+          <span className="font-label-md text-label-md">구독 결제 없음 · 12개월 열람권</span>
         </div>
         <ul className="flex flex-col gap-2 font-body-sm text-body-sm text-on-surface-variant">
           <li>· 매달 나가는 자동 결제가 없는 <strong className="text-on-surface">1회 결제</strong>예요.</li>
           {/* 서비스 제공기간은 전자상거래법 표시사항이자 카드사 심사 확인 항목이다.
-              '영구 소장'은 열람 편의이지 제공기간이 아니므로 둘을 나눠 적는다. */}
+              열람 기간은 제공기간이 아니므로 둘을 나눠 적는다. */}
           {report.kind === "consult" ? (
             <li>
               · <strong className="text-on-surface">제공기간</strong> · 결제 즉시 상담 세션이 열리고, 개설일로부터 30일
@@ -118,6 +118,12 @@ export default async function CheckoutPage({
             <li>
               · <strong className="text-on-surface">제공기간</strong> · 결제 즉시 풀이 생성이 시작돼 보통 1~2분 안에,
               늦어도 24시간 안에 받아 보실 수 있어요.
+            </li>
+          )}
+          {report.kind !== "consult" && (
+            <li>
+              · <strong className="text-on-surface">열람 기간</strong> · 받은 풀이는 보관함에서{" "}
+              <strong className="text-on-surface">결제일로부터 12개월</strong> 동안 다시 열고 PDF 로 내려받을 수 있어요.
             </li>
           )}
           {report.kind === "consult" ? (

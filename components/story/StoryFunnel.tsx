@@ -312,7 +312,7 @@ export function StoryFunnel({ report, related = [] }: { report: ReportProduct; r
           <div className="flex items-baseline gap-2">
             <span className="font-price-display text-price-display text-secondary">{formatKRW(report.price)}</span>
             {report.originalPrice && <span className="font-body-sm text-body-sm text-outline line-through">{formatKRW(report.originalPrice)}</span>}
-            <span className="ml-auto font-label-sm text-label-sm text-outline">{report.chapters.length}장 보고서 · 영구 소장</span>
+            <span className="ml-auto font-label-sm text-label-sm text-outline">12개월 열람</span>
           </div>
           <label className="flex flex-col gap-1.5">
             <span className="font-label-sm text-label-sm text-on-surface-variant">

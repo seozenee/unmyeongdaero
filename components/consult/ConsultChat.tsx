@@ -133,7 +133,7 @@ export function ConsultChat({ sessionId, subjectName, turnLimit, turnsUsed, temp
                   {streaming && <span className="ml-0.5 inline-block h-4 w-[2px] translate-y-0.5 bg-primary motion-safe:animate-dot-blink" />}
                 </p>
                 <span className="flex items-center gap-1 pl-1 font-label-sm text-[10px] leading-4 text-outline">
-                  <Icon name="info" className="text-[12px]" /> 참고용 콘텐츠입니다
+                  <Icon name="auto_awesome" className="text-[12px]" /> 명식을 띄워 두고 대화 중
                 </span>
               </div>
             </div>

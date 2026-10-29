@@ -4,6 +4,7 @@ import type { BirthProfile, Reading, StoredSazu } from "../db/types";
 import { getReport, type ReportProduct } from "../reports/catalog";
 import { ELEMENT_LABEL, FIVE_ELEMENTS, parseGanji, toFiveElement, type FiveElement } from "../saju/ganji";
 import { findCurrentDecadeIndex, parseElementCounts, resolveCurrentAge } from "../saju/modules";
+import { ELEMENT_SCENE, STRENGTH_SCENE } from "../manse/scenes";
 import { hasBatchim, josa } from "../text/josa";
 import { getGuide } from "./guides";
 import type { BriefingBeat, ReportSection, StoryPanel, StoryReport, TimelineItem } from "./report";
@@ -301,24 +302,6 @@ function pillarEvidence(chart: Chart, position: "year" | "month" | "day" | "hour
 // 읽는 사람은 두 글자째에서 멈춘다. 먼저 겪었을 법한 장면을 보여 주고, 용어는
 // 근거 카드로 내린다. 아래 장면들은 명식에서 바로 나오는 값(신강약·두드러진 오행)에만
 // 기대므로 없는 사실을 지어내지 않는다.
-
-const STRENGTH_SCENE: Record<string, string> = {
-  신강:
-    "하고 싶은 말이 있으면 결국 하고야 마는 쪽이라, 끝내 밀어붙였다가 \u2018굳이 그렇게까지 했어야 했나\u2019 하고 혼자 곱씹은 밤이 있으셨을 거예요.",
-  신약:
-    "해야 할 일을 혼자 끌어안고 있다가, 정작 도와 달라는 말은 못 하고 지쳐 버린 적 있으셨을 거예요.",
-  중화:
-    "어느 쪽으로도 크게 기울지 않아서, 주변 사람에 따라 전혀 다른 사람처럼 보인다는 말을 들어 보셨을 거예요.",
-};
-
-/** 넘치는 기운이 일상에서 어떤 장면으로 나오는지 */
-const ELEMENT_SCENE: Record<FiveElement, string> = {
-  wood: "새로 벌여 놓은 것이 여럿인데 끝맺은 건 몇 없어서, 스스로도 답답해지는 때가 있어요.",
-  fire: "마음이 확 달아올랐다가 며칠 뒤엔 그 일이 시들해져 있어서, 변덕스럽다는 말을 들어 보셨을 거예요.",
-  earth: "결정을 앞두고 며칠씩 미루다가, 정작 정하고 나면 그 자리를 오래 지키는 편이에요.",
-  metal: "아니다 싶은 건 분명히 선을 긋는 편이라, 맺고 끊는 게 차갑다는 오해를 받아 보셨을 거예요.",
-  water: "생각이 깊어 밤에 잠이 늦고, 말하기 전에 몇 번씩 속으로 굴려 보다 때를 놓친 적이 있어요.",
-};
 
 const natal: Builder = ({ me, reading }, title) => {
   const { dominant, missing } = dominantAndMissing(me);
@@ -754,7 +737,9 @@ const wealthHabit: Builder = ({ me, wealth, reading }, title) => {
   );
 };
 
-const HEALTH_NOTE = "명리의 오행 균형을 몸의 리듬에 빗대어 읽은 참고용 이야기예요. 진단이나 의료 조언이 아니며, 불편이 이어지면 꼭 진료를 받아 보세요.";
+// 몸 이야기에서 한 줄만 남긴다. 나머지 발뺌은 걷어내되, 아픈 사람을 병원에서
+// 멀어지게 하는 일만은 하지 않는다.
+const HEALTH_NOTE = "불편이 이어지면 진료를 함께 받아 보세요.";
 
 const healthBalance: Builder = ({ me, health }, title) => {
   const organs = (list(at(health, "organs")) as Record<string, Json>[]).filter((organ) => str(organ.signalNote));
@@ -1452,6 +1437,6 @@ export function buildTemplateReport(report: ReportProduct, reading: Reading, saz
     sections,
     timeline,
     actions,
-    closing: `${report.disclaimer ? `${report.disclaimer} ` : ""}이 보고서는 명리 계산을 바탕으로 한 참고용 풀이예요. 흐름을 아는 건 지도를 갖는 일일 뿐, 어느 길로 갈지는 언제나 ${name}님의 몫이에요.`,
+    closing: `${report.disclaimer ? `${report.disclaimer} ` : ""}여기까지가 ${name}님의 여덟 글자가 말해 주는 것이에요. 흐름을 알고 나면 같은 일도 다르게 지나갑니다.`,
   };
 }

@@ -9,7 +9,8 @@
 //  2) 진태양시: 시계 시각이 아니라 태양 위치로 시주를 정한다(서울 기준 약 -32분).
 //  3) 야자시: 23시부터 다음 날로 넘긴다(한국 만세력 다수 관행).
 import { Lunar, Solar } from "lunar-typescript";
-import { cityInfo, solarTimeOffsetMinutes } from "./cities";
+import { cityInfo } from "./cities";
+import { koreanClock } from "./korea-time";
 
 export interface BirthInput {
   year: number;
@@ -101,6 +102,10 @@ export interface PillarsResult extends FourPillars {
     clockTime: string | null;
     trueSolarTime: string | null;
     solarTimeOffsetMinutes: number;
+    /** 그때 쓰던 표준자오선(동경, 도) */
+    standardMeridian: number;
+    /** 서머타임이 돌던 해에 태어났는가 */
+    summerTime: boolean;
     city: string;
     dayChangedByNightZi: boolean;
   };
@@ -109,15 +114,25 @@ export interface PillarsResult extends FourPillars {
 export function computeFourPillars(input: BirthInput): PillarsResult {
   const city = cityInfo(input.city);
   const useTrue = input.useTrueSolarTime !== false;
-  const offset = useTrue ? solarTimeOffsetMinutes(city) : 0;
 
   const solar = toSolarDateTime(input);
+
+  // 시계가 가리키던 기준은 역사적으로 바뀌었다. 지금 기준(동경 135도)만 놓고 계산하면
+  // 1954~1961년생과 서머타임 해(1948~51·1955~60·1987~88)의 시주가 통째로 틀린다.
+  // 한국 바깥에서 태어난 경우에는 그 지역의 표준시를 그대로 쓴다.
+  const inKorea = city.utcOffset === 9 || city.utcOffset === 8.5;
+  const clock = inKorea ? koreanClock(solar.year, solar.month, solar.day) : null;
+  const meridian = clock ? clock.meridian : city.utcOffset * 15;
+  const dstMinutes = clock ? clock.dstMinutes : 0;
+
+  // 진태양시 = (출생지 경도 − 그때의 표준자오선) × 4분. 서머타임이면 한 시간을 먼저 뺀다.
+  const offset = (useTrue ? (city.longitude - meridian) * 4 : 0) + dstMinutes;
 
   // 진태양시로 옮긴 시각 — 일주·시주의 기준이 된다
   const trueTime = shiftMinutes(solar.year, solar.month, solar.day, solar.hour, solar.minute, offset);
 
   // 절기 경계는 중국시 기준이므로, 지역 표준시와의 차이만큼 당겨서 넘긴다
-  const toChina = (city.utcOffset - 8) * 60;
+  const toChina = (meridian / 15 - 8) * 60;
   const forTerms = shiftMinutes(trueTime.year, trueTime.month, trueTime.day, trueTime.hour, trueTime.minute, -toChina);
 
   const termLunar = Solar.fromYmdHms(forTerms.year, forTerms.month, forTerms.day, forTerms.hour, forTerms.minute, 0).getLunar();
@@ -142,6 +157,8 @@ export function computeFourPillars(input: BirthInput): PillarsResult {
       clockTime: input.hour === null ? null : `${pad(solar.hour)}:${pad(solar.minute)}`,
       trueSolarTime: input.hour === null ? null : `${pad(trueTime.hour)}:${pad(trueTime.minute)}`,
       solarTimeOffsetMinutes: Math.round(offset),
+      standardMeridian: meridian,
+      summerTime: dstMinutes !== 0,
       city: input.city ?? "서울",
       dayChangedByNightZi: dayChanged,
     },
