@@ -130,7 +130,7 @@ export function ProductIntro({ report, soldCount, related = [], onStart, resumin
     report.categoryLabel.replace(/\s+/g, ""),
     guide.name,
     `${report.chapters.length}장`,
-    "영구소장",
+    "12개월열람",
     "단건결제",
     ...(report.discountLabel ? [report.discountLabel.replace(/\s+/g, "")] : []),
   ];

@@ -349,6 +349,12 @@ export function StoryFunnel({ report, related = [] }: { report: ReportProduct; r
     );
   })();
 
+  // 손님이 답해야 넘어가는 걸음만 센다. 대사와 컷은 저절로 흐르므로 걸음으로 치지 않는다.
+  const answerKinds = ["question", "birth", "detail", "submit"] as const;
+  const isAnswerStep = (item: FunnelStep) => (answerKinds as readonly string[]).includes(item.kind);
+  const totalSteps = steps.filter(isAnswerStep).length;
+  const answeredSteps = steps.slice(0, cursor).filter(isAnswerStep).length;
+
   const guideLine = step?.kind === "line" && step.speaker === "guide" ? fillName(step.text, name) : null;
   const narration = step?.kind === "line" && step.speaker === "narration" ? fillName(step.text, name) : null;
   const prompt =
@@ -365,6 +371,7 @@ export function StoryFunnel({ report, related = [] }: { report: ReportProduct; r
       {detailPage}
       <Stage
         guide={guide}
+        progress={{ current: answeredSteps, total: totalSteps }}
         place={scene.place}
         camera={scene.camera}
         figure={scene.figure}
@@ -386,9 +393,12 @@ export function StoryFunnel({ report, related = [] }: { report: ReportProduct; r
         {narration && <WhisperLines lines={[narration]} />}
         {guideLine && <TypedBalloon key={cursor} text={guideLine} onTyped={onTyped} skipSignal={skipSignal} />}
         {prompt && (
-          <SpeechBalloon key={`prompt-${cursor}`} className="self-end" tail="bottom-right">
+          <p
+            key={`prompt-${cursor}`}
+            className="text-[1.6rem] font-bold leading-snug tracking-tight text-on-surface [text-shadow:0_2px_12px_rgb(0_0_0/0.9)] motion-safe:animate-fade-up"
+          >
             {fillName(prompt, name)}
-          </SpeechBalloon>
+          </p>
         )}
       </Stage>
     </>

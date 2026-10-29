@@ -31,9 +31,11 @@ interface StageProps {
   sound?: { on: boolean; toggle: () => void };
   /** 스토리에서 빠져나가기 */
   onClose?: () => void;
+  /** 몇 걸음 중 몇 번째인가. 끝이 보이면 사람은 끝까지 간다 */
+  progress?: { current: number; total: number };
 }
 
-export function Stage({ guide, place, camera, figure, assetKey, still, sfx, children, footer, onBack, onTap, sound, onClose }: StageProps) {
+export function Stage({ guide, place, camera, figure, assetKey, still, sfx, children, footer, onBack, onTap, sound, onClose, progress }: StageProps) {
   const asset = getWebtoonAsset(guide.id, assetKey);
 
   // 스테이지가 떠 있는 동안 뒤쪽 페이지 스크롤을 잠그고, 아래 내비게이션을 숨긴다.
@@ -66,6 +68,27 @@ export function Stage({ guide, place, camera, figure, assetKey, still, sfx, chil
           </button>
         ) : (
           <span />
+        )}
+        {/* 걸음 — 몇 개 남았는지 보이지 않으면 중간에 그만둔다 */}
+        {progress && progress.total > 1 && (
+          <ol
+            className="pointer-events-none flex items-center gap-1 rounded-full bg-surface-container-lowest/55 px-2.5 py-2 backdrop-blur"
+            aria-label={`${progress.current + 1} / ${progress.total} 단계`}
+          >
+            {Array.from({ length: progress.total }, (_, index) => (
+              <li
+                key={index}
+                className={cn(
+                  "h-1.5 rounded-full transition-all duration-300",
+                  index === progress.current
+                    ? "w-4 bg-secondary"
+                    : index < progress.current
+                      ? "w-1.5 bg-secondary/60"
+                      : "w-1.5 bg-on-surface/25",
+                )}
+              />
+            ))}
+          </ol>
         )}
         {sound && (
           <button
