@@ -244,14 +244,33 @@ export function createSupabaseRepository(): Repository {
         })
         .select()
         .single();
-      // 같은 결제가 두 번 들어온 경우에만 기존 것을 돌려준다(payment_id 가 unique 다).
-      // 같은 상품을 다시 산 것은 중복이 아니라 새 구매다.
       if (result.error?.code === UNIQUE_VIOLATION) {
-        const rows = unwrap(
+        // 같은 결제가 두 번 들어온 경우 — 기존 것을 그대로 돌려준다(payment_id 가 unique 다)
+        const samePayment = unwrap(
           await db().from("purchases").select().eq("payment_id", input.paymentRowId).limit(1),
-          "createPurchase.existing",
+          "createPurchase.samePayment",
         );
-        if (rows?.[0]) return toPurchase(rows[0]);
+        if (samePayment?.[0]) return toPurchase(samePayment[0]);
+
+        // 아직 (user_id, report_slug) 제약이 살아 있는 데이터베이스다(0008 마이그레이션 전).
+        //
+        // 여기서 던지면 손님은 돈을 내고 에러를 본다. 그것만은 안 된다. 기존 구매가
+        // 방금 만든 풀이를 가리키게 고쳐서, 적어도 산 것은 받게 한다. 전에 받은 풀이도
+        // readings 에 그대로 남아 보관함에서 열린다.
+        console.error(
+          `[purchase] (user, slug) 유일 제약이 아직 살아 있습니다 — supabase/migrations/0008_repurchase.sql 을 적용해 주세요`,
+        );
+        const moved = unwrap(
+          await db()
+            .from("purchases")
+            .update({ payment_id: input.paymentRowId, reading_id: input.readingId, purchased_at: new Date().toISOString() })
+            .eq("user_id", input.userId)
+            .eq("report_slug", input.reportSlug)
+            .select()
+            .limit(1),
+          "createPurchase.moved",
+        );
+        if (moved?.[0]) return toPurchase(moved[0]);
       }
       return toPurchase(required(result, "createPurchase"));
     },
