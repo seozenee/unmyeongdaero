@@ -76,7 +76,7 @@ function DossierCard({ report }: { report: ReportProduct }) {
 
         <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 px-space-md pb-space-md">
           <span
-            className="text-[2rem] leading-tight text-on-surface [text-shadow:0_2px_12px_rgb(0_0_0/0.95),0_0_22px_rgb(240_82_46/0.5)]"
+            className="text-[2rem] leading-tight tracking-tight text-white [text-shadow:0_1px_16px_rgb(0_0_0/0.6)]"
             style={font ? { fontFamily: font } : undefined}
           >
             {report.title}
@@ -90,14 +90,14 @@ function DossierCard({ report }: { report: ReportProduct }) {
       </div>
 
       <div className="flex items-center justify-between gap-space-sm px-space-md py-space-sm">
+        {/*
+          여기 「12개월 열람 · 명식까지 무료」가 붙어 있었다. 둘 다 사실이지만, 둘 다
+          결제를 앞두고서야 궁금해지는 것이다. 고르는 자리에서는 그림과 한 줄이면 된다.
+          조건은 결제 화면에서 다시 말한다.
+        */}
         <span className="flex items-center gap-1.5 font-label-sm text-label-sm text-outline">
           <Icon name="menu_book" className="text-[15px]" />
-          12개월 열람
-        </span>
-        {/* 값은 결제 직전에만. 가장 많이 읽힌 자리일수록 값으로 고르게 하면 안 된다 */}
-        <span className="flex items-center gap-1 font-label-sm text-label-sm text-tertiary">
-          <Icon name="lock_open_right" className="text-[15px]" />
-          명식까지 무료
+          {report.chapters.length}장
         </span>
       </div>
     </Link>

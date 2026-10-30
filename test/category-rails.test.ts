@@ -34,6 +34,19 @@ describe("주제별 줄", () => {
     }
   });
 
+  it("한 상품이 두 묶음에 들어가지 않는다", () => {
+    // 겹쳐 두면 내려가다 같은 카드를 또 만난다. 많아 보이려고 한 것이 "볼 게 없구나"로
+    // 읽힌다 — 같은 카드를 또 보는 순간 사람은 끝까지 다 봤다고 느낀다.
+    const seen = new Map<string, string>();
+    for (const rail of RAILS) {
+      for (const slug of rail.slugs) {
+        const already = seen.get(slug);
+        expect(already, `${slug} 가 「${already}」와 「${rail.heading}」 양쪽에 있다`).toBeUndefined();
+        seen.set(slug, rail.heading);
+      }
+    }
+  });
+
   it("같은 상품이 여러 줄에 서면 줄마다 다른 말을 한다", () => {
     const byslug = new Map<string, string[]>();
     for (const rail of RAILS) {

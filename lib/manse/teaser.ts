@@ -49,8 +49,17 @@ export interface ReadingTeaser {
   locked: Array<{ label: string; teaser: string }>;
 }
 
-const toneOf = (level: number | null): TeaserMonth["tone"] =>
-  level === null ? "neutral" : level >= 8 ? "good" : level <= 4 ? "caution" : "neutral";
+/**
+ * 달의 결.
+ *
+ * 전에는 `twelveFortune.level` 이라는 숫자를 읽어 8 이상이면 좋은 달로 쳤다. 그런
+ * 필드는 없다. 늘 null 이 나왔고, 모든 달이 "neutral" 로 떨어졌다. 그래서 결제 전
+ * 화면의 "문이 열리는 달"은 한 번도 뜬 적이 없다 — 에러도 없이, 그냥 비어 있었다.
+ *
+ * 엔진은 이미 `tone` 으로 좋고 나쁨을 매겨 둔다. 그걸 그대로 읽는다.
+ */
+const toneOf = (value: unknown): TeaserMonth["tone"] =>
+  value === "good" || value === "caution" || value === "neutral" ? value : "neutral";
 
 function monthsFrom(modules: SazuModules): TeaserMonth[] {
   const raw = [...list(at(modules, "weolun.upcomingWeoluns"))] as Record<string, unknown>[];
@@ -58,8 +67,8 @@ function monthsFrom(modules: SazuModules): TeaserMonth[] {
     .map((m) => ({
       label: str(m.monthLabel) ?? "",
       ganji: str(m.ganji) ?? "",
-      note: str(m.interpretation) ?? "",
-      tone: toneOf(num(at(m, "twelveFortune.level"))),
+      note: str(m.interpretation) ?? str(at(m, "twelveFortune.phase")) ?? "",
+      tone: toneOf(m.tone),
     }))
     .filter((m) => m.label);
 }

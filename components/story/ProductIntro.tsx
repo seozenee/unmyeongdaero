@@ -180,9 +180,11 @@ export function ProductIntro({ report, soldCount, related = [], onStart, resumin
           전에는 여기 할인율 스티커가 비뚜로 붙어 있었다. 눈에 가장 먼저 걸리는 자리에
           값 이야기를 둔 셈이다. 값은 명식을 다 보여 준 뒤 결제 직전에 한 번만 꺼낸다.
         */}
-        <span className="absolute right-space-md top-space-xl -rotate-[8deg] rounded-xl bg-secondary px-3 py-1.5 font-label-md text-label-md font-bold text-on-secondary shadow-xl">
-          여덟 글자까지 무료
-        </span>
+        {/*
+          여기 비뚜로 붙은 스티커가 있었다. 처음에는 할인율이었고, 그다음에는 「여덟
+          글자까지 무료」였다. 둘 다 그림 위에 종이 한 장을 덧댄 꼴이라, 공들여 뽑은
+          간판을 가렸다. 무료로 어디까지 보이는지는 아래 버튼 밑에서 한 번만 말한다.
+        */}
 
         {/* 아래 버튼 막대(약 9rem)에 해시태그가 가려지지 않게 그만큼 띄운다 */}
         <div className="relative flex flex-col gap-space-sm px-margin pb-[9.5rem]">

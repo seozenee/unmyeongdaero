@@ -98,16 +98,21 @@ export function HeroCarousel({ products }: HeroCarouselProps) {
                 {/* 그림을 최대한 살린다 — 글자가 앉는 아래쪽만 덮는다 */}
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-surface-container-lowest/95 via-surface-container-lowest/55 to-transparent" />
 
-                {/* 순위 리본 */}
+                {/*
+                  순위.
+                  빨간 리본을 깃발처럼 꽂아 두었다. 카드마다 그 색이 제일 먼저 눈에
+                  걸려서, 정작 보여 주려던 그림보다 리본을 먼저 보게 됐다. 순위는
+                  알려 주면 되는 것이지 외칠 것이 아니다. 유리알 같은 알약 하나로 줄인다.
+                */}
                 <span
                   className={cn(
-                    "absolute right-space-md top-0 flex flex-col items-center px-2.5 pb-2.5 pt-1.5 font-label-sm text-label-sm leading-none",
-                    "[clip-path:polygon(0_0,100%_0,100%_100%,50%_78%,0_100%)]",
-                    position === 0 ? "bg-secondary text-on-secondary" : "bg-secondary/80 text-on-secondary backdrop-blur",
+                    "absolute right-space-md top-space-md rounded-full px-2.5 py-1 font-label-sm text-label-sm leading-none backdrop-blur-md",
+                    position === 0
+                      ? "bg-white/90 text-black"
+                      : "bg-black/35 text-white ring-1 ring-inset ring-white/20",
                   )}
                 >
-                  <span className="text-[9px] tracking-widest">TOP</span>
-                  <span className="mt-0.5 font-headline-sm text-headline-sm leading-none">{position + 1}</span>
+                  {position + 1}위
                 </span>
 
                 {/* 간판과 한 줄. 값과 버튼은 두지 않는다 — 카드는 보여 주는 자리고,
@@ -117,12 +122,13 @@ export function HeroCarousel({ products }: HeroCarouselProps) {
                     {report.categoryLabel}
                   </span>
                   {/*
-                    제목에 브랜드 색 번짐을 한 겹 더 얹는다. 검은 그림자만 두면 글자가
-                    그림 위에 얹혀 있기만 하고, 불이 켜진 것처럼 보이지는 않는다.
-                    간판은 읽히는 것으로 모자라고 켜져 있어야 한다.
+                    한동안 제목에 브랜드 색 번짐을 얹었다. 켜 놓은 간판처럼 보이게 하려던
+                    것인데, 카드마다 글자가 빛나니 화면이 쉬는 자리 없이 시끄러웠다.
+                    번짐은 걷어내고 검은 그림자만 남긴다 — 그림 위에서 읽히기만 하면 된다.
+                    눈길은 빛이 아니라 크기와 여백으로 끈다.
                   */}
                   <span
-                    className="text-[3rem] leading-[1.06] text-on-surface [text-shadow:0_2px_16px_rgb(0_0_0/0.95),0_0_40px_rgb(0_0_0/0.7),0_0_30px_rgb(240_82_46/0.55)]"
+                    className="text-[3rem] leading-[1.06] tracking-tight text-white [text-shadow:0_1px_20px_rgb(0_0_0/0.65)]"
                     style={font ? { fontFamily: font } : undefined}
                   >
                     {report.title}

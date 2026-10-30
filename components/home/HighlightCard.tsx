@@ -38,11 +38,8 @@ export function HighlightCard() {
           </p>
 
           <div className="mt-2 flex items-center justify-between pt-2">
-            {/* 값은 결제 직전에 한 번만. 대표 자리에서는 무엇이 열리는지로 끌어온다 */}
-            <div className="flex items-center gap-1.5 font-label-md text-label-md text-secondary">
-              <Icon name="lock_open_right" className="text-[18px]" />
-              명식까지 무료로 열어 보기
-            </div>
+            {/* 값도 조건도 여기서는 말하지 않는다 — 끌어오는 것은 무엇이 궁금한가지 조건이 아니다 */}
+            <div className="font-label-md text-label-md text-secondary">{report.categoryLabel}</div>
             <span className="flex items-center gap-1 font-label-sm text-label-sm text-tertiary">
               <Icon name="lock_open" className="text-[16px]" />
               12개월 열람

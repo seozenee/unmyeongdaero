@@ -5,6 +5,7 @@ import { GuideShelf } from "@/components/home/GuideShelf";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { MostReadSection } from "@/components/home/MostReadSection";
+import { MyChart } from "@/components/home/MyChart";
 import { CategoryRails } from "@/components/home/CategoryRails";
 import { QuickNeeds } from "@/components/home/QuickNeeds";
 import { TrustBanner } from "@/components/home/TrustBanner";
@@ -22,6 +23,10 @@ export const dynamic = "force-dynamic";
  * 그리고 결제 직전에 궁금한 자리(안내자·받는 과정·자주 묻는 것)를 모두 한 장에 올린다.
  * 없는 숫자를 지어내 채우지는 않는다 — 채우는 것은 상품과 사실이다.
  *
+ * 순서는 상품이 먼저다. 설명과 약속과 자주 묻는 것을 위에 두면, 들어온 사람이 처음
+ * 만나는 것이 "우리가 어떤 회사인가"가 된다. 그건 사고 나서 궁금해지는 것이지
+ * 들어오자마자 궁금한 것이 아니다. 궁금한 것은 "내 것이 뭐가 나오나"다.
+ *
  * 모든 묶음은 옆으로 미는 줄이다. 세로로 길게 쌓인 목록은 한 번 내려가면 끝이 보여서,
  * 열일곱 개를 다 지나야 다음 이야기가 나왔다. 줄로 바꾸면 세로로는 주제만 훑고 관심
  * 있는 줄에서만 옆으로 민다.
@@ -34,16 +39,18 @@ export default async function HomePage() {
     <div className="flex w-full flex-col pb-8">
       <CategoryTabs />
       <HeroCarousel products={products} />
-      {/* 자기 고민을 손으로 짚고 바로 그 줄로 내려가는 길 */}
-      <QuickNeeds />
+      {/* 생일을 적은 적이 있으면 목록 대신 자기 원국부터 펼친다 */}
+      <MyChart />
       <MostReadSection products={products} />
       {/* 주제별 가로 줄 — 세로로는 주제만 훑고, 관심 있는 줄에서만 옆으로 민다 */}
       <section className="mt-space-xl">
         <CategoryRails products={products} />
       </section>
+      {/* 자기 고민을 손으로 짚고 바로 그 줄로 내려가는 길 */}
+      <QuickNeeds />
       <GuideShelf products={products} />
-      <HowItWorks />
       <FreeInsightSection />
+      <HowItWorks />
       <FaqSection />
       <TrustBanner />
     </div>
