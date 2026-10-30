@@ -3,7 +3,10 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ManseConfirm } from "@/components/manse/ManseConfirm";
 import { ManseSheet, type ManseFact } from "@/components/manse/ManseSheet";
-import { ReadingTeaser } from "@/components/manse/ReadingTeaser";
+import { getPoster } from "@/components/home/posters";
+import { ReadingWebtoon } from "@/components/manse/ReadingWebtoon";
+import { buildManseTopics } from "@/lib/manse";
+import { getGuide } from "@/lib/story/guides";
 import { buildReadingTeaser } from "@/lib/manse/teaser";
 import { Icon } from "@/components/ui/Icon";
 import { getCurrentUser, loginUrl } from "@/lib/auth/session";
@@ -50,10 +53,8 @@ export default async function MansePage({
   const report = await loadReport(reading.reportSlug);
   if (!report) notFound();
 
-  // 이미 산 사람은 여기 머물 이유가 없다
-  if (report.kind === "report" && (await repo.getPurchase(user.id, report.slug))) {
-    redirect(`/reports/${report.slug}/read`);
-  }
+  // 이미 산 사람도 여기 머물 수 있다. 전에는 결과 화면으로 돌려보냈는데, 그러면 다시
+  // 사려는 사람이 명식 확인에서 막혔다(lib/payments/service.ts 에 같은 이야기를 적어 두었다).
 
   const modules = mergedModules(reading.sazu ?? {});
   const pillars = parseFourPillars(modules);
@@ -96,7 +97,16 @@ export default async function MansePage({
 
   // 돈을 받기 전에 읽힐 거리를 명식에서 뽑는다. 전부 계산 결과이고, 우리가 세지 않는
   // 숫자(매력 점수 같은 것)는 만들지 않는다.
-  const teaser = buildReadingTeaser(modules, reading.subject.name);
+  // 결제 전 화면에는 "문이 열리는 달"이 들어간다. 그런데 초안에는 manse 한 토픽만
+  // 저장돼 있어 월운이 없다 — 가장 끌어당겨야 할 자리가 늘 비어 있었다.
+  //
+  // 월운은 생년월일만 있으면 바로 셈할 수 있는 값이다(AI 도, 저장소도 거치지 않는다).
+  // 없으면 여기서 그 자리에서 만들어 쓴다.
+  const teaserModules = reading.sazu?.today
+    ? modules
+    : mergedModules({ ...(reading.sazu ?? {}), ...buildManseTopics(["today"], reading.subject, reading.partner) });
+  const teaser = buildReadingTeaser(teaserModules, reading.subject.name);
+  const guide = getGuide(report.guide);
 
   // 계산 기준을 사람이 읽을 문장으로 옮긴다. 진태양시 보정처럼 "왜 이 글자가 나왔는지"를
   // 설명해 주는 값이라, 명식이 예상과 다를 때 확인할 수 있어야 한다.
@@ -132,7 +142,7 @@ export default async function MansePage({
         </p>
       )}
 
-      <ReadingTeaser teaser={teaser} name={reading.subject.name} />
+      <ReadingWebtoon teaser={teaser} name={reading.subject.name} guide={guide} poster={getPoster(report.slug, report.guide)} />
 
       <ManseSheet
         name={reading.subject.name}
