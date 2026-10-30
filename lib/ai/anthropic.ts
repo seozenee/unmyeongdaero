@@ -4,7 +4,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { env, ServiceNotConfiguredError } from "@/lib/env";
 
 /** 기본 모델. ANTHROPIC_MODEL 로 바꿀 수 있다 */
-export const CLAUDE_MODEL = env.anthropicModel ?? "claude-sonnet-5";
+export const CLAUDE_MODEL = env.anthropicModel ?? "claude-sonnet-5-5";
 
 // 서버측 거절 폴백: 안전 분류기가 요청을 거절하면 API 가 권장 모델로 같은 요청을 다시 실행한다.
 // Opus 5 · Fable 5 계열에서만 지원하므로 Sonnet 으로 돌릴 때는 자동으로 꺼진다.

@@ -100,11 +100,19 @@ export const modes = {
     isFreeAccess
       ? "mock"
       : pick(tossReady, "toss", "mock", "토스페이먼츠", ["NEXT_PUBLIC_TOSS_CLIENT_KEY", "TOSS_SECRET_KEY"]),
-  // 제미나이가 있으면 그쪽을 먼저 쓴다. 둘 다 없으면 규칙 기반 템플릿으로 떨어진다.
+  /**
+   * 풀이를 쓰는 쪽.
+   *
+   * 클로드를 먼저 쓴다. 제미나이도 붙여 두었지만 쓰는 모델이 자주 붐벼서(503) 풀이가
+   * 그 자리에서 실패하는 일이 잦았다. 돈을 받고 나서 실패하는 것은 안 쓰느니만 못하다.
+   * 키를 둘 다 넣어 두고 클로드 쪽을 비우면 제미나이로 넘어간다.
+   */
   ai: (): AiMode =>
-    env.geminiApiKey
-      ? "gemini"
-      : pick(Boolean(env.anthropicApiKey), "anthropic", "template", "Anthropic", ["ANTHROPIC_API_KEY"]),
+    env.anthropicApiKey
+      ? "anthropic"
+      : env.geminiApiKey
+        ? "gemini"
+        : pick(false, "anthropic", "template", "Anthropic", ["ANTHROPIC_API_KEY"]),
 };
 
 /** sazu Free 키는 5개 샘플 프로필만 계산하는 샌드박스로 동작한다 */
