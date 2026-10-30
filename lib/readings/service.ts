@@ -76,10 +76,10 @@ export async function createDraftReading(user: AppUser, input: unknown) {
   if (invalid) throw new AppError(400, "VALIDATION_ERROR", invalid);
 
   const repo = getRepository();
-  if (report.kind === "report") {
-    const purchase = await repo.getPurchase(user.id, report.slug);
-    if (purchase) return { alreadyPurchased: true as const, redirect: `/reports/${report.slug}/read` };
-  }
+  // 이미 산 사람을 전에는 곧장 결과로 돌려보냈다. 같은 것을 두 번 팔지 않겠다는 뜻이었는데,
+  // 실제로는 다시 보려는 사람이 있다 — 아이가 둘이거나, 상대가 바뀌었거나, 해가 바뀌었거나.
+  // 막아 두면 그 사람은 살 수 없고 우리는 팔 수 없다. 새로 적게 두고, 결과 화면은 늘
+  // 마지막에 산 것을 연다.
 
   const partner = report.partner === "none" ? null : parsed.data.partner;
   const manse = verifyProfile(parsed.data.subject, "subject");

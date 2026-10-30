@@ -108,6 +108,11 @@ export interface ReportPdfInput {
   disclaimer?: string;
 }
 
+/** 쪽마다 아래에 도는 번호. Page 가 여럿이라 부품으로 빼 둔다 */
+function PageNumber() {
+  return <Text style={styles.pageNumber} render={({ pageNumber }) => `${pageNumber}`} fixed />;
+}
+
 function RunningHead({ title }: { title: string }) {
   return (
     <View style={styles.runningHead} fixed>
@@ -134,11 +139,22 @@ export function ReportDocument(input: ReportPdfInput) {
         </View>
       </Page>
 
-      {/* 본문 — 한 장으로 흘려보내고 페이지는 내용이 차는 대로 넘어가게 둔다.
-          장마다 Page 를 따로 두면 남는 자리가 그대로 빈 쪽이 된다.
+      {/*
+        본문은 묶음마다 Page 를 따로 둔다.
+        한동안 한 Page 에 전부 흘려보냈다. 장마다 Page 를 두면 남는 자리가 빈 쪽이
+        된다는 이유였다. 그런데 그렇게 쌓다 보면 어느 쪽수를 넘기는 순간 레이아웃이
+        통째로 깨진다 — pdfkit 이 "unsupported number: -1.18e+23" 을 던지며 멈춘다.
+        우리 상품은 전부 세 장 이상이라, PDF 는 사실상 한 번도 제대로 나온 적이 없었다.
 
-          결론을 명식보다 앞에 둔다. 읽는 사람이 가장 먼저 알고 싶은 것이 결론이고,
-          지면에서도 결론(약 300pt)과 명식·오행이 한 쪽에 나란히 들어간다. */}
+        라이브러리만 놓고 보면 스무 쪽도 멀쩡하다. 한 Page 안에서 자라는 레이아웃
+        나무가 어느 크기를 넘길 때 어긋나는 것이다. 그래서 Page 를 작게 여러 개로
+        나눈다. 나무가 작으면 넘칠 일이 없다.
+
+        덤으로 종이로 읽을 때의 결도 좋아진다 — 장이 바뀌는 자리가 눈에 보이고,
+        표제지가 제 쪽을 온전히 차지한다.
+      */}
+
+      {/* 결론과 명식. 읽는 사람이 가장 먼저 알고 싶은 것이 결론이다 */}
       <Page size="A4" style={styles.page}>
         <RunningHead title={productTitle} />
 
@@ -168,19 +184,25 @@ export function ReportDocument(input: ReportPdfInput) {
           <ElementBars counts={elements} />
         </View>
 
-        {/* 장마다 표제지를 한 장 두고, 본문은 그다음 쪽부터 시작한다.
-            종이로 읽을 때 장이 바뀌는 자리가 눈에 보이고, 소장용 두께도 나온다.
-            break 는 '이 덩어리 앞에서 쪽을 넘겨라'는 뜻이라 빈 쪽이 생기지 않는다. */}
-        {report.sections.map((section, index) => (
-          <React.Fragment key={section.title}>
-            <View style={styles.chapterCover} break>
+        <PageNumber />
+      </Page>
+
+      {/* 장마다 표제지 한 쪽, 본문 한 쪽(넘치면 이어서) */}
+      {report.sections.map((section, index) => (
+        <React.Fragment key={section.title}>
+          <Page size="A4" style={styles.page}>
+            <View style={styles.chapterCover}>
               <Text style={styles.chapterNumber}>{String(index + 1).padStart(2, "0")}</Text>
               <View style={styles.chapterRule} />
               <Text style={styles.chapterTitle}>{section.title}</Text>
               <Text style={styles.chapterLead}>{section.lead}</Text>
             </View>
+            <PageNumber />
+          </Page>
 
-            <View style={styles.block} break>
+          <Page size="A4" style={styles.page}>
+            <RunningHead title={productTitle} />
+            <View style={styles.block}>
               <Eyebrow>{`${index + 1}장`}</Eyebrow>
               <SectionTitle>{section.title}</SectionTitle>
               {section.body.map((paragraph, paragraphIndex) => (
@@ -190,10 +212,15 @@ export function ReportDocument(input: ReportPdfInput) {
               ))}
               <Evidence items={section.evidence} />
             </View>
-          </React.Fragment>
-        ))}
+            <PageNumber />
+          </Page>
+        </React.Fragment>
+      ))}
 
-        <View style={styles.block} break>
+      {/* 시기 */}
+      <Page size="A4" style={styles.page}>
+        <RunningHead title={productTitle} />
+        <View style={styles.block}>
           <Eyebrow>시기</Eyebrow>
           <SectionTitle>흐름이 바뀌는 때</SectionTitle>
           <Timeline
@@ -205,7 +232,12 @@ export function ReportDocument(input: ReportPdfInput) {
             }))}
           />
         </View>
+        <PageNumber />
+      </Page>
 
+      {/* 실천과 맺음 */}
+      <Page size="A4" style={styles.page}>
+        <RunningHead title={productTitle} />
         <View style={styles.block} wrap={false}>
           <Eyebrow>실천</Eyebrow>
           <SectionTitle>오늘부터 해볼 수 있는 것</SectionTitle>
@@ -216,7 +248,12 @@ export function ReportDocument(input: ReportPdfInput) {
           <Eyebrow>맺음</Eyebrow>
           <Text style={styles.closing}>{report.closing}</Text>
         </View>
+        <PageNumber />
+      </Page>
 
+      {/* 용어와 꼬리말 */}
+      <Page size="A4" style={styles.page}>
+        <RunningHead title={productTitle} />
         {glossary.length > 0 && (
           <View style={styles.block}>
             <Eyebrow>용어</Eyebrow>
@@ -235,8 +272,7 @@ export function ReportDocument(input: ReportPdfInput) {
           명리 계산을 바탕으로 읽은 풀이입니다. 발행일로부터 12개월간 다시 열어 보실 수 있습니다.
           선택은 언제나 읽는 분의 몫입니다. · 운명대로 (르노바) · unmyeongdaero.com
         </Text>
-
-        <Text style={styles.pageNumber} render={({ pageNumber }) => `${pageNumber}`} fixed />
+        <PageNumber />
       </Page>
     </Document>
   );

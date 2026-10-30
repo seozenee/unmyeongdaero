@@ -203,11 +203,25 @@ export function createSupabaseRepository(): Repository {
       );
     },
 
+    /**
+     * 가장 최근 구매 한 건.
+     *
+     * 같은 상품을 다시 살 수 있게 되면서 한 사람에게 같은 슬러그의 구매가 여럿 생긴다.
+     * maybeSingle 은 행이 둘 이상이면 던지므로 쓸 수 없다 — 다시 산 사람의 화면이
+     * 통째로 깨진다. 늘 마지막에 산 것을 연다.
+     */
     async getPurchase(userId, reportSlug) {
-      const row = unwrap(
-        await db().from("purchases").select().eq("user_id", userId).eq("report_slug", reportSlug).maybeSingle(),
+      const rows = unwrap(
+        await db()
+          .from("purchases")
+          .select()
+          .eq("user_id", userId)
+          .eq("report_slug", reportSlug)
+          .order("purchased_at", { ascending: false })
+          .limit(1),
         "getPurchase",
       );
+      const row = rows?.[0];
       return row ? toPurchase(row) : null;
     },
 
@@ -230,9 +244,14 @@ export function createSupabaseRepository(): Repository {
         })
         .select()
         .single();
+      // 같은 결제가 두 번 들어온 경우에만 기존 것을 돌려준다(payment_id 가 unique 다).
+      // 같은 상품을 다시 산 것은 중복이 아니라 새 구매다.
       if (result.error?.code === UNIQUE_VIOLATION) {
-        const existing = await this.getPurchase(input.userId, input.reportSlug);
-        if (existing) return existing;
+        const rows = unwrap(
+          await db().from("purchases").select().eq("payment_id", input.paymentRowId).limit(1),
+          "createPurchase.existing",
+        );
+        if (rows?.[0]) return toPurchase(rows[0]);
       }
       return toPurchase(required(result, "createPurchase"));
     },

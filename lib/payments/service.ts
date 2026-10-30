@@ -36,11 +36,11 @@ export async function startCheckout(user: AppUser, slug: string, readingId: stri
   if (!report) throw new AppError(404, "REPORT_NOT_FOUND", "찾을 수 없는 상품이에요.");
   const repo = getRepository();
 
-  // 이미 소장한 리포트는 결제창 없이 바로 결과로
-  if (report.kind === "report") {
-    const purchase = await repo.getPurchase(user.id, report.slug);
-    if (purchase) return { kind: "already-purchased", redirect: resultPathFor(report) };
-  }
+  // 이미 소장한 리포트도 다시 살 수 있다. 전에는 결제창 없이 결과로 돌려보냈는데,
+  // 그러면 "다시 보고 싶다"는 사람에게 길이 없었다(풀이 만들기 쪽에도 같은 주석이 있다).
+  //
+  // 이 자리에서 막지 않는 대신, 결제 화면이 "이미 가지고 있는 풀이가 있다"고 알려 주고
+  // 보관함으로 가는 길을 함께 보여 준다. 모르고 두 번 내는 일은 없어야 한다.
 
   if (!readingId) {
     throw new AppError(400, "READING_REQUIRED", "먼저 풀이에 필요한 정보를 입력해 주세요.", {

@@ -32,10 +32,11 @@ export default async function CheckoutPage({
   if (!user) redirect(loginUrl(self));
 
   const repo = getRepository();
-  // 이미 소장한 리포트는 결제 화면을 건너뛴다
-  if (report.kind === "report" && (await repo.getPurchase(user.id, report.slug))) {
-    redirect(`/reports/${report.slug}/read`);
-  }
+  // 이미 소장한 리포트도 다시 살 수 있다. 전에는 이 자리에서 결과 화면으로 돌려보냈는데,
+  // 그러면 다시 보려는 사람에게 길이 아예 없었다.
+  //
+  // 대신 가지고 있다는 사실을 알려 준다. 모르고 두 번 내는 일은 없어야 하니까.
+  const owned = report.kind === "report" ? await repo.getPurchase(user.id, report.slug) : null;
 
   const inputPath = report.kind === "consult" ? "/consult" : `/reports/${report.slug}`;
   const reading = searchParams.reading ? await repo.getReading(searchParams.reading) : null;
@@ -90,6 +91,27 @@ export default async function CheckoutPage({
               </span>
             )}
           </div>
+
+          {/*
+            이미 같은 풀이를 가지고 있으면 그 사실을 먼저 말한다. 다시 사는 것을 막지는
+            않지만, 모르고 두 번 내는 일은 없어야 한다. 보관함으로 가는 길도 함께 둔다.
+          */}
+          {owned && (
+            <div className="mb-space-md flex flex-col gap-space-xs rounded-xl border border-outline-variant/60 bg-surface-container p-space-md">
+              <span className="font-label-md text-label-md text-on-surface">이 풀이는 이미 가지고 계세요</span>
+              <span className="font-body-sm text-body-sm text-on-surface-variant">
+                지금 결제하면 방금 적어 주신 정보로 <strong className="text-on-surface">새 풀이</strong>를 한 벌 더 만들어요.
+                전에 받은 풀이도 그대로 남아 있어요.
+              </span>
+              <Link
+                href="/library"
+                className="mt-0.5 flex w-fit items-center gap-1 font-label-sm text-label-sm text-secondary"
+              >
+                가지고 있는 풀이 보기
+                <Icon name="chevron_right" className="text-[16px]" />
+              </Link>
+            </div>
+          )}
 
           <CheckoutPanel
             slug={report.slug}

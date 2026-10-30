@@ -136,10 +136,13 @@ export function createLocalRepository(): Repository {
         Object.assign(findOrThrow(data.payments, (item) => item.paymentId === paymentId, "payment"), patch);
       }),
 
+    // 같은 상품을 다시 살 수 있으므로 가장 최근 것을 돌려준다
     getPurchase: (userId, reportSlug) =>
       read(
         (data) =>
-          data.purchases.find((purchase) => purchase.userId === userId && purchase.reportSlug === reportSlug) ?? null,
+          data.purchases
+            .filter((purchase) => purchase.userId === userId && purchase.reportSlug === reportSlug)
+            .sort((a, b) => b.purchasedAt.localeCompare(a.purchasedAt))[0] ?? null,
       ),
 
     listPurchases: (userId) =>
@@ -151,9 +154,9 @@ export function createLocalRepository(): Repository {
 
     createPurchase: (input) =>
       write((data) => {
-        const existing = data.purchases.find(
-          (purchase) => purchase.userId === input.userId && purchase.reportSlug === input.reportSlug,
-        );
+        // 같은 결제가 두 번 들어온 경우에만 기존 것을 돌려준다. 같은 상품을 다시 산 것은
+        // 중복이 아니라 새 구매다.
+        const existing = data.purchases.find((purchase) => purchase.paymentRowId === input.paymentRowId);
         if (existing) return existing;
         const purchase: Purchase = { id: randomUUID(), ...input, purchasedAt: now() };
         data.purchases.push(purchase);
