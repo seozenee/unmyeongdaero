@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BirthForm } from "@/components/story/BirthForm";
@@ -37,8 +38,6 @@ interface Scene {
 }
 
 const storageKey = (slug: string) => `sazudaero:funnel2:${slug}`;
-const LINE_PAUSE_MS = 760;
-const PANEL_HOLD_MS = 2600;
 const BASE_SCENE: Scene = { place: "room", camera: "close", figure: "close", asset: "intro-5" };
 
 function birthTitle(report: ReportProduct, target: "subject" | "partner") {
@@ -88,7 +87,16 @@ function SheetCard({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function StoryFunnel({ report, related = [] }: { report: ReportProduct; related?: ReportProduct[] }) {
+export function StoryFunnel({
+  report,
+  related = [],
+  owned = false,
+}: {
+  report: ReportProduct;
+  related?: ReportProduct[];
+  /** 이미 이 풀이를 산 적이 있는가 — 다시 보러 온 사람에게 지름길을 준다 */
+  owned?: boolean;
+}) {
   const router = useRouter();
   const guide = getGuide(report.guide);
   const steps = useMemo(() => buildFunnel(report), [report]);
@@ -138,22 +146,31 @@ export function StoryFunnel({ report, related = [] }: { report: ReportProduct; r
 
   const advance = useCallback(() => setCursor((value) => value + 1), []);
 
-  // 웹툰 컷은 장면을 바꾸고 잠시 머문 뒤 다음으로
+  // 웹툰 컷은 장면만 바꾸고 머문다. 넘기는 것은 손님이 정한다.
   useEffect(() => {
     if (phase !== "chat" || step?.kind !== "panel") return;
     setScene({ place: "room", camera: step.camera, figure: step.figure, asset: step.asset, sfx: step.sfx });
     setEcho(null);
-    const timer = window.setTimeout(() => {
-      setScene((current) => ({ ...BASE_SCENE, camera: current.camera === "close" ? "wide" : "close" }));
-      advance();
-    }, PANEL_HOLD_MS);
-    return () => window.clearTimeout(timer);
-  }, [phase, step, advance]);
+  }, [phase, step]);
 
-  const onTyped = useCallback(() => {
-    setTyping(false);
-    window.setTimeout(advance, LINE_PAUSE_MS);
-  }, [advance]);
+  /**
+   * 다음으로.
+   *
+   * 전에는 대사가 다 찍히면 0.76초 뒤에, 컷은 2.6초 뒤에 저절로 넘어갔다. 읽는 속도는
+   * 사람마다 다른데 넘어가는 속도는 하나였으니, 느리게 읽는 사람은 늘 놓치고 빠르게
+   * 읽는 사람은 늘 기다렸다. 둘 다 불편했다.
+   *
+   * 이제 누를 때까지 머문다. 컷을 넘길 때는 화면을 한 번 흔들어 장면이 바뀌었음을
+   * 보여 준다.
+   */
+  const next = useCallback(() => {
+    if (step?.kind === "panel") {
+      setScene((current) => ({ ...BASE_SCENE, camera: current.camera === "close" ? "wide" : "close" }));
+    }
+    advance();
+  }, [advance, step]);
+
+  const onTyped = useCallback(() => setTyping(false), []);
 
   useEffect(() => {
     if (step?.kind === "line") setTyping(true);
@@ -218,12 +235,32 @@ export function StoryFunnel({ report, related = [] }: { report: ReportProduct; r
   // ─ 상품 소개 (스테이지를 닫았을 때 보이는 화면) ─
   // 상품 소개는 ProductIntro 가 그린다 — 상품마다 다른 포스터·문구·서체를 쓴다
   const detailPage = (
-    <ProductIntro
-      report={report}
-      related={related}
-      onStart={() => setPhase(cursor > 0 ? "chat" : "intro")}
-      resuming={cursor > 0}
-    />
+    <>
+      {/*
+        이미 산 사람에게는 지름길을 준다. 전에는 이 화면에 들어오면 곧장 결과로
+        돌려보냈는데, 그러면 다시 사려는 사람은 들어올 수조차 없었다. 길을 막는 대신
+        길을 하나 더 놓는다 — 보러 온 사람은 누르고, 또 사러 온 사람은 그냥 내려간다.
+      */}
+      {owned && (
+        <Link
+          href={`/reports/${report.slug}/read`}
+          className="fixed inset-x-0 top-16 z-30 mx-auto flex w-full max-w-md items-center gap-space-sm border-b border-outline-variant/40 bg-surface-container/95 px-margin py-space-sm backdrop-blur"
+        >
+          <Icon name="auto_stories" className="text-[18px] text-secondary" />
+          <span className="flex-1 font-label-md text-label-md text-on-surface">이미 받으신 풀이가 있어요</span>
+          <span className="flex items-center gap-0.5 font-label-sm text-label-sm text-secondary">
+            바로 읽기
+            <Icon name="chevron_right" className="text-[16px]" />
+          </span>
+        </Link>
+      )}
+      <ProductIntro
+        report={report}
+        related={related}
+        onStart={() => setPhase(cursor > 0 ? "chat" : "intro")}
+        resuming={cursor > 0}
+      />
+    </>
   );
 
   if (phase === "closed") return detailPage;
@@ -410,12 +447,19 @@ export function StoryFunnel({ report, related = [] }: { report: ReportProduct; r
       );
     }
 
-    // 대사가 흐르는 동안
-    return (
-      <p className="py-3.5 text-center font-label-sm text-label-sm text-on-surface-variant/70">
-        {typing ? "화면을 누르면 빨리 넘어가요" : "…"}
-      </p>
-    );
+    // 대사가 찍히는 중이면 건너뛰기, 다 찍혔으면 다음으로
+    if (step?.kind === "line" || step?.kind === "panel") {
+      if (typing) {
+        return (
+          <p className="py-3.5 text-center font-label-sm text-label-sm text-on-surface-variant/70">
+            화면을 누르면 한 번에 다 보여 드려요
+          </p>
+        );
+      }
+      return <StageAction onClick={next}>다음</StageAction>;
+    }
+
+    return <p className="py-3.5 text-center font-label-sm text-label-sm text-on-surface-variant/70">…</p>;
   })();
 
   // 손님이 답해야 넘어가는 걸음만 센다. 대사와 컷은 저절로 흐르므로 걸음으로 치지 않는다.
@@ -448,7 +492,11 @@ export function StoryFunnel({ report, related = [] }: { report: ReportProduct; r
         sfx={scene.sfx}
         sound={sound}
         onClose={() => setPhase("closed")}
-        onTap={() => typing && setSkipSignal((value) => value + 1)}
+        onTap={() => {
+          // 찍히는 중이면 한 번에 다 보여 주고, 다 찍혔으면 다음으로 — 손가락 하나로 끝난다
+          if (typing) setSkipSignal((value) => value + 1);
+          else if (step?.kind === "line" || step?.kind === "panel") next();
+        }}
         footer={footer}
       >
         {notice && (
