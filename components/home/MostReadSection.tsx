@@ -64,41 +64,33 @@ function DossierCard({ report }: { report: ReportProduct }) {
     <Link
       ref={ref}
       href={`/reports/${report.slug}`}
-      className="group flex h-full flex-col overflow-hidden rounded-2xl bg-surface-container shadow-xl transition-transform active:scale-[0.99]"
+      className="group relative block aspect-[4/5] h-full w-full overflow-hidden rounded-2xl bg-surface-container-low transition-transform active:scale-[0.99]"
     >
-      <div className="relative aspect-[4/5] w-full overflow-hidden">
-        {poster && <WebtoonMedia asset={poster} active={inView} className="absolute inset-0" />}
-        <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-surface-container via-surface-container/60 to-transparent" />
+      {/*
+        카드는 영상 한 장이다.
+        그림 아래에 「12개월 열람 · 몇 장」을 적은 칸을 따로 달아 두었다. 카드마다 어두운
+        네모가 한 겹 더 생겨 그림이 네모에 얹힌 꼴이 됐다. 영상 아래에 설명 상자를 다는
+        영상은 없다. 글은 그림 위에 자막처럼 앉히고, 조건은 결제 화면에서 말한다.
+      */}
+      {poster && <WebtoonMedia asset={poster} active={inView} className="absolute inset-0" />}
+      <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/45 to-transparent" />
 
-        <span className="absolute left-space-sm top-space-sm rounded-full bg-surface-container-lowest/75 px-2 py-0.5 font-label-sm text-label-sm text-secondary backdrop-blur">
-          {report.categoryLabel}
+      <span className="absolute left-space-sm top-space-sm rounded-full bg-black/40 px-2 py-0.5 font-label-sm text-label-sm text-white backdrop-blur-md">
+        {report.categoryLabel}
+      </span>
+
+      <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1.5 px-space-md pb-space-md">
+        <span
+          className="text-[2rem] leading-tight tracking-tight text-white [text-shadow:0_1px_16px_rgb(0_0_0/0.6)]"
+          style={font ? { fontFamily: font } : undefined}
+        >
+          {report.title}
         </span>
-
-        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 px-space-md pb-space-md">
-          <span
-            className="text-[2rem] leading-tight tracking-tight text-white [text-shadow:0_1px_16px_rgb(0_0_0/0.6)]"
-            style={font ? { fontFamily: font } : undefined}
-          >
-            {report.title}
+        {pitch && (
+          <span className="line-clamp-2 font-body-md text-body-md leading-snug text-white/85 [text-shadow:0_1px_10px_rgb(0_0_0/0.7)]">
+            {pitch.claims[0]}
           </span>
-          {pitch && (
-            <span className="line-clamp-2 font-body-md text-body-md leading-snug text-on-surface/90 [text-shadow:0_1px_8px_rgb(0_0_0/0.9)]">
-              {pitch.claims[0]}
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between gap-space-sm px-space-md py-space-sm">
-        {/*
-          여기 「12개월 열람 · 명식까지 무료」가 붙어 있었다. 둘 다 사실이지만, 둘 다
-          결제를 앞두고서야 궁금해지는 것이다. 고르는 자리에서는 그림과 한 줄이면 된다.
-          조건은 결제 화면에서 다시 말한다.
-        */}
-        <span className="flex items-center gap-1.5 font-label-sm text-label-sm text-outline">
-          <Icon name="menu_book" className="text-[15px]" />
-          {report.chapters.length}장
-        </span>
+        )}
       </div>
     </Link>
   );

@@ -3,12 +3,10 @@ import { FaqSection } from "@/components/home/FaqSection";
 import { FreeInsightSection } from "@/components/home/FreeInsightSection";
 import { GuideShelf } from "@/components/home/GuideShelf";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
-import { HowItWorks } from "@/components/home/HowItWorks";
 import { MostReadSection } from "@/components/home/MostReadSection";
 import { MyChart } from "@/components/home/MyChart";
 import { CategoryRails } from "@/components/home/CategoryRails";
 import { QuickNeeds } from "@/components/home/QuickNeeds";
-import { TrustBanner } from "@/components/home/TrustBanner";
 import { loadReports } from "@/lib/reports/store";
 
 export const dynamic = "force-dynamic";
@@ -27,9 +25,13 @@ export const dynamic = "force-dynamic";
  * 만나는 것이 "우리가 어떤 회사인가"가 된다. 그건 사고 나서 궁금해지는 것이지
  * 들어오자마자 궁금한 것이 아니다. 궁금한 것은 "내 것이 뭐가 나오나"다.
  *
- * 모든 묶음은 옆으로 미는 줄이다. 세로로 길게 쌓인 목록은 한 번 내려가면 끝이 보여서,
- * 열일곱 개를 다 지나야 다음 이야기가 나왔다. 줄로 바꾸면 세로로는 주제만 훑고 관심
- * 있는 줄에서만 옆으로 민다.
+ * 「결제 전에 어디까지 보이나요」와 「3가지 결제 약속」은 아예 뺐다. 아래로 내려도
+ * 내려도 설명이 이어지면 첫 화면이 안내문이 된다. 둘 다 결제 화면과 약관·환불규정에
+ * 그대로 적혀 있다 — 정작 읽어야 할 자리에서 읽히면 된다.
+ *
+ * 주제별 묶음은 세로로 쌓는다. 한동안 전부 옆으로 미는 줄이었는데, 상품이 한 번씩만
+ * 나오도록 정리하고 나니 한 장짜리 묶음이 생겼다. 밀 것이 없는데 미는 줄로 만들 이유가
+ * 없다. 맨 위 대표 풀이 한 줄만 옆으로 민다.
  */
 export default async function HomePage() {
   // 운영 화면에서 만든 상품까지 합쳐 내려 준다
@@ -50,9 +52,7 @@ export default async function HomePage() {
       <QuickNeeds />
       <GuideShelf products={products} />
       <FreeInsightSection />
-      <HowItWorks />
       <FaqSection />
-      <TrustBanner />
     </div>
   );
 }

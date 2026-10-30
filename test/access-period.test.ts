@@ -47,11 +47,12 @@ describe("열람 기간", () => {
   });
 
   it("손님이 보는 자리에 12개월이 적혀 있다", () => {
-    // 결제 직전, 랜딩의 약속, FAQ — 돈을 내기 전에 읽는 세 자리
+    // 돈을 내기 전에 실제로 읽히는 자리. 랜딩의 「3가지 결제 약속」은 화면에서 뺐으므로
+    // 여기서 묻지 않는다 — 보이지 않는 곳에 적혀 있는지를 지켜 봐야 소용이 없다.
     for (const file of [
-      path.join("components", "home", "TrustBanner.tsx"),
       path.join("components", "home", "FaqSection.tsx"),
       path.join("components", "checkout", "CheckoutPanel.tsx"),
+      path.join("components", "manse", "ManseConfirm.tsx"),
     ]) {
       expect(readFileSync(file, "utf8"), file).toMatch(/12개월/);
     }

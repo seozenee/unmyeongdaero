@@ -165,37 +165,39 @@ function RailCard({ report, hook }: { report: ReportProduct; hook?: string }) {
     <Link
       ref={ref}
       href={`/reports/${report.slug}`}
-      className="group flex flex-col overflow-hidden rounded-2xl bg-surface-container ring-1 ring-inset ring-white/[0.06] transition-transform duration-200 active:scale-[0.99]"
+      className="group relative block aspect-[4/5] w-full overflow-hidden rounded-2xl bg-surface-container-low transition-transform duration-200 active:scale-[0.99]"
     >
-      <div className="relative aspect-[5/3] w-full overflow-hidden bg-surface-container-low">
-        {poster ? (
-          <WebtoonMedia asset={poster} active={inView} className="absolute inset-0" />
-        ) : (
-          <div
-            role="img"
-            aria-label=""
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url('${STITCH_ASSETS[report.cover]}')` }}
-          />
-        )}
-        <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
+      {/*
+        카드는 영상 한 장이다.
+        전에는 그림 아래에 글자 칸을 따로 붙였다. 카드마다 어두운 네모가 한 겹 더
+        생겨서, 공들여 만든 그림이 네모에 얹힌 꼴이 됐다. 글은 그림 위에 자막처럼
+        앉힌다 — 영상 아래에 설명 상자를 다는 영상은 없다.
+      */}
+      {poster ? (
+        <WebtoonMedia asset={poster} active={inView} className="absolute inset-0" />
+      ) : (
+        <div
+          role="img"
+          aria-label=""
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url('${STITCH_ASSETS[report.cover]}')` }}
+        />
+      )}
 
+      {/* 자막이 읽히는 만큼만 어둡게. 그림을 덮지 않는다 */}
+      <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/45 to-transparent" />
+
+      <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1.5 px-space-lg pb-space-lg">
         <span
-          className="absolute inset-x-space-lg bottom-space-md text-[2rem] leading-[1.1] tracking-tight text-white [text-shadow:0_1px_14px_rgb(0_0_0/0.6)]"
+          className="text-[2.1rem] leading-[1.1] tracking-tight text-white [text-shadow:0_1px_16px_rgb(0_0_0/0.6)]"
           style={font ? { fontFamily: font } : undefined}
         >
           {report.title}
         </span>
+        <span className="line-clamp-2 font-body-md text-body-md leading-snug text-white/85 [text-shadow:0_1px_10px_rgb(0_0_0/0.7)]">
+          {hook ?? report.tagline}
+        </span>
       </div>
-
-      {/*
-        카드 아래에는 한 줄만 둔다.
-        전에는 세 줄이었다 — 줄 문구, 상품 한 줄, 그리고 「명식까지 무료로 보기」. 글자가
-        세 줄이면 그림이 글에 눌린다. 내려가며 보는 사람은 세 줄을 읽지 않는다.
-      */}
-      <span className="line-clamp-2 px-space-lg py-space-md font-body-md text-body-md leading-relaxed text-on-surface-variant">
-        {hook ?? report.tagline}
-      </span>
     </Link>
   );
 }
