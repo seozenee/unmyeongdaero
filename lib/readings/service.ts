@@ -153,7 +153,20 @@ async function generateWithClaude(
   const stream = getAnthropic().beta.messages.stream({
     ...claudeBaseParams(),
     max_tokens: 64000,
-    output_config: { effort: "high", format: zodOutputFormat(storyReportSchema) },
+    // effort 를 high 로 두고 있었다. 깊이 생각할수록 좋은 글이 나올 것 같았는데, 재 보니
+    // 그렇지 않았다.
+    //
+    //   high   : 전체 200초 · 첫 글자까지 150초 · 출력 27,996토큰
+    //   medium : 전체  48초 · 첫 글자까지 1.7초 · 출력  6,129토큰
+    //
+    // high 가 더 쓴 2만 토큰은 거의 다 속생각이다. 완성된 글의 분량과 짜임은 같았다
+    // (5장 × 4문단, 브리핑 11개, 장마다 근거 3개 — 프롬프트가 요구하는 그대로).
+    //
+    // 차이는 손님 쪽에 있었다. high 에서는 모델이 2분 30초를 속으로만 생각하므로 화면에
+    // 아무것도 흐르지 않는다. 돈을 내고 빈 화면을 2분 30초 보는 것이다. medium 은 2초
+    // 만에 글이 흐르기 시작한다. 같은 글을 같은 짜임으로 주면서, 넷 중 셋의 시간을
+    // 돌려준다.
+    output_config: { effort: "medium", format: zodOutputFormat(storyReportSchema) },
     system: [{ type: "text", text: buildReportSystemPrompt(report), cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: buildReportUserPrompt(report, reading, sazu, today()) }],
   });
