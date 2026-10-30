@@ -181,6 +181,33 @@ export function StoryFunnel({
     advance();
   };
 
+  /**
+   * 한 걸음 되돌리기.
+   *
+   * 잘못 고른 것을 고치려면 처음부터 다시 하는 수밖에 없었다. 이름을 잘못 적었거나
+   * 보기를 잘못 눌렀다고 전부 다시 적게 하는 것은 벌이지 안내가 아니다.
+   *
+   * 대사와 컷은 건너뛰고 "답한 걸음"으로만 돌아간다. 한 번 누르면 한 번 고친다 —
+   * 대사 세 줄을 거슬러 올라가게 하면 되돌리기가 또 하나의 일이 된다.
+   */
+  const answerable = ["question", "birth", "detail", "reply"] as const;
+  const previousAnswerStep = steps
+    .slice(0, cursor)
+    .map((item, index) => ({ item, index }))
+    .filter(({ item }) => (answerable as readonly string[]).includes(item.kind))
+    .at(-1);
+
+  const goBack = previousAnswerStep
+    ? () => {
+        setCursor(previousAnswerStep.index);
+        setEcho(null);
+        setNotice(null);
+        setOtherFor(null);
+        setOtherText("");
+        setTyping(false);
+      }
+    : undefined;
+
   const jumpToBirth = (target: "subject" | "partner", message: string) => {
     const index = steps.findIndex((item) => item.kind === "birth" && item.target === target);
     setNotice(message);
@@ -491,6 +518,7 @@ export function StoryFunnel({
         assetKey={scene.asset}
         sfx={scene.sfx}
         sound={sound}
+        onBack={goBack}
         onClose={() => setPhase("closed")}
         onTap={() => {
           // 찍히는 중이면 한 번에 다 보여 주고, 다 찍혔으면 다음으로 — 손가락 하나로 끝난다

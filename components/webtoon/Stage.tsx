@@ -121,7 +121,7 @@ export function Stage({ guide, place, camera, figure, assetKey, still, sfx, chil
           <button
             type="button"
             onClick={onBack}
-            aria-label="이전 장면"
+            aria-label="이전으로"
             className="flex w-11 shrink-0 items-center justify-center rounded-lg bg-surface-container-lowest/70 text-on-surface-variant ring-1 ring-outline-variant/50 backdrop-blur transition-colors hover:text-on-surface"
           >
             <Icon name="chevron_left" className="text-[22px]" />

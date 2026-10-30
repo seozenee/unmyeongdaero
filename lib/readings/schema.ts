@@ -42,12 +42,27 @@ export const readingDraftSchema = z.object({
 export type ReadingDraftInput = z.input<typeof readingDraftSchema>;
 export type ReadingDraft = z.output<typeof readingDraftSchema>;
 
-/** 상품별 추가 규칙. 문제가 없으면 null */
+/** 보기에 없이 직접 적은 답으로 받아들일 최대 길이. 입력칸의 maxLength 와 같다 */
+const OTHER_ANSWER_MAX = 200;
+
+/**
+ * 상품별 추가 규칙. 문제가 없으면 null.
+ *
+ * 답이 보기 중 하나인지까지 보고 있었다. 「기타 — 직접 쓸게요」를 열어 둔 뒤로는
+ * 그 검사가 직접 적은 답을 전부 되돌려 보냈다. 손님 화면에는 "「아이는 몇 살인가요?」에
+ * 답해 주세요"가 떴다 — 방금 적어 놓고 안 적었다는 말을 듣는 셈이다.
+ *
+ * 보기에 없는 답도 받는다. 대신 비어 있지 않은지와, 입력칸이 받는 길이를 넘지 않았는지만
+ * 본다(화면에서 막아 두었지만 서버가 믿을 것은 아니다).
+ */
 export function validateDraftForReport(report: ReportProduct, draft: ReadingDraft): string | null {
   if (report.partner === "required" && !draft.partner) return "상대방 정보를 입력해 주세요.";
   for (const question of report.questions) {
-    const answer = draft.answers[question.id];
-    if (!answer || !question.options.includes(answer)) return `「${question.question}」에 답해 주세요.`;
+    const answer = draft.answers[question.id]?.trim();
+    if (!answer) return `「${question.question}」에 답해 주세요.`;
+    if (!question.options.includes(answer) && answer.length > OTHER_ANSWER_MAX) {
+      return `「${question.question}」 답이 너무 길어요. ${OTHER_ANSWER_MAX}자 안으로 적어 주세요.`;
+    }
   }
   return null;
 }
