@@ -23,6 +23,87 @@ interface BirthFormProps {
   remember?: boolean;
 }
 
+/**
+ * 태어난 곳 — 쳐서 찾는다.
+ *
+ * 229곳을 담은 드롭다운이었다. 데스크톱에서는 그럭저럭이지만 폰에서는 손가락으로
+ * 한참을 굴려야 하고, 내가 찾는 곳이 어느 묶음에 있는지도 모른다.
+ *
+ * 글자를 치면 맞는 곳만 추려 보여 준다. "부"만 쳐도 부산·부천·부여가 나온다. 아무것도
+ * 안 치면 많이 쓰는 곳 몇 개를 먼저 보여 줘서, 서울 사람은 한 번에 끝난다.
+ *
+ * 직접 적게 두지는 않는다. 우리가 경도를 모르는 이름이 들어오면 계산은 서울로 떨어지는데
+ * 화면에는 적어 넣은 곳이 그대로 남아, 서울로 계산한 것을 그 도시로 계산한 것처럼
+ * 보여 주게 된다. 목록에 없으면 「목록에 없어요」를 고르게 한다.
+ */
+const POPULAR = ["서울", "부산", "인천", "대구", "대전", "광주", "수원", "제주"];
+
+function CityPicker({ value, onChange }: { value: string; onChange: (city: string) => void }) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const all = useMemo(() => birthCities.flatMap((group) => group.cities.map((name) => ({ name, region: group.region }))), []);
+
+  const matches = useMemo(() => {
+    const keyword = query.trim();
+    if (!keyword) return all.filter((item) => POPULAR.includes(item.name)).slice(0, 8);
+    return all.filter((item) => item.name.includes(keyword) || item.region.includes(keyword)).slice(0, 12);
+  }, [query, all]);
+
+  return (
+    <div className="relative flex flex-col gap-1">
+      <span className="font-label-sm text-label-sm text-on-surface-variant">태어난 곳</span>
+      <input
+        type="text"
+        inputMode="search"
+        aria-label="태어난 곳"
+        value={open ? query : value}
+        placeholder="도시 이름을 적어 보세요"
+        onFocus={() => {
+          setQuery("");
+          setOpen(true);
+        }}
+        onChange={(event) => setQuery(event.target.value)}
+        onBlur={() => window.setTimeout(() => setOpen(false), 150)}
+        className={FIELD}
+      />
+      {open && (
+        <ul className="absolute left-0 right-0 top-full z-20 mt-1 max-h-60 overflow-y-auto rounded-lg border border-outline-variant/60 bg-surface-container-high shadow-2xl">
+          {matches.map((item) => (
+            <li key={item.name}>
+              <button
+                type="button"
+                // onBlur 보다 먼저 잡아야 목록이 닫히기 전에 고를 수 있다
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  onChange(item.name);
+                  setOpen(false);
+                }}
+                className="flex w-full items-baseline gap-space-sm px-space-md py-2.5 text-left transition-colors hover:bg-surface-bright"
+              >
+                <span className="font-body-md text-body-md text-on-surface">{item.name}</span>
+                <span className="font-label-sm text-label-sm text-outline">{item.region}</span>
+              </button>
+            </li>
+          ))}
+          <li>
+            <button
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                onChange("서울");
+                setOpen(false);
+              }}
+              className="w-full border-t border-outline-variant/40 px-space-md py-2.5 text-left font-label-sm text-label-sm text-outline transition-colors hover:bg-surface-bright"
+            >
+              목록에 없어요 — 서울 기준으로 계산
+            </button>
+          </li>
+        </ul>
+      )}
+    </div>
+  );
+}
+
 const FIELD =
   "w-full rounded-lg border border-outline-variant/60 bg-surface-container-lowest px-space-sm py-2.5 font-body-md text-body-md text-on-surface outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/60";
 
@@ -326,29 +407,7 @@ export function BirthForm({
                 ]}
               />
             </div>
-            <label className="flex flex-col gap-1">
-              <span className="font-label-sm text-label-sm text-on-surface-variant">태어난 곳</span>
-              <select aria-label="태어난 곳" className={FIELD} value={city} onChange={(e) => setCity(e.target.value)}>
-                {birthCities.map((group) => (
-                  <optgroup key={group.region} label={group.region}>
-                    {group.cities.map((cityName) => (
-                      <option key={cityName} value={cityName}>
-                        {cityName}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-                {/*
-                  목록에 없는 곳에서 태어난 사람에게 직접 쓰게 하지 않는 이유가 있다.
-                  우리가 경도를 모르는 이름을 받으면 계산은 서울로 떨어지는데, 화면에는
-                  적어 넣은 도시가 그대로 남는다. 서울로 계산한 것을 그 도시로 계산한 것처럼
-                  보여 주는 셈이다. 그래서 값은 서울로 두고, 무슨 일이 일어나는지 이름에 적는다.
-                */}
-                <optgroup label="그 밖">
-                  <option value="서울">목록에 없어요 — 서울 기준으로 계산</option>
-                </optgroup>
-              </select>
-            </label>
+            <CityPicker value={city} onChange={setCity} />
           </div>
 
           {/* 적은 것을 한 번에 되짚어 준다 — 고치려면 지금이 마지막이다 */}

@@ -22,7 +22,7 @@ export function HighlightCard() {
             </span>
             <span className="flex items-center gap-1 rounded-full bg-surface-container-highest/70 px-2.5 py-1 font-label-sm text-label-sm text-primary backdrop-blur-md">
               <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              {report.chapters.length}장 구성
+              한 편으로 이어 읽어요
             </span>
           </div>
         </div>

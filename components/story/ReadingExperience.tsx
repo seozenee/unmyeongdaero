@@ -168,10 +168,23 @@ export function ReadingExperience(props: ReadingExperienceProps) {
   const currentStreaming = !briefingDone && cursor === beats.length - 1;
   const briefingShown = briefingDone && cursor >= beats.length;
 
-  const advance = useCallback(() => {
-    // 한 줄을 다 쓰고 나서 다음 줄까지의 틈. 사람이 말을 마치고 숨을 고르는 만큼 둔다.
-    window.setTimeout(() => setCursor((value) => value + 1), 900);
-  }, []);
+  /**
+   * 다음 말로.
+   *
+   * 한 줄이 다 찍히면 0.9초 뒤에 저절로 넘어갔다. 읽는 속도는 사람마다 다른데 넘어가는
+   * 속도는 하나였으니, 느리게 읽는 사람은 늘 놓치고 빠르게 읽는 사람은 늘 기다렸다.
+   * 돈을 내고 받은 글인데 되감을 수도 없었다.
+   *
+   * 이제 누를 때까지 머문다. 아직 쓰는 중인 마지막 줄만 다 찍히면 저절로 이어진다 —
+   * 글이 흘러나오는 동안까지 손가락을 쓰게 할 이유는 없다.
+   */
+  const advance = useCallback(() => setCursor((value) => value + 1), []);
+  const [awaiting, setAwaiting] = useState(false);
+  const onBeatTyped = useCallback(() => setAwaiting(true), []);
+  const next = useCallback(() => {
+    setAwaiting(false);
+    advance();
+  }, [advance]);
 
   useEffect(() => {
     if (view === "chat") bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -260,7 +273,20 @@ export function ReadingExperience(props: ReadingExperienceProps) {
         </div>
       )}
 
-      <div className="flex flex-col gap-space-md">
+      {/*
+        화면을 누르면 — 찍히는 중이면 한 번에 다 보여 주고, 다 찍혔으면 다음으로.
+        전에는 "화면을 누르면 빠르게 넘어가요"라고 적어 두고 정작 누르는 자리를 만들지
+        않았다. skipSignal 을 올리는 곳이 어디에도 없었다 — 눌러 본 사람에게는 고장 난
+        화면이다.
+      */}
+      <div
+        className="flex flex-col gap-space-md"
+        onClick={() => {
+          if (briefingShown || beats.length === 0) return;
+          if (awaiting) next();
+          else setSkipSignal((value) => value + 1);
+        }}
+      >
         {beats.slice(0, cursor + 1).map((beat, index) => {
           const animate = index === cursor;
           const streaming = animate && currentStreaming;
@@ -271,7 +297,7 @@ export function ReadingExperience(props: ReadingExperienceProps) {
                 text={beat.text}
                 animate={animate}
                 streaming={streaming}
-                onTyped={animate ? advance : undefined}
+                onTyped={animate ? (streaming ? advance : onBeatTyped) : undefined}
                 skipSignal={animate ? skipSignal : 0}
               />
             );
@@ -284,7 +310,7 @@ export function ReadingExperience(props: ReadingExperienceProps) {
               showName={index === 0 || beats[index - 1]?.speaker === "narration"}
               animate={animate}
               streaming={streaming}
-              onTyped={animate ? advance : undefined}
+              onTyped={animate ? (streaming ? advance : onBeatTyped) : undefined}
               skipSignal={animate ? skipSignal : 0}
             />
           );
@@ -339,7 +365,18 @@ export function ReadingExperience(props: ReadingExperienceProps) {
       )}
 
       {!briefingShown && beats.length > 0 && !failure && (
-        <p className="text-center font-label-sm text-label-sm text-outline/70">화면을 누르면 빠르게 넘어가요</p>
+        awaiting ? (
+          <button
+            type="button"
+            onClick={next}
+            className="mx-auto flex w-full max-w-xs items-center justify-center gap-1 rounded-xl bg-secondary py-3.5 font-label-md text-label-md font-bold text-on-secondary transition-transform active:scale-[0.98]"
+          >
+            다음
+            <Icon name="arrow_forward" className="text-[18px]" />
+          </button>
+        ) : (
+          <p className="text-center font-label-sm text-label-sm text-outline/70">화면을 누르면 한 번에 다 보여 드려요</p>
+        )
       )}
 
       {failure && (

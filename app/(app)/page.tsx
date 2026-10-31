@@ -1,7 +1,6 @@
 import { CategoryTabs } from "@/components/home/CategoryTabs";
 import { FaqSection } from "@/components/home/FaqSection";
 import { FreeInsightSection } from "@/components/home/FreeInsightSection";
-import { GuideShelf } from "@/components/home/GuideShelf";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { MostReadSection } from "@/components/home/MostReadSection";
 import { MyChart } from "@/components/home/MyChart";
@@ -50,7 +49,6 @@ export default async function HomePage() {
       </section>
       {/* 자기 고민을 손으로 짚고 바로 그 줄로 내려가는 길 */}
       <QuickNeeds />
-      <GuideShelf products={products} />
       <FreeInsightSection />
       <FaqSection />
     </div>

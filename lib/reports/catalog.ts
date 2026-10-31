@@ -157,7 +157,10 @@ export const REPORTS = [
     guide: "doham",
     // 다섯 토픽을 모두 계산해 한 보고서로 엮는다
     topics: ["life", "decade", "yearly", "money", "love"],
-    partner: "optional",
+    // 혼자 보는 풀이다. 전에는 상대를 물을 수 있게 열어 두었는데,
+    // 「나는 무얼 가지고 태어났을까?」를 보러 온 사람에게 그 사람의 생년월일을 묻는 것은
+    // 뜬금없다. 둘을 보고 싶으면 궁합을 사면 된다.
+    partner: "none",
     chapters: [
       "타고난 그릇의 모양",
       "나를 움직이는 힘과 막는 힘",

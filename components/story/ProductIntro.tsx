@@ -128,7 +128,6 @@ export function ProductIntro({ report, soldCount, related = [], onStart, resumin
   const chips = [
     report.categoryLabel.replace(/\s+/g, ""),
     guide.name,
-    `${report.chapters.length}장`,
     "12개월열람",
     "단건결제",
     // 할인율은 값 이야기다. 여기는 "이게 나한테 맞는가"를 재는 자리라 값을 끌어오지 않는다
@@ -314,7 +313,6 @@ export function ProductIntro({ report, soldCount, related = [], onStart, resumin
         <section className="relative overflow-hidden rounded-3xl border border-dashed border-[rgb(var(--accent)/0.45)] bg-surface-container-lowest p-space-lg">
           <div className="flex items-baseline justify-between">
             <span className="font-label-sm text-label-sm font-bold tracking-[0.2em] text-[rgb(var(--accent))]">CONTENTS</span>
-            <span className="font-label-sm text-label-sm text-outline">{report.chapters.length}장</span>
           </div>
           <ol className="mt-space-sm flex flex-col">
             {report.chapters.map((chapter, index) => (
@@ -364,9 +362,7 @@ export function ProductIntro({ report, soldCount, related = [], onStart, resumin
           {/* 잠긴 자리 — 가린 것을 가렸다고 말한다 */}
           <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-1 bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest/92 to-transparent px-space-lg pb-space-lg pt-space-xl">
             <Icon name="lock" className="text-[22px] text-[rgb(var(--accent))]" />
-            <span className="font-label-md text-label-md text-on-surface">
-              결제하면 {report.chapters.length}장이 전부 열려요
-            </span>
+            <span className="font-label-md text-label-md text-on-surface">결제하면 전부 열려요</span>
             <span className="font-label-sm text-label-sm text-outline">미리보기는 글의 모양만 보여 드려요</span>
           </div>
         </section>
@@ -382,7 +378,7 @@ export function ProductIntro({ report, soldCount, related = [], onStart, resumin
               {[
                 {
                   icon: "menu_book",
-                  text: `${report.chapters.length}장짜리 한 편의 글이에요. 장마다 근거와 시기표가 붙어요.`,
+                  text: "끊기지 않는 한 편의 글이에요. 장마다 근거와 시기표가 붙어요.",
                 },
                 { icon: "download", text: "화면으로도 보고, PDF 로 내려받아 두실 수도 있어요." },
                 { icon: "inventory_2", text: "보관함에 들어가요. 결제일부터 12개월 동안 다시 열려요." },

@@ -79,6 +79,31 @@ function EchoLine({ text }: { text: string }) {
   );
 }
 
+/**
+ * 묻는 말.
+ *
+ * 한 덩어리로 크게 찍고 있었다. "지금의 상황과 꼭 답을 얻고 싶은 것을 적어 주세요.
+ * 적어 주신 만큼 가까이 읽습니다. 안 적으셔도 풀이는 그대로 나와요." — 세 문장이 같은
+ * 크기로 굵게 서 있으니 어디까지가 질문인지 한눈에 안 들어오고, 화면도 무거웠다.
+ *
+ * 첫 문장만 질문이다. 뒤에 붙는 말은 안심시키는 말이라 작고 흐리게 둔다.
+ */
+function Ask({ text }: { text: string }) {
+  const [first, ...rest] = text.split(/(?<=[.?!])\s+/);
+  return (
+    <div className="flex flex-col gap-1.5 motion-safe:animate-fade-up">
+      <p className="text-[1.6rem] font-bold leading-snug tracking-tight text-on-surface [text-shadow:0_2px_12px_rgb(0_0_0/0.9)]">
+        {first}
+      </p>
+      {rest.length > 0 && (
+        <p className="font-body-sm text-body-sm leading-snug text-on-surface-variant/75 [text-shadow:0_1px_8px_rgb(0_0_0/0.9)]">
+          {rest.join(" ")}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function SheetCard({ children }: { children: React.ReactNode }) {
   return (
     <div className="no-scrollbar max-h-[52vh] overflow-y-auto rounded-xl bg-surface-container-lowest/92 p-space-md shadow-2xl ring-1 ring-outline-variant/40 backdrop-blur-xl motion-safe:animate-fade-up">
@@ -449,14 +474,7 @@ export function StoryFunnel({
         {step?.kind === "panel" && step.caption && <WhisperLines lines={[fillName(step.caption, name)]} />}
         {narration && <WhisperLines lines={[narration]} />}
         {guideLine && <TypedBalloon key={cursor} text={guideLine} onTyped={onTyped} skipSignal={skipSignal} />}
-        {prompt && (
-          <p
-            key={`prompt-${cursor}`}
-            className="text-[1.6rem] font-bold leading-snug tracking-tight text-on-surface [text-shadow:0_2px_12px_rgb(0_0_0/0.9)] motion-safe:animate-fade-up"
-          >
-            {fillName(prompt, name)}
-          </p>
-        )}
+        {prompt && <Ask key={`prompt-${cursor}`} text={fillName(prompt, name)} />}
       </Stage>
     </>
   );
