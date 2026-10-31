@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getReport, REPORTS, type ReportProduct } from "@/lib/reports/catalog";
+import { PITCH } from "@/lib/reports/pitch";
+import { findEmptyTalk, findJargon } from "@/lib/story/sanitize";
 import { readingDraftSchema, validateDraftForReport } from "@/lib/readings/schema";
 
 const product = getReport("child-talent")!;
@@ -36,6 +38,42 @@ describe("상품 목록", () => {
     for (const item of REPORTS as readonly ReportProduct[]) {
       expect(item.questions ?? [], item.slug).toEqual([]);
     }
+  });
+
+  /*
+    판매 문구도 풀이와 같은 기준으로 본다.
+
+    풀이에서 용어를 걷어내 놓고 상세 화면은 그대로 두었더니, 결제 직전에 가장 많이
+    읽히는 글에 "월운으로 연락의 결이 열리는 달", "용신의 결로 바꿔 볼 습관" 이
+    마흔 군데 남아 있었다. 사러 온 사람이 처음 만나는 글이 제일 어려웠던 셈이다.
+
+    이 글은 정적인 문구라 풀이처럼 길목에서 걸러지지 않는다. 그래서 여기서 지킨다.
+  */
+  it("판매 문구에 용어가 없다", () => {
+    const offenders: string[] = [];
+    const check = (text: string, where: string) => {
+      const found = [...findJargon(text), ...findEmptyTalk(text)];
+      if (found.length > 0) offenders.push(`${where}: [${found.join(", ")}] ${text}`);
+    };
+
+    for (const report of REPORTS as readonly ReportProduct[]) {
+      check(report.title, `${report.slug}/제목`);
+      check(report.categoryLabel, `${report.slug}/분류`);
+      check(report.tagline, `${report.slug}/한 줄`);
+      check(report.description, `${report.slug}/설명`);
+      report.chapters.forEach((chapter, index) => check(chapter, `${report.slug}/목차${index + 1}`));
+
+      const pitch = PITCH[report.slug];
+      if (!pitch) continue;
+      pitch.claims.forEach((claim, index) => check(claim, `${report.slug}/단언${index + 1}`));
+      check(pitch.promise, `${report.slug}/약속`);
+      pitch.gets.forEach((item) => {
+        check(item.title, `${report.slug}/받는것`);
+        check(item.body, `${report.slug}/받는것`);
+      });
+    }
+
+    expect(offenders).toEqual([]);
   });
 
   it("상품 이름이 손님의 말이다", () => {

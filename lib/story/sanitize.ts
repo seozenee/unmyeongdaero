@@ -302,6 +302,8 @@ export function findJargon(text: string): string[] {
     시지: /(?<!메)시지/,
     관대: /(?<!너)관대(?!하)/,
     중화: /중화(?!요리)/,
+    // "끌리는 편인지" 의 「편인」은 십성이 아니라 "편(쪽) + 인지" 다
+    편인: /편인(?!지)/,
   };
   const ganji = GANJI_SHAPES.some((shape) => shape.test(text)) ? ["간지"] : [];
   return [

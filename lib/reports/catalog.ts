@@ -71,7 +71,7 @@ export const REPORTS = [
     title: "재회사주 심층",
     tagline: "그 사람은 왜 연락을 멈췄을까?",
     description:
-      "헤어진 상대의 명식까지 함께 펼쳐, 지금 그 사람 마음에 남아 있는 것과 빗장이 풀리는 시기, 먼저 연락하면 안 되는 이유까지 짚어 드려요.",
+      "헤어진 상대의 여덟 글자까지 함께 펼쳐, 지금 그 사람 마음에 남아 있는 것과 빗장이 풀리는 시기, 먼저 연락하면 안 되는 이유까지 짚어 드려요.",
     price: 14900,
     originalPrice: 24000,
     discountLabel: "38% OFF",
@@ -114,12 +114,12 @@ export const REPORTS = [
     title: "연애사주",
     tagline: "내 사랑은 언제 올까?",
     description:
-      "내 명식에 새겨진 연애의 결과 자꾸 반복되는 패턴, 올해 인연이 들어오는 시기를 읽어 드려요.",
+      "내 여덟 글자에 새겨진 연애 성향과 자꾸 반복되는 패턴, 올해 인연이 들어오는 시기를 읽어 드려요.",
     price: 13900,
     guide: "seoha",
     topics: ["love"],
     partner: "none",
-    chapters: ["타고난 연애의 결", "반복되는 연애 패턴과 그 이유", "올해 인연이 들어오는 흐름", "인연을 알아보고 붙잡는 법"],
+    chapters: ["타고난 연애 성향", "반복되는 연애 패턴과 그 이유", "올해 인연이 들어오는 흐름", "인연을 알아보고 붙잡는 법"],
     detail: { prompt: "요즘 마음에 둔 사람이나 연애 고민이 있다면 적어 주세요. 없어도 괜찮아요.", placeholder: "(예) 회사 동료가 신경 쓰이는데 먼저 다가가도 될지 모르겠어요." },
     cover: "thumbLove",
   },
@@ -146,11 +146,11 @@ export const REPORTS = [
     slug: "destiny-full",
     kind: "report",
     category: "destiny",
-    categoryLabel: "종합 명식",
+    categoryLabel: "종합",
     title: "종합사주",
     tagline: "타고난 것부터 말년까지, 한 권으로",
     description:
-      "타고난 그릇에서 시작해 열 해씩 바뀌는 대운 아홉 칸, 올해와 내년, 재물과 인연, 말년까지 — 흩어져 있던 풀이를 한 사람의 생애 순서로 꿰어 읽는 열한 장입니다.",
+      "타고난 그릇에서 시작해 열 해씩 바뀌는 아홉 칸, 올해와 내년, 재물과 인연, 말년까지 — 흩어져 있던 풀이를 한 사람의 생애 순서로 꿰어 읽는 열한 장입니다.",
     price: 48200,
     originalPrice: 72000,
     discountLabel: "33% OFF",
@@ -171,7 +171,7 @@ export const REPORTS = [
       "재물이 들어오는 길목과 새는 구멍",
       "인연의 자리와 가까워지는 방식",
       "몸과 마음이 기우는 방향",
-      "말년의 결과 지금 심어 둘 것",
+      "말년의 모습과 지금 심어 둘 것",
       "앞으로 10년을 위한 태도",
     ],
     detail: {
@@ -242,7 +242,7 @@ export const REPORTS = [
     guide: "doham",
     topics: ["money", "decade"],
     partner: "none",
-    chapters: ["나에게 맞는 일의 결", "지금 흐름이 여는 일의 방향", "움직이기 좋은 시기"],
+    chapters: ["나에게 맞는 일의 종류", "지금 흐름이 여는 일의 방향", "움직이기 좋은 시기"],
     cover: "thumbLife",
   },
   {
@@ -276,7 +276,7 @@ export const REPORTS = [
     guide: "doham",
     topics: ["life", "yearly"],
     partner: "none",
-    chapters: ["타고난 공부 체질과 집중의 결", "나에게 맞는 공부 방식", "시험·목표에 힘이 실리는 시기", "흔들릴 때 붙잡을 기준"],
+    chapters: ["타고난 공부 체질과 집중하는 방식", "나에게 맞는 공부 방식", "시험·목표에 힘이 실리는 시기", "흔들릴 때 붙잡을 기준"],
     detail: { prompt: "지금 공부 상황을 편하게 적어 주세요. 안 적으셔도 풀이는 그대로 나와요.", placeholder: "(예) 공무원 시험 2년째인데 작년에 두 문제 차이로 떨어졌어요." },
     cover: "thumbLife",
   },
@@ -288,7 +288,7 @@ export const REPORTS = [
     title: "우리 아이 공부사주",
     tagline: "이 아이에게 맞는 공부 방식",
     description:
-      "아이의 명식으로 읽는 공부 체질과 집중이 붙는 방식, 부모가 건네면 좋은 말과 눌러서는 안 될 결을 짚어 드려요.",
+      "아이의 여덟 글자로 읽는 공부 체질과 집중이 붙는 방식, 부모가 건네면 좋은 말과 눌러서는 안 될 자리를 짚어 드려요.",
     price: 14900,
     guide: "doham",
     roles: { subject: "child" },
@@ -324,7 +324,7 @@ export const REPORTS = [
     title: "사업운 사주",
     tagline: "나는 사업을 해도 될까?",
     description:
-      "남 밑에서 버는 결인지 내 간판을 걸 결인지, 사람을 써야 크는지 혼자 해야 남는지 — 벌일 때와 접을 때까지 짚어 드려요.",
+      "남 밑에서 버는 쪽인지 내 간판을 걸 쪽인지, 사람을 써야 크는지 혼자 해야 남는지 — 벌일 때와 접을 때까지 짚어 드려요.",
     price: 16900,
     originalPrice: 24000,
     discountLabel: "29% OFF",
@@ -333,7 +333,7 @@ export const REPORTS = [
     partner: "none",
     chapters: [
       "내 밑천 — 혼자 밀고 나가는 힘의 크기",
-      "사람을 쓰는 결인가, 혼자 쥐는 결인가",
+      "사람을 쓰는 쪽인가, 혼자 쥐는 쪽인가",
       "돈이 돌아 들어오는 구조와 새는 구멍",
       "벌일 때와 거둘 때",
       "올해와 내년, 움직여도 되는 달",
@@ -364,7 +364,7 @@ export const REPORTS = [
     topics: ["yearly", "decade"],
     partner: "none",
     chapters: [
-      "이 아이의 공부 그릇 — 타고난 학업의 결",
+      "이 아이의 공부 그릇 — 타고난 공부 성향",
       "집중이 붙는 자리와 흩어지는 자리",
       "연도별 학업 흐름 — 중3부터 재수까지",
       "지금 흐름이 공부에 주는 배경",
@@ -387,7 +387,7 @@ export const REPORTS = [
     title: "우리 아이 진로사주",
     tagline: "이 아이는 무엇이 되려고 태어났을까",
     description:
-      "타고난 재능이 어느 쪽으로 뻗는지, 어떤 일에서 빛나고 어떤 일에서 시드는지 — 아이가 스스로 길을 고를 때 참고할 결을 읽어 드려요.",
+      "타고난 재능이 어느 쪽으로 뻗는지, 어떤 일에서 빛나고 어떤 일에서 시드는지 — 아이가 스스로 길을 고를 때 참고할 기준을 읽어 드려요.",
     price: 16900,
     guide: "doham",
     roles: { subject: "child" },
@@ -398,7 +398,7 @@ export const REPORTS = [
       "재능이 뻗는 방향 — 만들까, 다룰까, 이끌까",
       "빛나는 자리와 시드는 자리",
       "재능이 자라는 시기 — 열 해 단위의 배경",
-      "어울리는 일의 결과 어울리지 않는 일의 결",
+      "어울리는 일과 어울리지 않는 일",
       "부모가 길을 넓혀 주는 방법",
     ],
     detail: {
@@ -415,7 +415,7 @@ export const REPORTS = [
     title: "우리 아이 영재사주",
     tagline: "우리 아이는 어떤 재능이 있을까?",
     description:
-      "아이의 명식에 드러난 재능의 종류와 그것이 터지는 시기, 그리고 지금 눌러서는 안 될 결을 짚어 드려요.",
+      "아이의 여덟 글자에 드러난 재능의 종류와 그것이 터지는 시기, 그리고 지금 눌러서는 안 될 자리를 짚어 드려요.",
     price: 14900,
     guide: "yunseul",
     roles: { subject: "child" },
@@ -441,7 +441,7 @@ export const REPORTS = [
     title: "1:1 사주 상담",
     tagline: "궁금한 걸 직접 묻는 자리",
     description:
-      "내 명식을 띄워 두고 궁금한 것을 자유롭게 묻는 대화 세션이에요 · 최대 20턴",
+      "내 여덟 글자를 띄워 두고 궁금한 것을 자유롭게 묻는 대화 세션이에요 · 최대 20턴",
     price: 5900,
     guide: "seoha",
     topics: ["consult"],
