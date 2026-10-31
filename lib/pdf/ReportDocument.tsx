@@ -17,9 +17,11 @@ const styles = StyleSheet.create({
     backgroundColor: palette.paper,
     color: palette.ink,
     fontFamily: "Pretendard",
-    paddingTop: 54,
-    paddingBottom: 56,
-    paddingHorizontal: 52,
+    // A5 는 폭이 420pt 다. A4 때 쓰던 52pt 여백을 그대로 두면 글 들어갈 자리가 316pt 밖에
+    // 남지 않아 한 줄에 열몇 글자가 된다 — 읽기 전에 눈이 먼저 지친다.
+    paddingTop: 42,
+    paddingBottom: 46,
+    paddingHorizontal: 38,
   },
   // ─ 표지 ─
   cover: { flexGrow: 1, justifyContent: "center" },
@@ -57,7 +59,8 @@ const styles = StyleSheet.create({
   // ─ 장 표제지 ─
   // 쪽 높이를 다 쓰고 가운데에 세운다. 다음 덩어리가 break 로 넘어가므로
   // 이 뷰 하나가 한 쪽을 온전히 차지한다.
-  chapterCover: { height: 680, justifyContent: "center", alignItems: "flex-start" },
+  // 표제지는 제 쪽을 통째로 쓴다. 높이를 숫자로 박아 두면 용지를 바꿀 때마다 어긋난다.
+  chapterCover: { flexGrow: 1, justifyContent: "center", alignItems: "flex-start" },
   chapterNumber: { ...type.headlineLg, fontSize: 64, fontWeight: 700, color: palette.accent, opacity: 0.35 },
   chapterRule: { width: 48, height: 2, backgroundColor: palette.accent, marginVertical: space.md },
   chapterTitle: { ...type.headlineLg, fontWeight: 700, color: palette.ink, marginBottom: space.sm },
@@ -128,7 +131,7 @@ export function ReportDocument(input: ReportPdfInput) {
   return (
     <Document title={`${productTitle} — ${subject.name}`} author="운명대로" language="ko">
       {/* 표지 */}
-      <Page size="A4" style={styles.page}>
+      <Page size="A5" style={styles.page}>
         <View style={styles.cover}>
           <Text style={styles.wordmark}>운명대로</Text>
           <View style={styles.coverRule} />
@@ -155,7 +158,7 @@ export function ReportDocument(input: ReportPdfInput) {
       */}
 
       {/* 결론과 명식. 읽는 사람이 가장 먼저 알고 싶은 것이 결론이다 */}
-      <Page size="A4" style={styles.page}>
+      <Page size="A5" style={styles.page}>
         <RunningHead title={productTitle} />
 
         <View style={styles.block}>
@@ -178,7 +181,8 @@ export function ReportDocument(input: ReportPdfInput) {
           <SectionTitle>타고난 네 기둥</SectionTitle>
           <PillarsTable cells={pillars} />
           <Text style={styles.caption}>
-            위는 천간, 아래는 지지 · 가운데 줄은 일간과 맺는 관계(십성) · 아랫줄은 그 자리에서의 기운의 세기(십이운성)
+            위아래 두 글자가 태어난 해·달·날·시에 걸린 기운이고, 그 아래 두 줄은 그 기운이
+            나와 어떻게 맞물리는지와 얼마나 센지를 적은 것이에요
           </Text>
           <Text style={styles.subheading}>다섯 기운의 분포</Text>
           <ElementBars counts={elements} />
@@ -190,7 +194,7 @@ export function ReportDocument(input: ReportPdfInput) {
       {/* 장마다 표제지 한 쪽, 본문 한 쪽(넘치면 이어서) */}
       {report.sections.map((section, index) => (
         <React.Fragment key={section.title}>
-          <Page size="A4" style={styles.page}>
+          <Page size="A5" style={styles.page}>
             <View style={styles.chapterCover}>
               <Text style={styles.chapterNumber}>{String(index + 1).padStart(2, "0")}</Text>
               <View style={styles.chapterRule} />
@@ -200,7 +204,7 @@ export function ReportDocument(input: ReportPdfInput) {
             <PageNumber />
           </Page>
 
-          <Page size="A4" style={styles.page}>
+          <Page size="A5" style={styles.page}>
             <RunningHead title={productTitle} />
             <View style={styles.block}>
               <Eyebrow>{`${index + 1}장`}</Eyebrow>
@@ -218,7 +222,7 @@ export function ReportDocument(input: ReportPdfInput) {
       ))}
 
       {/* 시기 */}
-      <Page size="A4" style={styles.page}>
+      <Page size="A5" style={styles.page}>
         <RunningHead title={productTitle} />
         <View style={styles.block}>
           <Eyebrow>시기</Eyebrow>
@@ -236,7 +240,7 @@ export function ReportDocument(input: ReportPdfInput) {
       </Page>
 
       {/* 실천과 맺음 */}
-      <Page size="A4" style={styles.page}>
+      <Page size="A5" style={styles.page}>
         <RunningHead title={productTitle} />
         <View style={styles.block} wrap={false}>
           <Eyebrow>실천</Eyebrow>
@@ -252,7 +256,7 @@ export function ReportDocument(input: ReportPdfInput) {
       </Page>
 
       {/* 용어와 꼬리말 */}
-      <Page size="A4" style={styles.page}>
+      <Page size="A5" style={styles.page}>
         <RunningHead title={productTitle} />
         {glossary.length > 0 && (
           <View style={styles.block}>

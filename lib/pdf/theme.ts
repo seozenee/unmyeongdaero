@@ -28,12 +28,23 @@ function toTracking(value: string | undefined, size: number): number {
   return Number.isFinite(parsed) ? parsed * size : 0;
 }
 
+/**
+ * 인쇄본 글자 배율.
+ *
+ * 화면 토큰을 그대로 종이에 옮기면 작다. 화면은 눈에서 30cm 떨어져 있고 밝게 빛나지만,
+ * 종이는 손에 들려 있고 빛을 되쏘기만 한다. 같은 14pt 라도 종이 쪽이 훨씬 빽빽해 보인다.
+ *
+ * 용지도 A4 에서 A5 로 줄였다. 폭이 좁아지면 한 줄에 들어가는 글자가 줄어 눈이 덜
+ * 흔들리고, 쪽수가 늘어 손에 쥐었을 때 책 같아진다 — 같은 글인데 읽는 맛이 달라진다.
+ */
+const PRINT_SCALE = 1.2;
+
 function scale(name: string, fallbackSize: number, fallbackLine: number) {
   const entry = fontSize[name];
-  const size = toPt(entry?.[0], fallbackSize);
+  const size = toPt(entry?.[0], fallbackSize) * PRINT_SCALE;
   return {
     fontSize: size,
-    lineHeight: toPt(entry?.[1]?.lineHeight, fallbackLine) / size,
+    lineHeight: (toPt(entry?.[1]?.lineHeight, fallbackLine) * PRINT_SCALE) / size,
     letterSpacing: toTracking(entry?.[1]?.letterSpacing, size),
   };
 }

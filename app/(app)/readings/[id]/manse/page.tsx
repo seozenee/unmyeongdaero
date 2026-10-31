@@ -121,7 +121,11 @@ export default async function MansePage({
    * 못 받으면 이 칸은 비운다. 아래 「문이 열리는 때」와 잠긴 칸은 그대로 있다 —
    * 지어낸 말로 채우느니 비워 두는 편이 낫다.
    */
-  const scenes = await writeTeaserScenes(teaserFacts(teaserModules, reading.subject.name));
+  // 아이 사주를 보는 사람은 아이가 아니라 부모다. 당사자에게 말하듯 쓰면 읽다가 어긋난다.
+  const childProduct = (report.roles?.subject ?? "self") === "child";
+  const scenes = await writeTeaserScenes(teaserFacts(teaserModules, reading.subject.name), {
+    voice: childProduct ? "parent-of-child" : "self",
+  });
   const guide = getGuide(report.guide);
 
   // 계산 기준을 사람이 읽을 문장으로 옮긴다. 진태양시 보정처럼 "왜 이 글자가 나왔는지"를
