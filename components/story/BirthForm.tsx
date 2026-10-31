@@ -107,6 +107,27 @@ function CityPicker({ value, onChange }: { value: string; onChange: (city: strin
 const FIELD =
   "w-full rounded-lg border border-outline-variant/60 bg-surface-container-lowest px-space-sm py-2.5 font-body-md text-body-md text-on-surface outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/60";
 
+/**
+ * "14:25" → { hour: 14, minute: 25 }. 모양이 아니면 null.
+ *
+ * 전에는 `time.split(":")` 한 뒤 그대로 Number 에 넣었다. 시각 칸이 비어 있으면
+ * (<input type="time"> 은 지우면 빈 문자열이 된다) 분이 undefined 가 되고,
+ * Number(undefined) 는 NaN 이다. 그 NaN 이 그대로 서버까지 가서 "입력하신 내용을
+ * 다시 확인해 주세요"로 돌아왔다 — 어디를 확인하라는 말인지 알 길이 없는 오류였다.
+ *
+ * 뒤로 갔다 다시 적을 때 특히 잘 났다. 양식이 다시 그려지면서 시각 칸이 비는 자리가
+ * 있었기 때문이다. 이제 보내기 전에 여기서 걸러 내고, 어느 칸이 문제인지 말해 준다.
+ */
+export function parseClockTime(time: string): { hour: number; minute: number } | null {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
+  if (!match) return null;
+  const hour = Number.parseInt(match[1]!, 10);
+  const minute = Number.parseInt(match[2]!, 10);
+  if (!Number.isInteger(hour) || !Number.isInteger(minute)) return null;
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+  return { hour, minute };
+}
+
 /** 그 해 그 달이 며칠까지 있는지 */
 const daysInMonth = (year: number, month: number) => new Date(year, month, 0).getDate();
 
@@ -247,14 +268,18 @@ export function BirthForm({
       setError("빠진 곳이 있어요. 앞으로 돌아가 확인해 주세요.");
       return;
     }
-    const [hourText, minuteText] = time.split(":");
+    const clock = parseClockTime(time);
+    if (knowsTime && !clock) {
+      setError("태어난 시각을 다시 확인해 주세요. 모르시면 ‘몰라요’를 눌러 주세요.");
+      return;
+    }
     const profile: BirthProfile = {
       name: name.trim(),
       birthYear: date.year,
       birthMonth: date.month,
       birthDay: date.day,
-      birthHour: knowsTime ? Number(hourText) : null,
-      birthMinute: knowsTime ? Number(minuteText) : undefined,
+      birthHour: knowsTime ? clock!.hour : null,
+      birthMinute: knowsTime ? clock!.minute : undefined,
       isFemale: gender === "female",
       isLunar: calendar === "lunar",
       isLeapMonth: calendar === "lunar" ? leap : undefined,

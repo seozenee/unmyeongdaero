@@ -65,9 +65,35 @@ function verifyProfile(profile: BirthProfile, target: "subject" | "partner"): St
   }
 }
 
+/** 어느 칸이 문제인지 손님의 말로 */
+const FIELD_LABEL: Record<string, string> = {
+  name: "이름",
+  birthYear: "태어난 해",
+  birthMonth: "태어난 달",
+  birthDay: "태어난 날",
+  birthHour: "태어난 시각",
+  birthMinute: "태어난 시각",
+  birthCity: "태어난 곳",
+  subject: "입력하신 정보",
+  partner: "상대방 정보",
+  notifyPhone: "연락처",
+};
+
 export async function createDraftReading(user: AppUser, input: unknown) {
   const parsed = readingDraftSchema.safeParse(input);
-  if (!parsed.success) throw new AppError(400, "VALIDATION_ERROR", "입력하신 내용을 다시 확인해 주세요.");
+  if (!parsed.success) {
+    // "입력하신 내용을 다시 확인해 주세요"만 돌려보내고 있었다. 어디를 확인하라는
+    // 말인지 알 길이 없으니, 손님은 멀쩡한 칸을 몇 번씩 고쳐 보다 포기한다.
+    // 어느 칸인지까지는 말해 준다.
+    const where = parsed.error.issues[0]?.path.filter((part) => typeof part === "string") as string[] | undefined;
+    const label = where?.map((part) => FIELD_LABEL[part]).find(Boolean);
+    console.error("[readings] 입력 검증 실패", JSON.stringify(parsed.error.issues.slice(0, 3)));
+    throw new AppError(
+      400,
+      "VALIDATION_ERROR",
+      label ? `${label}을(를) 다시 확인해 주세요.` : "입력하신 내용을 다시 확인해 주세요.",
+    );
+  }
 
   const report = getReport(parsed.data.slug);
   if (!report) throw new AppError(404, "REPORT_NOT_FOUND", "찾을 수 없는 상품이에요.");
