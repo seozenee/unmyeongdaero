@@ -10,8 +10,10 @@ import type { SazuTopic } from "@/lib/sazu/schemas";
 import { computeDecadeFortune } from "./decade";
 import { GLOSSARY } from "./glossary";
 import { computeGyeokguk, computeYongsin, ELEMENT_USAGE } from "./gyeokguk";
-import { computeLuck } from "./luck";
+import { computeLuck, computeSeun } from "./luck";
 import { computeFourPillars, type PillarsResult } from "./pillars";
+import { readCharacter } from "./character";
+import { buildLifeTimeline } from "./life";
 import { computeCrossRelations, computeNatalRelations } from "./relations";
 import { computeSinsal } from "./sinsal";
 import { countElements, judgeStrength } from "./strength";
@@ -113,6 +115,31 @@ export function computeManse(profile: BirthProfile, now = new Date()) {
   const natal = computeNatalRelations(pillars);
   const luck = computeLuck(pillars, profile.birthYear, now);
 
+  /*
+    나이가 박힌 연표.
+
+    대운 목록은 전부터 있었지만 간지와 시작 나이만 적힌 표였다. 그걸로는 "몇 살에
+    무엇이" 를 쓸 수 없어, 풀이가 늘 성격 이야기로 돌아갔다 — 누구에게나 조금씩
+    맞는 글이다. 사람이 사주를 보러 오는 이유는 언제 무엇이 오는지다.
+
+    올해부터 열두 해를 미리 세워 둔다. 한 해씩 그때 가서 계산하면 모델은 "앞으로"
+    라고밖에 못 쓴다.
+  */
+  const years = Array.from({ length: 12 }, (_, offset) => {
+    const year = now.getFullYear() + offset;
+    return { year, full: computeSeun(pillars, profile.birthYear, year).ganji };
+  });
+  const life = buildLifeTimeline({
+    pillars,
+    decades: decade.items,
+    years,
+    birthYear: profile.birthYear,
+    yongsin: yongsin.yongsin?.ko ?? null,
+    gisin: yongsin.gisin?.ko ?? null,
+    strength: strength.strength,
+    now,
+  });
+
   const fourPillars: Record<string, unknown> = {
     year: pillarDetail(pillars.year, dayStem, "year"),
     month: pillarDetail(pillars.month, dayStem, "month"),
@@ -195,6 +222,10 @@ export function computeManse(profile: BirthProfile, now = new Date()) {
         basisDays: decade.basisDays,
         list: decade.items,
       },
+      // 성격은 풀이에서 가장 먼저 읽히는 자리인데, 그걸 바로 가리키는 값이 없었다.
+      // 원국만 던져 주면 "성실하시네요" 로 돌아간다.
+      character: readCharacter(pillars, strength.strength),
+      lifeTimeline: life,
       seun: luck.seun,
       weolun: luck.weolun,
       dailyInteraction: {
@@ -245,9 +276,16 @@ const NEEDS_LUCK: readonly SazuTopic[] = ["today", "yearly", "decade", "love", "
 /** 이 토픽이 두 사람을 다루는가 */
 const NEEDS_PARTNER: readonly SazuTopic[] = ["compatibility", "love"];
 
-function topicModules(topic: SazuTopic, me: ManseResult): Record<string, unknown> {
-  const { seun, weolun, ...rest } = me.modules;
-  return NEEDS_LUCK.includes(topic) ? { ...rest, seun, weolun } : rest;
+/*
+  토픽마다 재료를 가려 내보내고 있었다. 세운·월운이 일부 토픽에만 실려, 평생사주와
+  재물운 사주에는 "올해·이번 달" 을 쓸 재료가 아예 없었다. 시기를 묻는 상품인데
+  시기를 쓸 자료가 없으니 글이 성격 이야기로 돌아간다.
+
+  가려서 아낄 것이 없다. 전부 같은 계산에서 나오고, 토큰 몇 백 자 차이다.
+  모든 토픽에 같은 재료를 싣는다 — 무엇을 앞세울지는 상품의 목차가 정한다.
+*/
+function topicModules(_topic: SazuTopic, me: ManseResult): Record<string, unknown> {
+  return me.modules;
 }
 
 /**

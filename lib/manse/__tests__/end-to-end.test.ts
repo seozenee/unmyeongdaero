@@ -40,9 +40,33 @@ describe("샘플이 아닌 실제 생년월일로도 끝까지 간다", () => {
     expect(labels).toEqual(expect.arrayContaining(["원국", "일간", "오행", "신강약", "용신", "신살"]));
   });
 
-  it("시기를 다루는 토픽에만 세운·월운이 붙는다", () => {
-    expect(sazu.yearly!.modules.seun).toBeDefined();
-    expect(sazu.life!.modules.seun).toBeUndefined();
+  /*
+    전에는 "시기를 다루는 토픽에만" 세운·월운을 실었다. 그런데 시기를 묻지 않는
+    상품이 없다 — 평생사주도 재물운 사주도 "언제" 를 묻는다. 가려서 보내니 그 상품의
+    글은 시기를 쓸 재료가 없어 성격 이야기로 돌아갔다. 이제 전부 같은 재료를 싣는다.
+  */
+  it("어느 토픽이든 시기를 쓸 재료가 함께 간다", () => {
+    for (const topic of ["manse", "yearly", "life"] as const) {
+      expect(sazu[topic]?.modules.seun, topic).toBeDefined();
+      expect(sazu[topic]?.modules.lifeTimeline, topic).toBeDefined();
+    }
+  });
+
+  it("연표에 나이가 박힌다", () => {
+    const life = sazu.life!.modules.lifeTimeline as {
+      나이: number;
+      열해: Array<{ startAge: number; endAge: number; 영역: string; 바람: string }>;
+      해마다: Array<{ age: number; year: number }>;
+      지금칸: number;
+    };
+    expect(life.나이).toBeGreaterThan(0);
+    expect(life.열해.length).toBeGreaterThanOrEqual(8);
+    // 칸은 나이 순서대로 이어져야 한다 — 비는 나이가 있으면 "몇 살에" 를 쓸 수 없다
+    for (let index = 1; index < life.열해.length; index += 1) {
+      expect(life.열해[index]!.startAge).toBe(life.열해[index - 1]!.endAge + 1);
+    }
+    expect(life.해마다[0]!.age).toBe(life.나이);
+    expect(life.지금칸).toBeGreaterThanOrEqual(0);
   });
 });
 
