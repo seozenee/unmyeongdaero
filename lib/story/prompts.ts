@@ -3,6 +3,7 @@ import "server-only";
 import type { BirthProfile, ConsultSession, Reading, StoredSazu } from "@/lib/db/types";
 import type { ReportProduct } from "@/lib/reports/catalog";
 import { parseDecadeFortune, parseElementCounts, parseFourPillars } from "@/lib/saju/modules";
+import { buildLens } from "@/lib/manse/lens";
 import { mergedModules } from "@/lib/sazu/readings";
 import { getGuide, type Guide } from "./guides";
 import type { StoryPanel } from "./report";
@@ -120,6 +121,11 @@ ${report.chapters.map((title, index) => `  ${index + 1}. ${title}`).join("\n")}
 장면에는 눈에 보이는 것이 있어야 한다 — 종이, 지우개, 시계, 현관, 휴대폰 화면, 식탁.
 추상명사("성향", "경향", "에너지", "기운")로 끝나는 문장은 실패다.
 
+**<틀로본결> 이 있으면 거기서 출발한다.** 그 분야에서 쓰는 눈금으로 이 사람이 어느
+쪽에 서 있는지 적어 둔 것이다. 「이런모습으로」의 본보기는 그대로 베끼지 말고, 나머지
+계산값과 겹쳐 더 구체적인 장면으로 바꿔 쓴다. 눈금의 이름(과제 집착력, 창의성 등)은
+글에 그대로 써도 된다 — 사주 용어가 아니라 누구나 알아듣는 말이다.
+
 **닳은 그림을 쓰지 않는다.** "방에 들어가 혼자 있는다", "집에 와서 곱씹는다",
 "이불을 걷어찬다", "썼다 지웠다 한다" — 이 넷은 누구에게나 해당돼서 아무것도 맞히지
 못한다. 데이터가 정말로 그쪽을 가리킬 때만 쓰고, 그때도 한 보고서에 한 번까지다.
@@ -226,6 +232,17 @@ function sazuBlocks(sazu: StoredSazu) {
     .join("\n");
 }
 
+/**
+ * 그 분야에서 쓰는 눈금으로 옮긴 값.
+ *
+ * 계산값만 넘기면 두루뭉술해진다. 아이 재능이면 렌줄리의 세 고리처럼 이미 쓰이는
+ * 눈금을 얹어, "과제 집착력이 높은 쪽"까지 좁혀 준다. 좁혀진 만큼 구체적으로 써진다.
+ */
+function lensBlock(report: ReportProduct, sazu: StoredSazu) {
+  const lens = buildLens(mergedModules(sazu), report.category);
+  return lens ? `<틀로본결>\n${JSON.stringify(lens)}\n</틀로본결>\n` : "";
+}
+
 export function buildReportUserPrompt(report: ReportProduct, reading: Reading, sazu: StoredSazu, today: string) {
   // 고르는 질문은 없앴다. 손님에게 받는 말은 자유 서술 한 칸뿐이다.
   const story = reading.answers.detail?.trim();
@@ -233,7 +250,7 @@ export function buildReportUserPrompt(report: ReportProduct, reading: Reading, s
   return `<customer role="${ROLE_LABEL[report.roles?.subject ?? "self"]}">${describeProfile(reading.subject)}</customer>
 ${reading.partner ? `<partner role="${ROLE_LABEL[report.roles?.partner ?? "lover"]}">${describeProfile(reading.partner)}</partner>\n` : ""}${
     story ? `<asked>\n${story}\n</asked>\n` : ""
-  }<today>${today}</today>
+  }${lensBlock(report, sazu)}<today>${today}</today>
 <available_panels>${availablePanels(sazu).join(", ") || "없음"}</available_panels>
 ${sazuBlocks(sazu)}
 

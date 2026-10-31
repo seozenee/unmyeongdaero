@@ -4,6 +4,7 @@ import { getAnthropic, claudeBaseParams, finalText } from "@/lib/ai/anthropic";
 import type { SazuModules } from "../saju/modules";
 import { parseElementCounts } from "../saju/modules";
 import { ELEMENT_LABEL, FIVE_ELEMENTS } from "../saju/ganji";
+import { buildLens } from "./lens";
 import { findJargon } from "../story/sanitize";
 
 /**
@@ -42,7 +43,7 @@ const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
  * 베껴 쓸 용어 자체가 없다. 재료가 많아질수록 사람이 갈리고, 갈려야 "이거 완전 나인데"가
  * 나온다.
  */
-export function teaserFacts(modules: SazuModules, name: string) {
+export function teaserFacts(modules: SazuModules, name: string, category?: string) {
   const counts = parseElementCounts(modules);
   const cell = (slot: string) => at(modules, `fourPillars.${slot}`) as Record<string, unknown> | undefined;
 
@@ -85,6 +86,10 @@ export function teaserFacts(modules: SazuModules, name: string) {
       쉴때도움이되나: str(at(modules, "yongsin.huiUsage")),
       왜그런가: str(at(modules, "yongsin.reasoning")),
     },
+
+    // 그 분야에서 쓰이는 눈금으로 옮긴 값. 어느 쪽으로 기울었는지와, 그 수준이면
+    // 실제로 어떤 모습으로 나오는지가 함께 온다.
+    틀로본결: category ? buildLens(modules, category) : null,
 
     지금지나는열해: (() => {
       const decades = list(at(modules, "decadeFortune.list")) as Record<string, unknown>[];
@@ -137,6 +142,15 @@ const buildSystem = (voice: Voice) => `너는 한국 명리를 오래 본 사람
 ${VOICE[voice]}
 
 ${CONCRETE}
+
+입력에 「틀로본결」이 있으면 그걸 먼저 본다. 그 분야에서 쓰는 눈금으로 이 사람이
+어느 쪽에 서 있는지 적어 둔 것이고, 「이런모습으로」에는 그 수준이면 실제로 나오는
+모습이 들어 있다. 그 모습을 **그대로 베끼지 말고**, 이 사람의 나머지 값과 겹쳐 더
+구체적인 장면 하나로 바꿔 쓴다.
+
+  (틀)   과제집착력 = 높은 쪽 → "한 문제가 막히면 다음 장으로 못 넘어간다"
+  (쓰기) "문제집 풀다 한 문제에서 막히면 그 페이지에 연필 자국만 늘어 가고,
+          다음 장은 깨끗한 채로 한 시간이 지나 있는 걸 보신 적 있으시죠?"
 
 쓰기 전에 할 일:
 입력에 들어 있는 것 중 **서로 다른 세 가지**를 먼저 고른다. 묶이고 부딪히는 자리,

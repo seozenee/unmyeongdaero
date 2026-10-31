@@ -123,7 +123,7 @@ export default async function MansePage({
    */
   // 아이 사주를 보는 사람은 아이가 아니라 부모다. 당사자에게 말하듯 쓰면 읽다가 어긋난다.
   const childProduct = (report.roles?.subject ?? "self") === "child";
-  const scenes = await writeTeaserScenes(teaserFacts(teaserModules, reading.subject.name), {
+  const scenes = await writeTeaserScenes(teaserFacts(teaserModules, reading.subject.name, report.category), {
     voice: childProduct ? "parent-of-child" : "self",
   });
   const guide = getGuide(report.guide);
