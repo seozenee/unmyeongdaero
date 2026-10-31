@@ -162,7 +162,7 @@ export default async function MansePage({
         </p>
       )}
 
-      <ReadingWebtoon teaser={teaser} name={reading.subject.name} guide={guide} poster={getPoster(report.slug, report.guide)} scenes={scenes} />
+      <ReadingWebtoon teaser={teaser} name={reading.subject.name} guide={guide} poster={getPoster(report.slug, report.guide)} scenes={scenes} chapters={report.chapters} />
 
       <ManseSheet
         name={reading.subject.name}

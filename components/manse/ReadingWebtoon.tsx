@@ -55,6 +55,34 @@ function Panel({ children, className }: { children: React.ReactNode; className?:
   );
 }
 
+/**
+ * 크게 던지는 두 줄.
+ *
+ * 윗줄은 흰 글씨로 깔고, 아랫줄만 브랜드 색으로 때린다. 한 덩어리로 다 굵게 쓰면
+ * 어디를 보라는 건지 알 수 없어 그냥 시끄러운 글이 된다. 눈이 한 군데에만 걸려야
+ * 그 한 줄이 남는다.
+ */
+function Punch({ lead, hit }: { lead: string; hit: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1.5 bg-surface px-margin py-space-xl text-center">
+      <p className="text-[1.5rem] font-bold leading-snug tracking-tight text-on-surface">{lead}</p>
+      <p className="text-[1.75rem] font-bold leading-snug tracking-tight text-secondary">{hit}</p>
+    </div>
+  );
+}
+
+/** 잠긴 장을 예고하는 머리 — 몇 장이 더 있는지 눈으로 보여 준다 */
+function ChapterMark({ no, title }: { no: number; title: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1 bg-surface px-margin pt-space-xl">
+      <span className="font-label-sm text-label-sm tracking-[0.3em] text-secondary">
+        CHAPTER {String(no).padStart(2, "0")}
+      </span>
+      <p className="text-[1.4rem] font-bold leading-snug tracking-tight text-on-surface">{title}</p>
+    </div>
+  );
+}
+
 /** 안내자가 건네는 말 한 칸 */
 function Says({ guide, children }: { guide: Guide; children: React.ReactNode }) {
   return (
@@ -86,6 +114,7 @@ export function ReadingWebtoon({
   guide,
   poster,
   scenes,
+  chapters,
 }: {
   teaser: Teaser;
   name: string;
@@ -102,6 +131,8 @@ export function ReadingWebtoon({
    * 두는 편이 낫다.
    */
   scenes: string[] | null;
+  /** 잠긴 장의 제목들. 몇 장이 더 있는지 눈으로 보여 주는 데 쓴다 */
+  chapters: readonly string[];
 }) {
   return (
     <section className="-mx-margin flex flex-col">
@@ -166,46 +197,71 @@ export function ReadingWebtoon({
         </Panel>
       )}
 
-      {/* 잠긴 칸 — 무엇이 들었는지는 밝히고 내용만 가린다 */}
-      <div className="flex flex-col gap-space-sm bg-surface px-margin pb-space-xl">
-        <Panel>
-          <Says guide={guide}>여기까지는 공짜예요. 나머지는 열어야 보입니다.</Says>
-        </Panel>
+      {/*
+        여기서부터가 파는 자리다.
+        지금까지 읽은 것이 전부처럼 느껴지면 아무도 열지 않는다. 읽은 것이 "극히 일부"
+        였다는 걸 먼저 말하고, 남은 장이 몇이고 무엇인지 눈으로 보여 준다.
+      */}
+      <Punch lead="방금 읽으신 건" hit="여덟 글자의 극히 일부예요" />
 
-        {teaser.locked.map((item) => (
-          <Panel key={item.label}>
-            <div className="flex items-start gap-space-sm rounded-2xl border border-outline-variant/50 bg-surface-container p-space-lg">
-              <Icon name="lock" className="mt-0.5 shrink-0 text-[18px] text-outline" />
-              <span className="flex min-w-0 flex-col gap-0.5">
-                <span className="font-label-md text-label-md text-on-surface">{item.label}</span>
-                <span className="font-body-sm text-body-sm text-on-surface-variant">{item.teaser}</span>
-              </span>
+      {poster && (
+        <Panel>
+          <div className="relative aspect-[3/2] w-full overflow-hidden">
+            <WebtoonMedia asset={poster} className="absolute inset-0" />
+            <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-surface/60" />
+          </div>
+        </Panel>
+      )}
+
+      <Punch lead={`${name}님, 좋은 말만 하지는 않을 거예요.`} hit="그래도 들어 보시겠어요?" />
+
+      {/* 잠긴 장 — 무엇이 들었는지는 밝히고 내용만 가린다 */}
+      <div className="flex flex-col gap-space-md pb-space-xl">
+        {chapters.slice(0, 5).map((title, index) => (
+          <Panel key={title}>
+            <ChapterMark no={index + 1} title={title} />
+            <div className="mt-space-sm px-margin">
+              <div className="relative overflow-hidden rounded-2xl bg-surface-container p-space-lg">
+                {/* 글이 있긴 한데 읽히지는 않는 모양 — 비어 있는 것과 가린 것은 다르다 */}
+                <div className="flex flex-col gap-2" aria-hidden>
+                  <span className="h-3 w-full rounded-full bg-on-surface/10" />
+                  <span className="h-3 w-11/12 rounded-full bg-on-surface/10" />
+                  <span className="h-3 w-4/5 rounded-full bg-on-surface/10" />
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center bg-surface-container/40 backdrop-blur-[2px]">
+                  <Icon name="lock" className="text-[22px] text-outline" />
+                </div>
+              </div>
             </div>
           </Panel>
         ))}
 
-        {teaser.traits.length > 0 && (
+        {chapters.length > 5 && (
           <Panel>
-            <dl className="mt-space-xs grid grid-cols-2 gap-space-sm">
-              {teaser.traits.map((trait) => (
-                <div key={trait.label} className="flex flex-col gap-0.5 rounded-xl bg-surface-container p-space-md">
-                  <dt className="font-label-sm text-label-sm text-outline">{trait.label}</dt>
-                  <dd className="font-headline-sm text-headline-sm text-on-surface">{trait.value}</dd>
-                </div>
-              ))}
-            </dl>
+            <p className="px-margin text-center font-body-md text-body-md text-on-surface-variant">
+              이 밖에 {chapters.length - 5}장이 더 있어요.
+            </p>
           </Panel>
         )}
 
-        <Panel>
-          <Link
-            href="#결제"
-            className="mt-space-xs flex items-center justify-center gap-1 rounded-2xl bg-secondary py-4 font-label-md text-label-md font-bold text-on-secondary"
-          >
-            내 풀이 열어 보기
-            <Icon name="arrow_forward" className="text-[18px]" />
-          </Link>
-        </Panel>
+        {teaser.locked.length > 0 && (
+          <Panel>
+            <div className="mt-space-sm flex flex-col gap-space-sm px-margin">
+              <p className="font-label-md text-label-md text-on-surface">열면 이런 것들이 나와요</p>
+              {teaser.locked.map((item) => (
+                <div key={item.label} className="flex items-start gap-space-sm rounded-xl bg-surface-container p-space-md">
+                  <Icon name="check" className="mt-0.5 shrink-0 text-[17px] text-secondary" />
+                  <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="font-label-md text-label-md text-on-surface">{item.label}</span>
+                    <span className="font-body-sm text-body-sm text-on-surface-variant">{item.teaser}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        )}
+
+        <Punch lead="여기까지는 돈이 들지 않았어요." hit="나머지는 열어야 보입니다" />
       </div>
     </section>
   );
