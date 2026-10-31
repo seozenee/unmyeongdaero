@@ -24,24 +24,73 @@ const at = (value: unknown, path: string): unknown =>
     return (current as Record<string, unknown>)[key];
   }, value);
 
-/** 모델에게 넘길 계산 결과. 사람마다 달라지는 값만 모은다 */
+const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
+
+/**
+ * 모델에게 넘길 계산 결과.
+ *
+ * 한동안 아홉 가지만 넘겼다 — 신강약, 기운 분포, 격국 같은 것들. 그런데 그 값들은
+ * 분류라서 사람이 잘 갈리지 않는다. "중화 · 편관격 · 용신 목"인 사람은 수없이 많고,
+ * 그 셋만 보고 쓰면 수없이 많은 사람에게 같은 글이 나간다.
+ *
+ * 정작 엔진은 훨씬 많은 것을 이미 셈해 두고 있었고, 그중 상당수는 **이미 쉬운 말로
+ * 적혀 있었다** — 신살마다 붙은 한 줄 설명("글과 연구에 깊이 들어가는 결"), 글자끼리
+ * 묶이고 부딪히는 자리의 뜻("한번 맺은 인연을 오래 끌고 가는 쪽"), 나를 살리는 기운을
+ * 어디에 쓰면 되는지("새로 배우기, 초록이 있는 곳"). 그걸 하나도 안 넘기고 있었다.
+ *
+ * 이제 그 말들을 그대로 넘긴다. 용어(편관, 년살, 육합)는 빼고 뜻만 넘기므로, 모델이
+ * 베껴 쓸 용어 자체가 없다. 재료가 많아질수록 사람이 갈리고, 갈려야 "이거 완전 나인데"가
+ * 나온다.
+ */
 export function teaserFacts(modules: SazuModules, name: string) {
   const counts = parseElementCounts(modules);
-  const pillar = (slot: string) => str(at(modules, `fourPillars.${slot}.full`));
+  const cell = (slot: string) => at(modules, `fourPillars.${slot}`) as Record<string, unknown> | undefined;
+
+  /** 한 기둥에서 쓸 만한 말만 — 글자 이름이 아니라 그 자리의 뜻 */
+  const pillar = (slot: string, label: string) => {
+    const data = cell(slot);
+    if (!data) return null;
+    return {
+      자리: label,
+      결: str(at(data, "twelveFortuneInterpretation.positionMeaning")) ?? str(at(data, "twelveFortuneInterpretation.phase")),
+    };
+  };
 
   return {
     이름: name,
-    네기둥: { 년: pillar("year"), 월: pillar("month"), 일: pillar("day"), 시: pillar("hour") },
-    태어난날의글자: str(at(modules, "fourPillars.day.sky")),
-    기운의세기: str(at(modules, "sinStrength.strength")),
+    기운의세기: str(at(modules, "sinStrength.analysis")),
     기운분포: counts
       ? Object.fromEntries(FIVE_ELEMENTS.map((key) => [ELEMENT_LABEL[key].ko, counts[key]]))
       : null,
     비는기운: counts ? FIVE_ELEMENTS.filter((key) => counts[key] === 0).map((key) => ELEMENT_LABEL[key].ko) : [],
-    가까운사이의결: str(at(modules, "fourPillars.day.earthSippiSeong")),
-    타고난틀: str(at(modules, "gyeokguk.name")),
-    나를살리는기운: str(at(modules, "yongsin.yongsin.ko")),
-    지금자리: str(at(modules, "fourPillars.day.twelveStage")),
+
+    // 네 기둥을 글자가 아니라 "그 자리가 뜻하는 결"로 넘긴다
+    자리별결: [pillar("year", "어린 시절과 뿌리"), pillar("month", "자라 온 환경과 사회"), pillar("day", "나 자신과 가까운 사이"), pillar("hour", "말년과 자식")].filter(Boolean),
+
+    // 글자끼리 묶이고 부딪히는 자리 — 사람마다 가장 많이 갈리는 값이다
+    묶이고부딪히는자리: str(at(modules, "wongukInteraction.summary")),
+    그관계들: list(at(modules, "wongukInteraction.relations"))
+      .map((item) => str(at(item, "meaning")))
+      .filter(Boolean)
+      .slice(0, 5),
+
+    // 신살은 이름이 어렵지만 설명은 이미 쉬운 말이다. 이름은 빼고 설명만 넘긴다.
+    타고난결들: list(at(modules, "sinsal.items"))
+      .map((item) => str(at(item, "description")))
+      .filter(Boolean)
+      .slice(0, 10),
+
+    나를살리는것: {
+      무엇이도움이되나: str(at(modules, "yongsin.usage")),
+      쉴때도움이되나: str(at(modules, "yongsin.huiUsage")),
+      왜그런가: str(at(modules, "yongsin.reasoning")),
+    },
+
+    지금지나는열해: (() => {
+      const decades = list(at(modules, "decadeFortune.list")) as Record<string, unknown>[];
+      const current = decades.at(-1);
+      return current ? { 몇세부터: current.startAge ?? null, 결: str(at(current, "twelveFortune.phase")) } : null;
+    })(),
   };
 }
 
@@ -89,11 +138,20 @@ ${VOICE[voice]}
 
 ${CONCRETE}
 
+쓰기 전에 할 일:
+입력에 들어 있는 것 중 **서로 다른 세 가지**를 먼저 고른다. 묶이고 부딪히는 자리,
+타고난 결들, 나를 살리는 것, 자리별 결 — 이 중에서 고르되 같은 것을 두 번 쓰지 않는다.
+그리고 고른 것 하나당 장면 하나씩만 쓴다. 입력에 없는 인상으로 쓰면 누구에게나
+해당되는 글이 된다.
+
 규칙:
 - 사주 용어와 한자를 한 글자도 쓰지 않는다. 오행(목화토금수), 십성, 신강·신약, 용신,
   격국, 일간, 대운, "명식" — 전부 금지다.
-- 세 장면은 서로 다른 자리를 짚는다. 사람 사이에서 하나, 일(또는 공부)에서 하나,
-  혼자 있을 때 하나로 나누면 겹치지 않는다.
+- 세 장면은 **서로 다른 자리에서** 일어난다. 하나는 사람들 사이(학교·직장·친구·가족),
+  하나는 무언가를 해내는 자리(공부·일·돈), 하나는 몸과 생활(잠·먹는 것·물건·집안일).
+- 닳은 그림을 쓰지 않는다. 고른 것이 정말로 그쪽을 가리킬 때가 아니면
+  "방에 들어가 혼자 있는다", "집에 와서 곱씹는다", "이불을 걷어찬다" 는 쓰지 않는다.
+  이 셋은 누구에게나 해당돼서 아무것도 맞히지 못한다.
 - 각 장면은 1~2문장, 50~110자.
 - 주어진 값에 없는 사실(직업, 형제, 사는 곳, 구체적 사건)을 지어내지 않는다.
   보이는 장면은 그 결에서 나올 법한 것이어야 하고, 없는 사연을 만들어 붙이는 것이 아니다.
