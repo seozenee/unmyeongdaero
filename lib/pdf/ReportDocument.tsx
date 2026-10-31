@@ -61,6 +61,7 @@ const styles = StyleSheet.create({
   // 이 뷰 하나가 한 쪽을 온전히 차지한다.
   // 표제지는 제 쪽을 통째로 쓴다. 높이를 숫자로 박아 두면 용지를 바꿀 때마다 어긋난다.
   chapterCover: { flexGrow: 1, justifyContent: "center", alignItems: "flex-start" },
+  chapterCategory: { ...type.labelSm, fontWeight: 700, color: palette.accent, letterSpacing: 1.2 },
   chapterNumber: { ...type.headlineLg, fontSize: 64, fontWeight: 700, color: palette.accent, opacity: 0.35 },
   chapterRule: { width: 48, height: 2, backgroundColor: palette.accent, marginVertical: space.md },
   chapterTitle: { ...type.headlineLg, fontWeight: 700, color: palette.ink, marginBottom: space.sm },
@@ -98,6 +99,8 @@ export interface ReportPdfInput {
   report: StoryReport;
   /** 상품 이름 — 표지와 머리글에 쓴다 */
   productTitle: string;
+  /** 분류 — 장 머리에 번호와 함께 적는다 ("03 · 종합 명식") */
+  categoryLabel: string;
   subject: BirthProfile;
   /** 원국 네 기둥 */
   pillars: PillarCell[];
@@ -126,7 +129,8 @@ function RunningHead({ title }: { title: string }) {
 }
 
 export function ReportDocument(input: ReportPdfInput) {
-  const { report, productTitle, subject, pillars, chartLine, elements, glossary, issuedAt, disclaimer } = input;
+  const { report, productTitle, categoryLabel, subject, pillars, chartLine, elements, glossary, issuedAt, disclaimer } =
+    input;
 
   return (
     <Document title={`${productTitle} — ${subject.name}`} author="운명대로" language="ko">
@@ -174,15 +178,27 @@ export function ReportDocument(input: ReportPdfInput) {
           </View>
         </View>
 
-        {/* 원국과 오행은 한 덩어리로 묶는다. 따로 두면 둘 사이에서 쪽이 넘어가
-            오행 막대만 덩그러니 놓인 쪽이 생긴다. */}
-        <View style={styles.block} wrap={false}>
+        <PageNumber />
+      </Page>
+
+      {/*
+        명식은 제 쪽을 쓴다.
+
+        결론과 한 덩어리로 묶어 두었는데, 판에 십성·운성·지장간까지 올리면서 키가
+        훌쩍 커졌다. wrap={false} 인 덩어리가 쪽 높이를 넘으면 react-pdf 는 다음
+        쪽으로 넘기지 못하고 그 자리에 겹쳐 그린다 — 글자 위에 글자가 찍힌다.
+        결론만으로도 한 쪽이 차므로 나눠 둔다.
+      */}
+      <Page size="A5" style={styles.page}>
+        <RunningHead title={productTitle} />
+        <View style={styles.block}>
           <Eyebrow>명식</Eyebrow>
           <SectionTitle>타고난 네 기둥</SectionTitle>
           <PillarsTable cells={pillars} />
           <Text style={styles.caption}>
-            위아래 두 글자가 태어난 해·달·날·시에 걸린 기운이고, 그 아래 두 줄은 그 기운이
-            나와 어떻게 맞물리는지와 얼마나 센지를 적은 것이에요
+            위에서부터 나와의 관계 · 윗글자 · 아랫글자 · 나와의 관계 · 그 자리에서 지나는 때 ·
+            아랫글자 속에 숨은 글자예요. 가운데 테두리 친 칸이 나를 가리키는 자리고,
+            「비어 있음」은 힘이 덜 실리는 자리예요
           </Text>
           <Text style={styles.subheading}>다섯 기운의 분포</Text>
           <ElementBars counts={elements} />
@@ -196,6 +212,7 @@ export function ReportDocument(input: ReportPdfInput) {
         <React.Fragment key={section.title}>
           <Page size="A5" style={styles.page}>
             <View style={styles.chapterCover}>
+              <Text style={styles.chapterCategory}>{categoryLabel}</Text>
               <Text style={styles.chapterNumber}>{String(index + 1).padStart(2, "0")}</Text>
               <View style={styles.chapterRule} />
               <Text style={styles.chapterTitle}>{section.title}</Text>
@@ -207,7 +224,7 @@ export function ReportDocument(input: ReportPdfInput) {
           <Page size="A5" style={styles.page}>
             <RunningHead title={productTitle} />
             <View style={styles.block}>
-              <Eyebrow>{`${index + 1}장`}</Eyebrow>
+              <Eyebrow>{`${String(index + 1).padStart(2, "0")} · ${categoryLabel}`}</Eyebrow>
               <SectionTitle>{section.title}</SectionTitle>
               {section.body.map((paragraph, paragraphIndex) => (
                 <Text key={paragraphIndex} style={styles.paragraph}>

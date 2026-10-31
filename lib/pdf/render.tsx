@@ -2,6 +2,15 @@ import "server-only";
 
 import { renderToBuffer } from "@react-pdf/renderer";
 import { GLOSSARY } from "@/lib/manse/glossary";
+import { voidBranches } from "@/lib/manse/sinsal";
+import {
+  HIDDEN_STEMS,
+  branchTenGod,
+  tenGod,
+  twelveStage,
+  type Branch,
+  type Stem,
+} from "@/lib/manse/tables";
 import type { BirthProfile } from "@/lib/db/types";
 import type { StoredSazu } from "@/lib/db/types";
 import type { ReportProduct } from "@/lib/reports/catalog";
@@ -24,22 +33,44 @@ const at = (value: Json, path: string): Json =>
   );
 const str = (value: Json) => (typeof value === "string" ? value : null);
 
-/** 원국 네 칸. 시주를 모르면 세 칸만 낸다 */
+/**
+ * 원국 네 칸. 시주를 모르면 세 칸만 낸다.
+ *
+ * 십성·십이운성·지장간·공망은 받아 온 값을 읽지 않고 여덟 글자에서 직접 센다.
+ * 화면 판(components/saju/FourPillarsChart)도 같은 표를 쓰므로, 종이와 화면이
+ * 서로 다른 말을 할 일이 없다. 받아 온 값에 빈 칸이 있어도 판은 채워진다.
+ *
+ * 명리 관습대로 오른쪽에서 왼쪽으로 년·월·일·시를 읽으니, 지면에는 시주를 가장
+ * 왼쪽에 둔다.
+ */
 function pillarCells(modules: Record<string, unknown>): PillarCell[] {
+  const ganjiOf = (slot: string) => str(at(modules, `fourPillars.${slot}.full`));
+  const dayGanji = ganjiOf("day");
+  const dayStem = dayGanji ? (dayGanji[0] as Stem) : null;
+  const dayBranch = dayGanji ? (dayGanji[1] as Branch) : null;
+  const voids = dayStem && dayBranch ? voidBranches(dayStem, dayBranch) : [];
+
   const cells: PillarCell[] = [];
-  for (const slot of ["year", "month", "day", "hour"] as const) {
-    const pillar = at(modules, `fourPillars.${slot}`);
-    const ganji = str(at(pillar, "full"));
+  for (const slot of ["hour", "day", "month", "year"] as const) {
+    const ganji = ganjiOf(slot);
     if (!ganji) continue;
-    const element = str(at(pillar, "skyElement")) ?? elementOfStem(ganji[0]!);
+    const stem = ganji[0] as Stem;
+    const branch = ganji[1] as Branch;
+    const mine = slot === "day";
+
     cells.push({
       slot: SLOT_LABEL[slot],
-      ganji,
+      stem,
+      branch,
       // 일주의 천간은 일간 자신이다. 자기와의 관계를 "비견"이라 적으면 읽는 사람이 헷갈린다.
-      stemGod: slot === "day" ? "일간" : (str(at(pillar, "sippiSeong")) ?? "-"),
-      branchGod: str(at(pillar, "earthSippiSeong")) ?? "-",
-      stage: str(at(pillar, "twelveStage")) ?? "-",
-      color: ELEMENT_COLOR[element] ?? palette.ink,
+      stemGod: mine ? "일간" : dayStem ? tenGod(dayStem, stem) : "-",
+      branchGod: dayStem ? branchTenGod(dayStem, branch) : "-",
+      stage: dayStem ? twelveStage(dayStem, branch) : "-",
+      hidden: HIDDEN_STEMS[branch]?.join("·") ?? "",
+      empty: voids.includes(branch),
+      stemColor: ELEMENT_COLOR[elementOfStem(stem)] ?? palette.ink,
+      branchColor: ELEMENT_COLOR[elementOfBranch(branch)] ?? palette.ink,
+      mine,
     });
   }
   return cells;
@@ -50,6 +81,12 @@ const STEM_ELEMENT_KO: Record<string, string> = {
   기: "토", 경: "금", 신: "금", 임: "수", 계: "수",
 };
 const elementOfStem = (stem: string) => STEM_ELEMENT_KO[stem] ?? "토";
+
+const BRANCH_ELEMENT_KO: Record<string, string> = {
+  자: "수", 축: "토", 인: "목", 묘: "목", 진: "토", 사: "화",
+  오: "화", 미: "토", 신: "금", 유: "금", 술: "토", 해: "수",
+};
+const elementOfBranch = (branch: string) => BRANCH_ELEMENT_KO[branch] ?? "토";
 
 function elementRows(modules: Record<string, unknown>) {
   const counts = parseElementCounts(modules);
@@ -90,7 +127,9 @@ function usedGlossary(report: StoryReport, chartTerms: readonly string[]) {
 
 /** 원국표에 찍힌 십성·십이운성 — 한 글자여도 뜻을 실어야 하는 용어들 */
 const chartTerms = (cells: PillarCell[]) =>
-  cells.flatMap((cell) => [cell.stemGod, cell.branchGod, cell.stage]).filter((term) => term !== "-");
+  cells
+    .flatMap((cell) => [cell.stemGod, cell.branchGod, cell.stage, cell.empty ? "공망" : ""])
+    .filter((term) => term !== "-" && term !== "");
 
 const ISSUED = new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long", day: "numeric", timeZone: "Asia/Seoul" });
 
@@ -117,6 +156,7 @@ export async function renderReportPdf(input: RenderReportPdfInput): Promise<Buff
     <ReportDocument
       report={input.report}
       productTitle={input.product.title}
+      categoryLabel={input.product.categoryLabel}
       subject={input.subject}
       pillars={cells}
       chartLine={chartLine}

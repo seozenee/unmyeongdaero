@@ -36,18 +36,22 @@ const styles = StyleSheet.create({
   evidenceBox: {
     backgroundColor: palette.tint,
     borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: palette.accentSoft,
     padding: space.md,
-    marginTop: space.xs,
+    marginTop: space.sm,
   },
-  evidenceRow: { flexDirection: "row", marginBottom: space.xs },
-  evidenceLabel: {
+  evidenceHead: {
     ...type.labelSm,
     fontWeight: 700,
     color: palette.accent,
-    width: 118,
-    paddingRight: space.sm,
+    letterSpacing: 0.6,
+    marginBottom: space.sm,
   },
-  evidenceDetail: { ...type.bodySm, color: palette.ink, flex: 1 },
+  evidenceRow: { flexDirection: "row", marginBottom: space.sm },
+  evidenceBullet: { ...type.bodySm, color: palette.accent, width: 10 },
+  evidenceLabel: { ...type.labelMd, fontWeight: 700, color: palette.ink, marginBottom: 2 },
+  evidenceDetail: { ...type.bodySm, color: palette.inkMuted },
   // ─ 원국표 ─
   chartRow: { flexDirection: "row", gap: space.xs },
   chartCell: {
@@ -56,16 +60,23 @@ const styles = StyleSheet.create({
     borderColor: palette.tint,
     borderRadius: radius.lg,
     overflow: "hidden",
+    paddingBottom: space.xs,
   },
+  chartCellMine: { borderColor: palette.accent },
   chartCellHead: {
     backgroundColor: palette.tint,
     paddingVertical: 4,
     alignItems: "center",
   },
+  chartCellHeadMine: { backgroundColor: palette.accentSoft },
   chartCellHeadText: { ...type.labelSm, fontWeight: 600, color: palette.ink },
-  chartGanji: { ...type.headlineMd, fontWeight: 700, textAlign: "center", marginTop: space.sm },
-  chartMeta: { ...type.labelSm, color: palette.inkMuted, textAlign: "center", marginTop: 2 },
-  chartFoot: { ...type.labelSm, color: palette.inkFaint, textAlign: "center", marginTop: space.xs, marginBottom: space.sm },
+  chartGod: { ...type.labelSm, fontWeight: 600, color: palette.inkMuted, textAlign: "center", marginTop: 3 },
+  chartGodMine: { color: palette.accent, fontWeight: 700 },
+  chartChar: { ...type.headlineMd, fontWeight: 700, textAlign: "center", marginTop: 2 },
+  chartReading: { ...type.labelSm, color: palette.inkMuted, textAlign: "center" },
+  chartStage: { ...type.labelSm, color: palette.inkFaint, textAlign: "center", marginTop: 3 },
+  chartVoid: { ...type.labelSm, fontWeight: 700, color: palette.gold, textAlign: "center" },
+  chartHidden: { ...type.labelSm, fontSize: 7, color: palette.inkFaint, textAlign: "center", marginTop: 2 },
   // ─ 오행 막대 ─
   barRow: { flexDirection: "row", alignItems: "center", marginBottom: 6 },
   barLabel: { ...type.labelSm, fontWeight: 600, color: palette.ink, width: 22 },
@@ -95,29 +106,57 @@ export function SectionTitle({ children }: { children: string }) {
   return <Text style={styles.sectionTitle}>{children}</Text>;
 }
 
-/** 원국 네 기둥 — 지면에서는 네 칸을 나란히 편다 */
+/**
+ * 원국 네 기둥 — 지면에서는 네 칸을 나란히 편다.
+ *
+ * 한동안 한 칸에 "무인" 두 글자를 붙여 찍고 그 아래 "식신 · 편인" 을 한 줄로 적었다.
+ * 어느 십성이 천간 것이고 어느 것이 지지 것인지 알 수가 없었다. 화면 판과 똑같이
+ * 위아래로 나눠 세운다 — 십성 · 천간 · 지지 · 십성 · 운성 · 지장간.
+ */
 export interface PillarCell {
   slot: string;
-  ganji: string;
+  /**
+   * 천간·지지 — 한글로만 싣는다.
+   *
+   * 한자를 크게 찍어 두었는데 종이에서 「甲」이 "2" 로, 「亥」가 "¥" 로 나왔다.
+   * 본문 글꼴(Pretendard)에 한자 글리프가 없어서 엉뚱한 자리의 글자가 찍힌 것이다.
+   * 한자 글꼴을 한 벌 더 싣는 방법도 있지만, 읽는 사람에게 한자는 어차피 못 읽는
+   * 글자다. 한글로 적으면 글꼴도 글도 모두 해결된다.
+   */
+  stem: string;
+  branch: string;
   stemGod: string;
   branchGod: string;
   stage: string;
-  color: string;
+  /** 지지 속에 숨은 글자 ("무·병·갑") */
+  hidden: string;
+  /** 일주가 속한 순에서 비는 자리인가 */
+  empty: boolean;
+  stemColor: string;
+  branchColor: string;
+  /** 일주 — 나를 가리키는 자리 */
+  mine: boolean;
 }
 
 export function PillarsTable({ cells }: { cells: PillarCell[] }) {
   return (
     <View style={styles.chartRow}>
       {cells.map((cell) => (
-        <View key={cell.slot} style={styles.chartCell}>
-          <View style={styles.chartCellHead}>
+        <View key={cell.slot} style={cell.mine ? { ...styles.chartCell, ...styles.chartCellMine } : styles.chartCell}>
+          <View style={cell.mine ? { ...styles.chartCellHead, ...styles.chartCellHeadMine } : styles.chartCellHead}>
             <Text style={styles.chartCellHeadText}>{cell.slot}</Text>
           </View>
-          <Text style={{ ...styles.chartGanji, color: cell.color }}>{cell.ganji}</Text>
-          <Text style={styles.chartMeta}>
-            {cell.stemGod} · {cell.branchGod}
+
+          <Text style={cell.mine ? { ...styles.chartGod, ...styles.chartGodMine } : styles.chartGod}>
+            {cell.stemGod}
           </Text>
-          <Text style={styles.chartFoot}>{cell.stage}</Text>
+          <Text style={{ ...styles.chartChar, color: cell.stemColor }}>{cell.stem}</Text>
+          <Text style={{ ...styles.chartChar, color: cell.branchColor }}>{cell.branch}</Text>
+          <Text style={styles.chartGod}>{cell.branchGod}</Text>
+
+          <Text style={styles.chartStage}>{cell.stage}</Text>
+          {cell.empty && <Text style={styles.chartVoid}>비어 있음</Text>}
+          <Text style={styles.chartHidden}>{cell.hidden}</Text>
         </View>
       ))}
     </View>
@@ -152,10 +191,17 @@ export function Evidence({ items }: { items: Array<{ label: string; detail: stri
   if (items.length === 0) return null;
   return (
     <View style={styles.evidenceBox} wrap={false}>
+      <Text style={styles.evidenceHead}>이 말이 어디서 나왔냐면</Text>
       {items.map((item, index) => (
-        <View key={`${item.label}-${index}`} style={index === items.length - 1 ? { flexDirection: "row" } : styles.evidenceRow}>
-          <Text style={styles.evidenceLabel}>{item.label}</Text>
-          <Text style={styles.evidenceDetail}>{item.detail}</Text>
+        <View
+          key={`${item.label}-${index}`}
+          style={index === items.length - 1 ? { flexDirection: "row" } : styles.evidenceRow}
+        >
+          <Text style={styles.evidenceBullet}>·</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.evidenceLabel}>{item.label}</Text>
+            <Text style={styles.evidenceDetail}>{item.detail}</Text>
+          </View>
         </View>
       ))}
     </View>
