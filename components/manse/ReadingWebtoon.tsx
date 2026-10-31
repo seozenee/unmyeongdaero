@@ -85,12 +85,43 @@ export function ReadingWebtoon({
   name,
   guide,
   poster,
+  readingId,
 }: {
   teaser: Teaser;
   name: string;
   guide: Guide;
   poster: WebtoonAsset | null;
+  readingId: string;
 }) {
+  /**
+   * 맞혀 보이는 장면은 AI 가 쓴다.
+   *
+   * 표에서 고르던 때는 신강약 셋 × 넘치는 기운 다섯 × 비는 기운 다섯 = 일흔다섯 가지뿐이라,
+   * 같은 조합인 사람은 토씨 하나까지 같은 글을 봤다. 친구끼리 비교하면 바로 들킨다.
+   *
+   * 그렇다고 AI 를 기다렸다 그리면 결제 전 화면이 몇 초씩 비어 있게 된다. 파는 자리에서
+   * 흰 화면은 가장 비싼 값을 치른다. 그래서 표에 있는 문장으로 먼저 그려 두고, 글이
+   * 오면 조용히 바꿔 끼운다. 못 받아도 화면은 그대로 멀쩡하다.
+   */
+  const [scenes, setScenes] = useState(teaser.scenes);
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      try {
+        const response = await fetch(`/api/readings/${readingId}/teaser`, { method: "POST" });
+        if (!response.ok) return;
+        const body = (await response.json()) as { scenes?: string[] | null };
+        if (alive && body.scenes && body.scenes.length > 0) setScenes(body.scenes);
+      } catch {
+        // 표에 있는 문장이 이미 떠 있다
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [readingId]);
+
   return (
     <section className="-mx-margin flex flex-col">
       {/* 첫 칸 — 그림이 화면을 채우고 안내자가 말을 건다 */}
@@ -106,13 +137,13 @@ export function ReadingWebtoon({
       </Panel>
 
       {/* 맞혀 보이는 칸들 */}
-      {teaser.scenes.length > 0 && (
+      {scenes.length > 0 && (
         <div className="flex flex-col gap-space-md bg-surface px-margin py-space-xl">
           <Panel>
             <Says guide={guide}>{name}님, 여덟 글자를 펼쳐 놓고 보니 짚이는 게 있어요.</Says>
           </Panel>
 
-          {teaser.scenes.map((scene, index) => (
+          {scenes.map((scene, index) => (
             <Panel key={scene} className={index === 0 ? "pt-space-sm" : undefined}>
               <div className="flex flex-col gap-space-xs rounded-2xl bg-surface-container p-space-lg">
                 <span className="font-body-md text-body-md leading-relaxed text-on-surface">{scene}</span>
