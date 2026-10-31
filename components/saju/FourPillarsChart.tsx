@@ -58,8 +58,8 @@ export function FourPillarsChart({ pillars, className }: { pillars: FourPillarsI
         ))}
       </ol>
       <p className="font-label-sm text-label-sm leading-snug text-outline">
-        위에서부터 일간과의 관계 · 천간 · 지지 · 일간이 그 자리에서 지나는 때 · 지지 속에 숨은 글자.
-        일주가 나를 가리키는 자리고, 「공망」은 비어 있어 힘이 덜 실리는 자리다.
+        위에서부터 나와의 관계 · 윗글자 · 아랫글자 · 그 자리에서 지나는 때 · 아랫글자 속에 숨은 글자.
+        테두리 친 칸이 나를 가리키는 자리고, 「비어 있음」은 힘이 덜 실리는 자리다.
       </p>
     </section>
   );
@@ -131,7 +131,7 @@ function Column({
 
       <span className="font-label-sm text-[10px] leading-4 text-outline">
         {stage}
-        {empty && <span className="ml-1 text-tertiary">공망</span>}
+        {empty && <span className="ml-1 text-tertiary">비어 있음</span>}
       </span>
 
       <span className="text-center font-label-sm text-[10px] leading-4 text-outline">{hidden.join("·")}</span>

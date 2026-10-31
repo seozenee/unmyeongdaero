@@ -12,7 +12,7 @@ export const hasBatchim = (word: string) => finalConsonant(word) !== 0;
 /** ㄹ 받침 — '으로'가 아니라 '로'를 쓰는 유일한 받침이다 */
 const RIEUL = 8;
 
-type JosaPair = "이/가" | "은/는" | "을/를" | "과/와" | "이에요/예요" | "아/야" | "으로/로";
+type JosaPair = "이/가" | "은/는" | "을/를" | "과/와" | "이에요/예요" | "아/야" | "으로/로" | "이라/라";
 
 export function josa(word: string, pair: JosaPair) {
   const [withBatchim, withoutBatchim] = pair.split("/") as [string, string];

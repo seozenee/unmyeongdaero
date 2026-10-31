@@ -8,7 +8,7 @@ import { ELEMENT_SCENE, STRENGTH_SCENE } from "../manse/scenes";
 import { hasBatchim, josa } from "../text/josa";
 import { getGuide } from "./guides";
 import type { BriefingBeat, ReportSection, StoryPanel, StoryReport, TimelineItem } from "./report";
-import { soften } from "./sanitize";
+import { plainDeep, soften } from "./sanitize";
 
 // ─── 안전한 접근 ─────────────────────────────────────────────────────────────
 
@@ -158,7 +158,22 @@ function buildChart(name: string, modules: Record<string, Json>, birth: BirthPro
   };
 }
 
-const elementKo = (element: FiveElement | null) => (element ? ELEMENT_LABEL[element].ko : "");
+/**
+ * 기운의 이름.
+ *
+ * "목·화·토·금·수" 한 글자로 적고 있었다. 명리를 아는 사람에게는 익숙하지만, 모르는
+ * 사람에게는 "흐름을 꼬이게 하는 기운은 목이에요" 가 암호다. 같은 것을 가리키는
+ * 보통 말이 이미 있다 — 나무·불·흙·쇠·물.
+ */
+const ELEMENT_WORD: Record<FiveElement, string> = {
+  wood: "나무",
+  fire: "불",
+  earth: "흙",
+  metal: "쇠",
+  water: "물",
+};
+
+const elementKo = (element: FiveElement | null) => (element ? ELEMENT_WORD[element] : "");
 
 function dominantAndMissing(chart: Chart) {
   if (!chart.counts) return { dominant: [] as string[], missing: [] as string[] };
@@ -295,14 +310,25 @@ const section = (title: string, lead: string, body: Array<string | null>, eviden
   panel,
 });
 
+/** 네 자리가 가리키는 삶의 영역 — 라벨에 쓰는 짧은 말 */
+const PILLAR_AREA: Record<"year" | "month" | "day" | "hour", string> = {
+  year: "집안과 어린 시절",
+  month: "일하고 사람 만나는 자리",
+  day: "나 자신과 가장 가까운 사이",
+  hour: "말년과 남기는 것",
+};
+
 function pillarEvidence(chart: Chart, position: "year" | "month" | "day" | "hour", who = "") {
   const pillar = chart.pillar(position);
   if (!pillar || !str(pillar.full)) return null;
   const meaning = str(at(pillar, "twelveFortuneInterpretation.positionMeaning"));
   const energy = sentences(str(at(pillar, "twelveFortuneInterpretation.energy")), 1);
+  // 라벨에 "일주 병인 · 편인 · 장생" 처럼 이름을 넷이나 늘어놓고 있었다. 읽는 사람에게는
+  // 암호 네 개다. 그 자리가 삶에서 가리키는 영역만 적고, 설명은 detail 에서 한다.
+  const area = PILLAR_AREA[position];
   return {
-    label: `${who}${POSITION_KO[position]}주 ${str(pillar.full)} · ${str(pillar.earthSippiSeong) ?? str(pillar.sippiSeong) ?? ""} · ${str(pillar.twelveStage) ?? ""}`.replace(/ · $/, ""),
-    detail: soften([energy, meaning ? `자리의 뜻: ${meaning}` : null].filter(Boolean).join(" ") || "원국의 뼈대를 이루는 기둥이에요."),
+    label: `${who}${area}`,
+    detail: soften([energy, meaning].filter(Boolean).join(" ") || `${area}를 읽는 자리예요.`),
   };
 }
 
@@ -331,7 +357,7 @@ const natal: Builder = ({ me, reading }, title) => {
               : me.strength === "신약"
                 ? `${me.name}님은 곁에 사람이 있을 때 훨씬 멀리 가는 결이에요. 혼자 버티는 방식이 제일 손해예요.`
                 : `${me.name}님은 한쪽으로 크게 기울지 않아, 때와 자리에 따라 결이 달라지는 쪽이에요.`,
-            me.strength ? `(명리로는 이걸 ${me.strength}이라고 불러요.)` : null,
+            // 용어를 쓰지 않기로 했으니 용어를 알려 주는 괄호도 지운다.
           )
         : null,
       over ? ELEMENT_SCENE[over] : null,
@@ -339,7 +365,7 @@ const natal: Builder = ({ me, reading }, title) => {
         ? join(
             `가장 가까운 사람 앞에서, 그리고 혼자 있을 때 나오는 모습이 따로 있어요.`,
             sentences(str(at(day, "twelveFortuneInterpretation.energy")), 1),
-            `(여덟 글자 가운데 ${str(day.full)} 두 글자가 그 자리예요.)`,
+            "(여덟 글자 가운데 태어난 날의 두 글자가 그 자리예요.)",
           )
         : null,
       dominant.length
@@ -373,13 +399,59 @@ const elementsAndYongsin: Builder = ({ me }, title) => {
       me.yongsin.gi ? `반대로 기신 ${elementKo(me.yongsin.gi)}의 결, 즉 ${ELEMENT_VIRTUE[me.yongsin.gi].excess}은 경계하는 편이 좋아요.` : null,
     ],
     [
-      yong ? { label: `용신 ${elementKo(yong)}${me.yongsin.hui ? ` · 희신 ${elementKo(me.yongsin.hui)}` : ""}`, detail: me.yongsin.reasoning ?? "사주의 균형을 맞추는 오행이에요." } : null,
-      me.yongsin.gi ? { label: `기신 ${elementKo(me.yongsin.gi)}`, detail: `${ELEMENT_VIRTUE[me.yongsin.gi].excess}이 커질 때 흐름이 꼬이기 쉬워요.` } : null,
-      dominant.length ? { label: `오행 편중 · ${dominant.join("·")} 강 / ${missing.join("·") || "빈 기운 없음"}`, detail: "원국 여덟 글자와 지장간을 합친 분포예요." } : null,
+      yong ? { label: `채우면 풀리는 것 · ${ELEMENT_VIRTUE[yong].good}`, detail: `이쪽이 늘어날 때 막혀 있던 일이 먼저 움직여요.` } : null,
+      me.yongsin.gi ? { label: `길어지면 탈 나는 것 · ${ELEMENT_VIRTUE[me.yongsin.gi].excess}`, detail: `이게 오래 이어지면 하던 일까지 같이 꼬여요.` } : null,
+      dominant.length ? { label: `몰린 쪽 · ${dominant.join("·")}`, detail: missing.length ? `반대로 ${missing.join("·")} 쪽이 비어 있어요. 몰린 쪽은 알아서 굴러가고, 빈 쪽은 일부러 채워야 굴러가요.` : "크게 비는 쪽은 없어요." } : null,
     ],
     "elements",
   );
 };
+
+/**
+ * 자리를 삶의 영역으로 옮긴다.
+ *
+ * "월간과 시간이 맞물려요" 는 읽는 사람에게 아무 말도 아니다. 그렇다고 "해와 달이
+ * 부딪혀요" 로 바꾸면 더 나쁘다 — 쉬워 보이지만 역시 아무 뜻이 없다.
+ *
+ * 명리에서 네 자리가 가리키는 삶의 영역은 정해져 있다. 그 영역의 이름으로 적으면
+ * 쉬우면서도 사람마다 달라진다. 부딪히는 자리가 집안과 일인 사람과, 일과 말년인
+ * 사람은 서로 다른 말을 듣게 된다.
+ */
+const POSITION_LIFE: Record<string, string> = {
+  년: "집안과 자란 환경",
+  연: "집안과 자란 환경",
+  월: "일하고 사람 만나는 자리",
+  일: "나 자신과 가장 가까운 사이",
+  시: "말년과 내가 남기는 것",
+};
+
+const lifeArea = (position: string) => POSITION_LIFE[position.trim().charAt(0)] ?? null;
+
+/** 두 자리가 어떻게 얽히는지. 묶이는 쪽과 부딪히는 쪽만 가른다 */
+const bindsTogether = (type: string) => type.includes("합");
+
+/**
+ * 얽힘 하나를 손님의 말로.
+ *
+ * 자리 이름도 글자 이름도 꺼내지 않는다. 대신 "어느 영역과 어느 영역이" 를 적는다.
+ * 두 영역을 모르면(엔진이 자리를 안 주면) 이 근거는 아예 내지 않는다 — 자리를 모르면
+ * 할 수 있는 말은 "기운이 얽혀요" 뿐이고, 그건 누구에게나 해당되는 말이다.
+ */
+function relationEvidence(relation: { type: string; sourcePosition: string; targetPosition: string }) {
+  const from = lifeArea(relation.sourcePosition);
+  const to = lifeArea(relation.targetPosition);
+  if (!from || !to) return null;
+
+  return bindsTogether(relation.type)
+    ? {
+        label: `${from} · ${to}`,
+        detail: `이 둘이 한 덩어리로 움직여요. 한쪽이 풀리면 다른 쪽도 같이 풀리고, 한쪽이 막히면 같이 막혀요.`,
+      }
+    : {
+        label: `${from} · ${to}`,
+        detail: `이 둘이 서로를 잡아당겨요. 한쪽에 시간을 쏟으면 다른 쪽에서 반드시 탈이 나는 구조라, 둘을 같은 날에 몰아 두지 않는 편이 좋아요.`,
+      };
+}
 
 const natalRelations: Builder = ({ me, reading }, title) => {
   const top = me.relations.slice(0, 3);
@@ -388,27 +460,22 @@ const natalRelations: Builder = ({ me, reading }, title) => {
   const friction = me.relations.length - bound;
   return section(
     title,
-    top[0]
-      ? `원국 안에서 가장 세게 맞물리는 자리는 ${top[0].sourcePosition}과 ${top[0].targetPosition}이에요`
-      : "원국 안의 밀고 당기는 힘이 반복되는 패턴을 만들어요",
+    top[0] && relationEvidence(top[0])
+      ? `${relationEvidence(top[0])!.label.replace(" · ", "과 ")}가 한 줄로 묶여 움직여요`
+      : "여덟 글자 안에서 밀고 당기는 힘이 같은 장면을 되풀이하게 만들어요",
     [
       me.relations.length
         ? `여덟 글자 사이에서 서로 묶이는 자리가 ${bound}곳, 부딪히거나 어긋나는 자리가 ${friction}곳 보여요. ${friction > bound ? "묶이기보다 부딪히는 쪽이 많아, 한자리에 오래 머물기보다 옮기고 바꾸며 나아가는 결이에요." : "부딪힘보다 묶이는 쪽이 많아, 한번 정한 자리와 사람을 오래 끌고 가는 결이에요."}`
         : null,
-      top[0]
-        ? join(
-            `${top[0].sourcePosition} ${josa(top[0].source, "과/와")} ${top[0].targetPosition} ${top[0].target}이 ${top[0].type}으로 얽혀요.`,
-            top[0].meaning,
-          )
-        : null,
+      top[0] && relationEvidence(top[0]) ? relationEvidence(top[0])!.detail : null,
       me.strengths.length ? `강점으로는 ${me.strengths.slice(0, 2).map((item) => item.trait).join(", ")}이 돋보여요.` : null,
       me.cautions.length ? `다만 ${me.cautions.map((item) => item.trait).join(", ")} 같은 결이 관계와 일에서 같은 장면을 반복하게 만들 수 있어요.` : null,
       answerLine(reading, "pattern") ?? answerLine(reading, "concern"),
     ],
     [
-      ...top.slice(0, 2).map((relation) => ({ label: `${relation.sourcePosition} ${relation.source} ↔ ${relation.targetPosition} ${relation.target} · ${relation.type}`, detail: relation.meaning ?? "원국 안의 긴장 관계예요." })),
-      me.cautionSinsal[0] ? { label: `신살 ${me.cautionSinsal[0].name}`, detail: sentences(me.cautionSinsal[0].description, 1) ?? "조심하면 좋은 결이에요." } : null,
-      me.goodSinsal[0] ? { label: `신살 ${me.goodSinsal[0].name}`, detail: sentences(me.goodSinsal[0].description, 1) ?? "도움이 되는 결이에요." } : null,
+      ...top.slice(0, 2).map(relationEvidence),
+      me.cautionSinsal[0] ? { label: "조심하면 좋은 결", detail: sentences(me.cautionSinsal[0].description, 1) ?? "서두를 때 탈이 나기 쉬워요." } : null,
+      me.goodSinsal[0] ? { label: "도움이 되는 결", detail: sentences(me.goodSinsal[0].description, 1) ?? "사람의 도움이 붙는 결이에요." } : null,
     ],
   );
 };
@@ -419,19 +486,24 @@ const crossRelations: Builder = ({ me, partner, cross, reading }, title) => {
   return section(
     title,
     cross.hap > cross.clash
-      ? `${me.name}님과 ${partnerName}님 사이에는 끌림(합)이 긴장보다 크게 남아 있어요`
-      : `${me.name}님과 ${partnerName}님 사이는 끌림보다 부딪힘(형·충·해)이 먼저 드러나는 사이예요`,
+      ? `${me.name}님과 ${partnerName}님 사이에는 끌림이 긴장보다 크게 남아 있어요`
+      : `${me.name}님과 ${partnerName}님 사이는 끌림보다 부딪힘이 먼저 드러나는 사이예요`,
     [
-      `두 사람의 명식을 겹쳐 보면 끌림을 뜻하는 합이 ${cross.hap}건, 부딪힘을 뜻하는 형·충·파·해가 ${cross.clash}건 보여요`,
-      cross.matches[0] ? `가장 뚜렷한 연결은 「${cross.matches[0].label}」이에요. ${soften(cross.matches[0].note)}` : null,
+      `두 사람의 여덟 글자를 겹쳐 보면 서로 끌어당기는 대목이 ${cross.hap}곳, 서로를 잡아당기는 대목이 ${cross.clash}곳이에요. ${
+        cross.hap > cross.clash
+          ? "끌리는 쪽이 많아서, 떨어져 있어도 다시 붙게 되는 사이예요."
+          : "부딪히는 쪽이 많아서, 같이 있는 시간이 길어질수록 마찰이 늘어요."
+      }`,
       cross.lackingSelf.length || cross.lackingPartner.length
-        ? `오행으로 보면 ${me.name}님에게 비어 있는 ${cross.lackingSelf.join("·") || "기운"}을 ${partnerName}님이, ${partnerName}님에게 비어 있는 ${cross.lackingPartner.join("·") || "기운"}을 ${me.name}님이 채우는 구조예요. 서로가 서로에게 없는 것을 가진 사이라 끌림이 컸던 거예요.`
+        ? `${me.name}님에게 비어 있는 ${josa(cross.lackingSelf.join("·") || "기운", "을/를")} ${partnerName}님이, ${partnerName}님에게 비어 있는 ${josa(cross.lackingPartner.join("·") || "기운", "을/를")} ${me.name}님이 채워요. 서로에게 없는 것을 가진 사이라 처음 끌림이 컸던 거예요.`
         : null,
       answerLine(reading, "whoEnded") ?? answerLine(reading, "concern"),
       storyEcho(reading),
     ],
     [
-      ...cross.matches.slice(0, 2).map((match) => ({ label: match.label, detail: soften(match.note) })),
+      // 엔진이 준 라벨은 "나 병 ↔ 상대 신 · 천간합" 꼴이라 그대로는 못 내보낸다.
+      // 세어 본 결과만 근거로 남긴다 — 사람마다 숫자가 달라 따져 볼 수 있다.
+      { label: "두 사람 사이의 맞물림", detail: `끌어당기는 대목 ${cross.hap}곳, 잡아당기는 대목 ${cross.clash}곳이에요.` },
       pillarEvidence(me, "day", `${me.name} · `),
       pillarEvidence(partner, "day", `${partnerName} · `),
     ],
@@ -463,7 +535,7 @@ const partnerHeart: Builder = ({ partner, reading, me }, title) => {
       pillarEvidence(partner, "day", `${partner.name} · `),
       partner.gyeokguk ? { label: `${partner.name} · 격국 ${partner.gyeokguk.name}`, detail: partner.gyeokguk.reasoning ?? "상대 사주의 틀이에요." } : null,
       partner.yongsin.yong ? { label: `${partner.name} · 용신 ${elementKo(partner.yongsin.yong)}`, detail: partner.yongsin.reasoning ?? "상대에게 필요한 기운이에요." } : null,
-      partner.cautionSinsal[0] ? { label: `${partner.name} · 신살 ${partner.cautionSinsal[0].name}`, detail: sentences(partner.cautionSinsal[0].description, 1) ?? "" } : null,
+      partner.cautionSinsal[0] ? { label: `${partner.name} · 조심하면 좋은 결`, detail: sentences(partner.cautionSinsal[0].description, 1) ?? "" } : null,
     ],
   );
 };
@@ -478,7 +550,7 @@ const partnerNow: Builder = ({ partner, me, reading }, title) => {
     [
       decade
         ? join(
-            `${partner.name}님의 현재 대운은 ${str(decade.full)}${paren(str(at(decade, "sipseong.gan")))}이고,`,
+            `${partner.name}님이 지금 지나는 열 해는${paren(str(at(decade, "sipseong.gan")))} 이런 흐름이고,`,
             quoted(str(at(decade, "twelveFortune.phase")), (phase) => `"${phase}"의 흐름이에요.`) || "지금의 결을 지나는 중이에요.",
             "마음이 없어서가 아니라, 관계에 쓸 힘이 다른 곳으로 흘러가 있는 시기일 수 있어요.",
           )
@@ -495,7 +567,7 @@ const partnerNow: Builder = ({ partner, me, reading }, title) => {
           }
         : null,
       seun ? { label: `${partner.name} · ${num(seun.year) ?? ""} ${str(seun.ganji) ?? ""} 세운`, detail: soften(str(seun.interpretation) ?? "상대의 올해 흐름이에요.") } : null,
-      partner.goodSinsal[0] ? { label: `${partner.name} · 신살 ${partner.goodSinsal[0].name}`, detail: sentences(partner.goodSinsal[0].description, 1) ?? "" } : null,
+      partner.goodSinsal[0] ? { label: `${partner.name} · 도움이 되는 결`, detail: sentences(partner.goodSinsal[0].description, 1) ?? "" } : null,
     ],
   );
 };
@@ -540,7 +612,9 @@ function timelineFor(chart: Chart): TimelineItem[] {
     items.push({
       period: decadeLabel(decade)!,
       tone: fortuneTone(num(at(decade, "twelveFortune.level"))),
-      title: ([str(at(decade, "sipseong.gan")), str(at(decade, "twelveFortune.keyword")) ?? str(at(decade, "twelveFortune.name"))].filter(Boolean).join(" · ") || "10년의 배경").slice(0, 18),
+      // 십성 이름을 앞에 붙이고 있었다. 바꿔 적어도 "크게 벌리는 돈 · 역마와 분주함"
+      // 처럼 두 말이 겹쳐 길기만 하다. 그 열 해를 한마디로 부르는 말만 남긴다.
+      title: (str(at(decade, "twelveFortune.keyword")) ?? str(at(decade, "twelveFortune.name")) ?? "10년의 배경").slice(0, 18),
       note: str(at(decade, "twelveFortune.phase")) ?? "10년 단위의 큰 흐름이에요.",
     });
   }
@@ -561,7 +635,7 @@ const timing: Builder = ({ me, reading }, title) => {
         ? `${me.name}님은 지금 ${decadeLabel(decade)}${paren(str(at(decade, "sipseong.gan")))} 안에 있어요. ${quoted(str(at(decade, "twelveFortune.phase")), (phase) => `12운성으로는 "${phase}"의 때라, `)}${fortuneTone(num(at(decade, "twelveFortune.level"))) === "caution" ? "새로 벌이기보다 거두고 정리할수록 다음 흐름이 가벼워져요" : "움직인 만큼 결과가 따라오는 흐름이에요"}.`
         : null,
       seun ? `올해 ${str(seun.ganji)} 세운은 "${soften(str(seun.interpretation) ?? "")}"의 해예요.${nextSeun ? ` 이어지는 ${num(nextSeun.year)} ${str(nextSeun.ganji)} 세운은 "${soften(str(nextSeun.interpretation) ?? "")}"로 결이 바뀌어요.` : ""}` : null,
-      next ? `${num(next.startAge)}세부터는 ${str(next.full)} 대운으로 넘어가며 ${quoted(str(at(next, "twelveFortune.phase")), (phase) => `"${phase}"의 `)}흐름이 열려요.` : null,
+      next ? `${num(next.startAge)}세부터는 다음 열 해로 넘어가며 ${quoted(str(at(next, "twelveFortune.phase")), (phase) => `"${phase}"의 `)}흐름이 열려요.` : null,
       answerLine(reading, "breakupPeriod") ? null : null,
     ],
     [
@@ -591,7 +665,7 @@ const cautionSection: Builder = ({ me, reading, report }, title) => {
       ? `지금 먼저 연락하면 ${gi ? `기신 ${elementKo(gi)}의 결(${ELEMENT_VIRTUE[gi].excess})` : "조급함"}이 앞서며 마음이 더 멀어지기 쉬워요`
       : `조심할 지점은 ${me.cautions[0]?.trait ?? (gi ? ELEMENT_VIRTUE[gi].excess : "조급함")}이에요`,
     [
-      gi ? `${me.name}님의 명식에서 흐름을 꼬이게 하는 기운은 ${elementKo(gi)}이에요. 감정이 올라올 때 ${ELEMENT_VIRTUE[gi].excess}이 앞서면, 좋은 의도도 부담으로 전해지기 쉬워요.` : null,
+      gi ? `${me.name}님의 명식에서 흐름을 꼬이게 하는 기운은 ${josa(elementKo(gi), "이에요/예요")}. 감정이 올라올 때 ${ELEMENT_VIRTUE[gi].excess}이 앞서면, 좋은 의도도 부담으로 전해지기 쉬워요.` : null,
       relation ? `올해 세운은 원국 ${josa(str(at(relation, "targetPosition")) ?? "", "과/와")} ${josa(str(at(relation, "type")) ?? "", "으로/로")} 얽혀요. ${sentences(str(at(relation, "meaning")), 2) ?? ""}` : null,
       me.cautions.length ? `스스로도 ${me.cautions.map((item) => item.trait).join(", ")}의 결을 알고 있다면, 결정적인 말은 하루 묵힌 뒤 꺼내는 습관이 가장 강력한 처방이에요.` : null,
       isReunion ? answerLine(reading, "contactStatus") : answerLine(reading, "concern"),
@@ -599,7 +673,7 @@ const cautionSection: Builder = ({ me, reading, report }, title) => {
     [
       gi ? { label: `기신 ${elementKo(gi)}`, detail: `${ELEMENT_VIRTUE[gi].excess}이 커질수록 흐름이 어긋나요.` } : null,
       relation ? { label: `${num(me.seun.current?.year)} ${str(me.seun.current?.ganji)} 세운 · ${str(at(relation, "type"))}`, detail: sentences(str(at(relation, "meaning")), 1) ?? "" } : null,
-      me.cautionSinsal[0] ? { label: `신살 ${me.cautionSinsal[0].name}`, detail: sentences(me.cautionSinsal[0].description, 1) ?? "" } : null,
+      me.cautionSinsal[0] ? { label: "조심하면 좋은 결", detail: sentences(me.cautionSinsal[0].description, 1) ?? "" } : null,
       me.cautions[0] ? { label: `성향 주의 · ${me.cautions[0].trait}`, detail: me.cautions[0].basis ?? "명식의 성향 평가에서 나온 주의점이에요." } : null,
     ],
   );
@@ -664,22 +738,22 @@ const wealthStructure: Builder = ({ me, wealth }, title) => {
       : "재물의 길목은 내가 무엇을 다룰 수 있는 사람인지에서 갈려요",
     [
       element
-        ? `일간 ${josa(`${me.dayMaster?.char ?? ""}${me.dayMaster?.element ?? ""}`, "이/가")} 다스리는 기운이 ${elementKo(element)}이라, 명리에서는 이 자리를 재성이라 불러요. 원국에 ${jae}자리 있어요.${jae === 0 ? " 타고난 재성이 드러나지 않는다는 건 돈이 없다는 뜻이 아니라, 돈이 들어오는 길을 스스로 만들어야 한다는 뜻이에요." : ""}`
+        ? `${me.name}님이 다루는 기운이 ${josa(elementKo(element), "이라/라")}, 돈은 그쪽에서 들어와요. 여덟 글자 안에 그 자리가 ${jae}곳 있어요.${jae === 0 ? " 타고난 재성이 드러나지 않는다는 건 돈이 없다는 뜻이 아니라, 돈이 들어오는 길을 스스로 만들어야 한다는 뜻이에요." : ""}`
         : null,
       siksang > 0 && jae > 0
-        ? "식상(만들고 표현하는 힘)과 재성이 함께 있어, 내가 만든 결과물이 그대로 값이 되는 식상생재의 흐름이에요. 남의 자리에서 받는 돈보다 내 이름으로 만든 것에서 오는 돈이 커요."
+        ? "식상과 재성이 함께 있어, 내가 만든 결과물이 그대로 값이 되는 식상생재의 흐름이에요. 남의 자리에서 받는 돈보다 내 이름으로 만든 것에서 오는 돈이 커요."
         : siksang > 0
-          ? "식상(만들고 표현하는 힘)이 뚜렷해요. 당장의 재성이 약해도, 만들어 내는 일을 오래 쌓으면 그것이 재물의 길이 돼요."
+          ? "식상이 뚜렷해요. 당장의 재성이 약해도, 만들어 내는 일을 오래 쌓으면 그것이 재물의 길이 돼요."
           : null,
       talJae
-        ? `비겁(나와 같은 편의 기운)이 ${bigyeop}자리로 재성보다 많아요. 사람과 돈이 섞이면 새기 쉬운 결이라, 보증·동업·빌려주는 돈에서 가장 많이 잃어요.`
+        ? `비겁이 ${bigyeop}자리로 재성보다 많아요. 사람과 돈이 섞이면 새기 쉬운 결이라, 보증·동업·빌려주는 돈에서 가장 많이 잃어요.`
         : canCarry
           ? "일간의 힘이 넉넉해, 큰 돈이 들어와도 휘둘리기보다 다루는 쪽에 가까워요."
           : "일간의 힘이 넉넉한 편은 아니라, 한 번에 크게 벌이기보다 감당할 크기로 나눠 가는 편이 유리해요.",
       sentences(str(at(wealth, "prose")), 2),
     ],
     [
-      element ? { label: `재성 ${elementKo(element)} · ${jae}자리`, detail: `일간 ${josa(me.dayMaster?.element ?? "", "이/가")} 극하는 오행이라 재물을 뜻해요.` } : null,
+      element ? { label: `돈이 들어오는 자리 · ${jae}곳`, detail: `${me.name}님이 다루는 쪽의 기운이라, 돈은 여기를 지나 들어와요.` } : null,
       talJae ? { label: `비겁 ${bigyeop}자리 · 탈재 신호`, detail: "재성보다 비겁이 많아 사람을 통해 재물이 나가기 쉬운 구조예요." } : null,
       me.strength ? { label: `신강약 · ${me.strength}`, detail: me.strengthAnalysis ?? "재물을 감당하는 힘의 기준이에요." } : null,
     ],
@@ -708,7 +782,7 @@ const wealthTiming: Builder = ({ me, wealth }, title) => {
       layers.length === 0 && element
         ? join(
             `재성 ${elementKo(element)}의 기운이 운에서 들어오는 때가 재물의 길목이에요.`,
-            decadeHit ? `대운에서는 ${num(decadeHit.startAge)}세부터의 ${str(decadeHit.full)}이 그 자리예요.` : null,
+            decadeHit ? `${num(decadeHit.startAge)}세부터의 열 해가 그 자리예요.` : null,
             seunHit ? `가까이는 ${num(seunHit.year)} ${str(seunHit.ganji)} 세운이 그 결을 데려와요.` : null,
           )
         : null,
@@ -717,7 +791,7 @@ const wealthTiming: Builder = ({ me, wealth }, title) => {
     ],
     [
       ...layers.slice(0, 3).map((layer) => ({ label: `${str(layer.label)} ${str(layer.ganji)}${layer.wealthStarArrives === true ? " · 재성 유입" : ""}`, detail: soften(str(layer.note) ?? "") })),
-      decadeHit ? { label: `${num(decadeHit.startAge)}세~ ${str(decadeHit.full)} 대운`, detail: element ? `재성 ${elementKo(element)}의 기운이 배경으로 깔리는 칸이에요.` : "" } : null,
+      decadeHit ? { label: `${num(decadeHit.startAge)}세부터의 열 해`, detail: element ? `${elementKo(element)} 기운이 배경으로 깔리는 열 해예요.` : "" } : null,
       good ? { label: good.period, detail: good.note } : null,
     ],
     "decade",
@@ -791,20 +865,23 @@ const healthWatch: Builder = ({ me, health }, title) => {
     vulnerabilities[0]
       ? soften(str(vulnerabilities[0].note) ?? str(vulnerabilities[0].mechanism) ?? "유의할 계통이 있어요")
       : clash[0]
-        ? `${clash[0].sourcePosition}와 ${clash[0].targetPosition}의 ${clash[0].type}이 몸에서는 긴장이 오래 머무는 자리로 나타나요`
+        ? `${lifeArea(clash[0].sourcePosition) ?? "지금 쓰는 자리"}와 ${lifeArea(clash[0].targetPosition) ?? "앞으로 쓸 자리"} 사이의 긴장이 몸으로 먼저 올라와요`
         : "크게 기운 계통은 없지만, 피로가 쌓이는 자리는 미리 알아 두면 좋아요",
     [
       ...vulnerabilities.slice(0, 2).map((item) => soften([str(item.mechanism), str(at(item, "natalPresence.note"))].filter(Boolean).join(" — "))),
       tensions[0] ? soften(str(tensions[0].note) ?? "") : null,
       clash.length && !vulnerabilities.length
-        ? `원국 안에서 부딪히는 자리는 ${clash.map((relation) => `${relation.sourcePosition} ${relation.source} ↔ ${relation.targetPosition} ${relation.target}(${relation.type})`).join(", ")}예요. 명리에서는 이런 자리를 무리가 쌓이면 가장 먼저 신호가 오는 곳으로 읽어요.`
+        ? `부딪히는 대목은 ${clash
+            .map((relation) => relationEvidence(relation)?.label)
+            .filter(Boolean)
+            .join(", ")}이에요. 무리가 쌓이면 여기서 먼저 신호가 와요.`
         : null,
       gi ? `기신 ${elementKo(gi)}의 결, 곧 ${ELEMENT_VIRTUE[gi].excess}이 길어질 때 몸이 먼저 지쳐요. ${ELEMENT_BODY[gi].care}이 그 반대쪽의 처방이에요.` : null,
       HEALTH_NOTE,
     ],
     [
       ...vulnerabilities.slice(0, 2).map((item) => ({ label: soften(str(item.mechanism) ?? "유의 구조"), detail: soften(str(item.note) ?? "") })),
-      ...clash.slice(0, 2).map((relation) => ({ label: `${relation.sourcePosition} ↔ ${relation.targetPosition} · ${relation.type}`, detail: relation.meaning ?? "긴장이 머무는 자리예요." })),
+      ...clash.slice(0, 2).map(relationEvidence),
       { label: "고지", detail: HEALTH_NOTE },
     ],
   );
@@ -986,7 +1063,7 @@ const decadeMap: Builder = ({ me }, title) => {
       ahead.length
         ? join(
             `앞으로는 ${ahead.slice(0, 3).map((item) => `${num(item.startAge)}세 ${str(item.full)}`).join(", ")}${ahead.length > 3 ? " 순으로" : "으로"} 이어져요.`,
-            turning ? `그 가운데 ${num(turning.startAge)}세 ${str(turning.full)} 대운에 특히 힘이 실려요.` : null,
+            turning ? `그 가운데 ${num(turning.startAge)}세부터의 열 해에 특히 힘이 실려요.` : null,
           )
         : null,
       me.decade.current
@@ -997,7 +1074,7 @@ const decadeMap: Builder = ({ me }, title) => {
       me.decade.current
         ? { label: `현재 ${decadeLabel(me.decade.current)}`, detail: str(at(me.decade.current, "twelveFortune.phase")) ?? "지금 지나는 대운이에요." }
         : null,
-      turning ? { label: `${num(turning.startAge)}세~ ${str(turning.full)} 대운`, detail: str(at(turning, "twelveFortune.phase")) ?? "힘이 실리는 칸이에요." } : null,
+      turning ? { label: `${num(turning.startAge)}세부터의 열 해`, detail: str(at(turning, "twelveFortune.phase")) ?? "힘이 실리는 열 해예요." } : null,
       direction ? { label: `대운 방향 · ${direction}`, detail: "태어난 해의 음양과 성별로 정해지는, 대운이 흘러가는 방향이에요." } : null,
     ],
     "decade",
@@ -1017,7 +1094,7 @@ const loveSeat: Builder = ({ me, reading }, title) => {
     [
       day
         ? join(
-            `일지(${str(day.earth) ?? str(day.full)})는 배우자·연인의 자리이자 내가 혼자 있을 때의 자리예요.`,
+            "태어난 날의 아래 글자는 배우자·연인의 자리이자 내가 혼자 있을 때의 자리예요.",
             sentences(str(at(day, "twelveFortuneInterpretation.positionMeaning")), 1),
           )
         : null,
@@ -1033,7 +1110,7 @@ const loveSeat: Builder = ({ me, reading }, title) => {
     [
       pillarEvidence(me, "day"),
       relational ? { label: `${relational[0]} ${relational[1]}자리`, detail: "원국 네 기둥에서 센 십성 분포예요." } : null,
-      flower ? { label: `신살 ${flower.name}`, detail: sentences(flower.description, 1) ?? "" } : null,
+      flower ? { label: "사람이 모이는 결", detail: sentences(flower.description, 1) ?? "" } : null,
     ],
   );
 };
@@ -1063,7 +1140,7 @@ const lateYears: Builder = ({ me }, title) => {
     ],
     [
       pillarEvidence(me, "hour"),
-      last ? { label: `${num(last.startAge)}세~ ${str(last.full)} 대운`, detail: str(at(last, "twelveFortune.phase")) ?? "대운의 마지막 칸이에요." } : null,
+      last ? { label: `${num(last.startAge)}세부터의 열 해`, detail: str(at(last, "twelveFortune.phase")) ?? "마지막 열 해예요." } : null,
       pillarEvidence(me, "year"),
     ],
   );
@@ -1084,7 +1161,7 @@ const bizCapital: Builder = ({ me, reading }, title) => {
       me.strengthAnalysis,
       `사업에서 밑천은 돈이 아니라 버티는 힘이에요. 명리에서는 그걸 일간의 힘으로 봐요. ${strong ? "밀고 나가는 힘이 넉넉하니, 초반에 혼자 감당해야 하는 시기를 견디는 데는 유리해요. 다만 덜어 낼 곳을 못 찾으면 혼자 다 쥐려다 지쳐요." : "힘이 넉넉한 편은 아니라, 처음부터 크게 벌이기보다 작게 열어 두고 반응을 보며 키우는 쪽이 오래가요."}`,
       bigyeop > 0
-        ? `비겁(나와 같은 편의 기운)이 ${bigyeop}자리예요. ${bigyeop >= 3 ? "경쟁과 동업이 늘 따라붙는 구조라, 지분과 역할을 먼저 문서로 나눠 두세요." : "함께하는 사람에게서 힘을 얻는 편이라, 혼자보다 둘이 더 멀리 가요."}`
+        ? `비겁이 ${bigyeop}자리예요. ${bigyeop >= 3 ? "경쟁과 동업이 늘 따라붙는 구조라, 지분과 역할을 먼저 문서로 나눠 두세요." : "함께하는 사람에게서 힘을 얻는 편이라, 혼자보다 둘이 더 멀리 가요."}`
         : "비겁이 드러나지 않아, 남과 겨루기보다 내 속도로 쌓아 올리는 쪽이 편해요.",
       answerLine(reading, "worry") ?? storyEcho(reading),
     ],
@@ -1209,7 +1286,7 @@ const talentDirection: Builder = (ctx, title) => {
     [
       top ? { label: `십성 · ${top[0]} ${top[1]}자리`, detail: talent?.shows ?? "원국에서 가장 센 결이에요." } : null,
       pillarEvidence(child, "hour"),
-      child.goodSinsal[0] ? { label: `신살 ${child.goodSinsal[0].name}`, detail: sentences(child.goodSinsal[0].description, 1) ?? "" } : null,
+      child.goodSinsal[0] ? { label: "도움이 되는 결", detail: sentences(child.goodSinsal[0].description, 1) ?? "" } : null,
     ],
     "elements",
   );
@@ -1372,7 +1449,7 @@ export function buildTemplateReport(report: ReportProduct, reading: Reading, saz
       title,
       panel,
       body: ensureMin(built.body, 2, () => "이 대목은 앞에서 본 명식의 흐름을 기준 삼아, 서두르지 않고 천천히 살펴보면 좋아요."),
-      evidence: ensureMin(built.evidence, 1, () => ({ label: `일주 ${str(me.pillar("day")?.full) ?? ""}`, detail: "풀이의 기준이 되는 나의 기둥이에요." })),
+      evidence: ensureMin(built.evidence, 1, () => ({ label: "나 자신과 가장 가까운 사이", detail: "풀이의 기준이 되는 자리예요." })),
     };
   });
 
@@ -1418,8 +1495,8 @@ export function buildTemplateReport(report: ReportProduct, reading: Reading, saz
     new Set([
       ...me.keywords.slice(0, 2),
       str(at(me.decade.current, "twelveFortune.keyword"))?.split(/[와과 ]/)[0],
-      me.yongsin.yong ? `용신 ${elementKo(me.yongsin.yong)}` : null,
-      me.gyeokguk?.name,
+      // 용신·격국은 이름이 곧 용어다. 키워드는 손님이 그대로 입에 올리는 말이라 뺀다.
+      me.yongsin.yong ? ELEMENT_VIRTUE[me.yongsin.yong].good : null,
     ].filter((item): item is string => Boolean(item) && item!.length <= 8)),
   ).slice(0, 5);
 
@@ -1440,7 +1517,16 @@ export function buildTemplateReport(report: ReportProduct, reading: Reading, saz
     { speaker: "guide", text: "자세한 풀이와 근거, 시기표는 보고서에 정리해 두었어요. 천천히 펼쳐 보세요." },
   ].filter((beat): beat is BriefingBeat => Boolean(beat));
 
-  return {
+  /*
+    나가기 직전에 한 번에 손님의 말로 바꾼다.
+
+    이 생성기는 계산 결과의 이름을 그대로 문장에 끼워 넣는다 — "편재 · 역마와 분주함",
+    "나 병 ↔ 상대 신 · 천간합", "2026 병오 세운". 고칠 자리가 백 군데가 넘어 하나씩
+    손보면 반드시 빠뜨린다. 길목이 하나뿐이니 여기서 거른다.
+
+    문장을 짓는 쪽은 계속 계산 이름으로 써도 된다. 읽는 사람에게 나갈 때만 바뀐다.
+  */
+  const plained = plainDeep({
     briefing,
     headline,
     summary,
@@ -1449,5 +1535,9 @@ export function buildTemplateReport(report: ReportProduct, reading: Reading, saz
     timeline,
     actions,
     closing: `${report.disclaimer ? `${report.disclaimer} ` : ""}여기까지가 ${name}님의 여덟 글자가 말해 주는 것이에요. 흐름을 알고 나면 같은 일도 다르게 지나갑니다.`,
-  };
+  });
+
+  // 장 제목만은 상품 목차 그대로 둔다. 손님이 상세 화면에서 보고 산 목록이고,
+  // 프롬프트와 화면이 같은 제목을 쓴다 — 여기서 한 글자라도 달라지면 어긋난다.
+  return { ...plained, sections: plained.sections.map((section, index) => ({ ...section, title: sections[index]!.title })) };
 }

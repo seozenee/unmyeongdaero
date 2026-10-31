@@ -6,6 +6,7 @@ import { buildManseTopics } from "../../manse";
 import { getReport, listReports } from "../../reports/catalog";
 import { SAZU_SAMPLE_PROFILES } from "../../sazu/sample-profiles";
 import { storyReportSchema } from "../report";
+import { findEmptyTalk, findJargon } from "../sanitize";
 import { buildTemplateReport } from "../report-template";
 
 const FIXTURES = path.join(__dirname, "../../sazu/__fixtures__");
@@ -114,6 +115,11 @@ describe("buildTemplateReport · 우리 만세력 엔진", () => {
       for (const section of result.sections) {
         for (const item of section.evidence) expect(item.label.trim()).not.toMatch(/^·|·$/);
       }
+
+      // 손님 글에는 용어도, 용어 대신 쓰는 뜻 없는 비유도 나가지 않는다.
+      // "해와 달이 부딪히는 자리" 같은 말은 용어보다 나쁘다 — 찾아봐도 뜻이 없다.
+      expect(findJargon(text), `${report.slug} · 용어`).toEqual([]);
+      expect(findEmptyTalk(text), `${report.slug} · 뜻 없는 비유`).toEqual([]);
 
       // 장마다 다른 이야기여야 한다 — 같은 채움 문장이 여러 장을 덮으면 산 값이 아니다
       const leads = result.sections.map((section) => section.lead);
