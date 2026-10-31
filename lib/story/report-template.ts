@@ -243,20 +243,31 @@ const ANSWER_LINES: Record<string, Record<string, string>> = {
   },
 };
 
-function answerLine(reading: Reading, questionId: string) {
-  // 이 상품에서 실제로 물은 질문의 답만 쓴다
-  const product = getReport(reading.reportSlug);
-  if (product && !product.questions.some((question) => question.id === questionId)) return null;
-  const answer = reading.answers[questionId];
-  const template = answer ? ANSWER_LINES[questionId]?.[answer] : undefined;
-  return template ? template.replaceAll("{name}", reading.subject.name) : null;
+/**
+ * 고르는 질문에 딸려 있던 문장들.
+ *
+ * 보기를 받아 그 답에 맞는 문장을 돌려주고 있었다. 그런데 보기에서 고른 말은 그 사람의
+ * 말이 아니다 — 네 개 중 가장 덜 틀린 것을 고른 것뿐이다. 그 말을 풀이에서 다시 꺼내면
+ * "버티는 중이라고 하셨는데 사주와 딱 맞아요"가 되는데, 자기가 방금 고른 말을 돌려받는
+ * 것이라 맞혔다는 느낌이 들지 않는다. 오히려 사주를 안 보고 쓴 티가 난다.
+ *
+ * 질문을 없앴으므로 이 문장들도 쓰지 않는다. 풀이는 여덟 글자로만 쓴다.
+ */
+function answerLine(_reading: Reading, _questionId: string): string | null {
+  return null;
 }
 
-function storyEcho(reading: Reading) {
-  const story = reading.answers.detail?.trim();
-  if (!story) return null;
-  const snippet = story.length > 38 ? `${story.slice(0, 38)}…` : story;
-  return `적어 주신 "${snippet}" 이야기와 명식을 겹쳐 보면, 아래 흐름이 그 장면과 맞닿아 있어요.`;
+/**
+ * 적어 준 이야기를 되읽어 주던 문장.
+ *
+ * "적어 주신 '요즘 너무 지쳐요' 이야기와 명식을 겹쳐 보면…" 하고 손님이 쓴 말을 그대로
+ * 인용했다. 가까이 읽는 것처럼 보이려던 것인데, 읽는 쪽에서는 자기가 방금 쓴 문장을
+ * 돌려받는 것이라 "내 글을 읽고 쓴 거구나"가 된다. 사주를 봤다는 느낌이 사라진다.
+ *
+ * 적어 준 말은 어디를 더 짚을지 정하는 데만 쓰고, 글에는 꺼내지 않는다.
+ */
+function storyEcho(_reading: Reading): string | null {
+  return null;
 }
 
 // ─── 장 빌더 ────────────────────────────────────────────────────────────────
@@ -1398,7 +1409,7 @@ export function buildTemplateReport(report: ReportProduct, reading: Reading, saz
     sections[0]?.lead,
     sections[1]?.lead,
     timeline.find((item) => item.tone === "good") ? `가장 가까이 힘이 실리는 때는 ${timeline.find((item) => item.tone === "good")!.period}이에요.` : null,
-    report.questions[0] && reading.answers[report.questions[0].id] ? `"${reading.answers[report.questions[0].id]}"라고 답해 주신 지금의 상황에 맞춰 풀었어요.` : null,
+    // 적어 준 말을 되풀이하지 않는다 — 자기가 쓴 문장을 돌려받으면 맞혔다는 느낌이 들지 않는다
   ]
     .filter(Boolean)
     .join(" ");

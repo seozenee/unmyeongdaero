@@ -372,43 +372,6 @@ export function ProductIntro({ report, soldCount, related = [], onStart, resumin
         </section>
       </Reveal>
 
-      {/* ─ 들어가면 뭘 묻는지. 대화를 미리 보여 준다 ─ */}
-      {report.questions.length > 0 && (
-        <Reveal className="mt-space-lg">
-          <section className="flex flex-col gap-space-md rounded-3xl bg-[rgb(var(--accent)/0.12)] p-space-lg ring-1 ring-[rgb(var(--accent)/0.28)]">
-            <div className="flex flex-col gap-0.5">
-              <span className="font-label-sm text-label-sm font-bold tracking-[0.2em] text-[rgb(var(--accent))]">BEFORE WE START</span>
-              <h2 className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">들어가면 이런 걸 물어요</h2>
-            </div>
-
-            {report.questions.slice(0, 2).map((question) => (
-              <div key={question.id} className="flex flex-col gap-space-xs">
-                <div className="flex items-end gap-space-xs">
-                  <GuideAvatar guide={guide} size="sm" />
-                  <p className="rounded-3xl rounded-bl-md bg-surface-container-highest px-space-md py-2 font-body-md text-body-md leading-snug text-on-surface">
-                    {question.question}
-                  </p>
-                </div>
-                <ul className="flex flex-wrap justify-end gap-1.5">
-                  {question.options.slice(0, 3).map((option) => (
-                    <li
-                      key={option}
-                      className="rounded-full border border-[rgb(var(--accent)/0.6)] px-2.5 py-1 font-label-sm text-label-sm text-on-surface"
-                    >
-                      {option}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-
-            <p className="font-label-sm text-label-sm leading-snug text-on-surface-variant">
-              답해 주신 내용은 그대로 풀이의 근거가 돼요. 여기까지는 무료예요.
-            </p>
-          </section>
-        </Reveal>
-      )}
-
       {/* ─ 받고 나면 어떻게 생겼는지 ─ */}
       <Reveal className="mt-space-lg">
         <section className="overflow-hidden rounded-3xl bg-surface-container">

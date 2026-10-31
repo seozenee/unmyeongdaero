@@ -15,7 +15,7 @@ import { buildManseTopics } from "@/lib/manse";
 import { SazuApiError } from "@/lib/sazu/errors";
 import { buildReportSystemPrompt, buildReportUserPrompt } from "@/lib/story/prompts";
 import { isCompleteReport, storyReportSchema, type StoryReport } from "@/lib/story/report";
-import { softenDeep } from "@/lib/story/sanitize";
+import { auditReport, softenDeep } from "@/lib/story/sanitize";
 import { buildTemplateReport } from "@/lib/story/report-template";
 import { hasLive, startLive, streamLive } from "./live";
 import { notifyReading } from "./notify";
@@ -176,7 +176,9 @@ async function generateWithClaude(
   if (message.stop_reason === "refusal") throw new Error("[claude] 요청이 거절되었습니다.");
   if (message.stop_reason === "max_tokens") throw new Error("[claude] 출력이 max_tokens 에서 잘렸습니다.");
   // 프롬프트로도 금지하지만 모델이 내부 점수("신강 79점")나 겁주는 표현을 흘릴 수 있어 코드로 한 번 더 막는다
-  return softenDeep(storyReportSchema.parse(JSON.parse(finalText(message.content))));
+  const report_ = softenDeep(storyReportSchema.parse(JSON.parse(finalText(message.content))));
+  auditReport(report_, report.slug);
+  return report_;
 }
 
 /** AI 미설정 개발 모드: 보고서 JSON 을 조금씩 흘려 스트리밍 경험을 그대로 재현한다 */

@@ -57,7 +57,8 @@ const OTHER_ANSWER_MAX = 200;
  */
 export function validateDraftForReport(report: ReportProduct, draft: ReadingDraft): string | null {
   if (report.partner === "required" && !draft.partner) return "상대방 정보를 입력해 주세요.";
-  for (const question of report.questions) {
+  // 고르는 질문은 없앴다. 남은 운영 데이터에 남아 있을 수 있어 있을 때만 본다.
+  for (const question of report.questions ?? []) {
     const answer = draft.answers[question.id]?.trim();
     if (!answer) return `「${question.question}」에 답해 주세요.`;
     if (!question.options.includes(answer) && answer.length > OTHER_ANSWER_MAX) {

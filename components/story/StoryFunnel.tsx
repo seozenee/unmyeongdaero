@@ -114,12 +114,6 @@ export function StoryFunnel({
   const [subject, setSubject] = useState<BirthProfile | null>(null);
   const [partner, setPartner] = useState<BirthProfile | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  // 「기타」를 고른 질문과 거기에 적고 있는 말.
-  //
-  // 고른 보기 중에 자기 사정이 없는 사람이 있다. 그 사람에게 가장 가까운 것을 억지로
-  // 고르게 하면, 틀린 답을 받아 풀이를 쓰는 셈이 된다. 그래서 그 자리에서 직접 쓰게 한다.
-  const [otherFor, setOtherFor] = useState<string | null>(null);
-  const [otherText, setOtherText] = useState("");
   const [detail, setDetail] = useState("");
   // 알림톡 받을 번호. 적지 않아도 되고, 적으면 다 쓴 뒤 카톡으로 알려 준다.
   const [phone, setPhone] = useState("");
@@ -202,8 +196,6 @@ export function StoryFunnel({
         setCursor(previousAnswerStep.index);
         setEcho(null);
         setNotice(null);
-        setOtherFor(null);
-        setOtherText("");
         setTyping(false);
       }
     : undefined;
@@ -305,84 +297,6 @@ export function StoryFunnel({
   const footer = (() => {
     if (step?.kind === "reply") {
       return <StageAction onClick={() => answer(step.text)}>{step.text}</StageAction>;
-    }
-
-    if (step?.kind === "question") {
-      const id = step.question.id;
-      const pick = (value: string) => {
-        setAnswers((current) => ({ ...current, [id]: value }));
-        setOtherFor(null);
-        setOtherText("");
-        answer(value);
-      };
-
-      // 「기타」를 골랐으면 보기를 치우고 쓰는 자리만 둔다 — 두 가지를 같이 보여 주면
-      // 무엇을 눌러야 하는지 한 번 더 생각해야 한다
-      if (otherFor === id) {
-        const typed = otherText.trim();
-        return (
-          <div className="flex flex-col gap-space-xs motion-safe:animate-fade-up">
-            <SheetCard>
-              <div className="flex flex-col gap-space-sm">
-                <label htmlFor={`other-${id}`} className="font-label-md text-label-md text-on-surface">
-                  어떤 쪽에 가까운지 적어 주세요
-                </label>
-                <textarea
-                  id={`other-${id}`}
-                  autoFocus
-                  rows={3}
-                  value={otherText}
-                  onChange={(event) => setOtherText(event.target.value)}
-                  onKeyDown={(event) => {
-                    // 줄바꿈보다 보내는 쪽이 훨씬 잦다
-                    if (event.key === "Enter" && !event.shiftKey && typed) {
-                      event.preventDefault();
-                      pick(typed);
-                    }
-                  }}
-                  maxLength={200}
-                  placeholder="보기에 없는 사정이면 그대로 적어 주세요"
-                  className="w-full resize-none rounded-xl border border-outline-variant/60 bg-surface-container-lowest px-space-md py-space-sm font-body-md text-body-md text-on-surface outline-none placeholder:text-outline focus:border-secondary"
-                />
-                <div className="flex gap-space-xs">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOtherFor(null);
-                      setOtherText("");
-                    }}
-                    className="rounded-xl border border-outline-variant/60 px-space-lg py-3 font-label-md text-label-md text-on-surface-variant"
-                  >
-                    보기로 돌아가기
-                  </button>
-                  <button
-                    type="button"
-                    disabled={!typed}
-                    onClick={() => pick(typed)}
-                    className={cn(
-                      "flex-1 rounded-xl py-3 font-label-md text-label-md transition-colors",
-                      typed ? "bg-secondary text-on-secondary" : "bg-secondary/25 text-on-surface/40",
-                    )}
-                  >
-                    이걸로 보낼게요
-                  </button>
-                </div>
-              </div>
-            </SheetCard>
-          </div>
-        );
-      }
-
-      return (
-        <div className="flex flex-col gap-space-xs motion-safe:animate-fade-up">
-          {step.question.options.map((option) => (
-            <StageAction key={option} onClick={() => pick(option)}>
-              {option}
-            </StageAction>
-          ))}
-          <StageAction onClick={() => setOtherFor(id)}>기타 — 직접 쓸게요</StageAction>
-        </div>
-      );
     }
 
     if (step?.kind === "birth") {
@@ -498,12 +412,10 @@ export function StoryFunnel({
   const guideLine = step?.kind === "line" && step.speaker === "guide" ? fillName(step.text, name) : null;
   const narration = step?.kind === "line" && step.speaker === "narration" ? fillName(step.text, name) : null;
   const prompt =
-    step?.kind === "question"
-      ? step.question.question
-      : step?.kind === "detail"
-        ? step.prompt
-        : step?.kind === "submit"
-          ? "다 모였어요. 이제 펼쳐 볼까요?"
+    step?.kind === "detail"
+      ? step.prompt
+      : step?.kind === "submit"
+        ? "다 모였어요. 이제 펼쳐 볼까요?"
           : null;
 
   return (

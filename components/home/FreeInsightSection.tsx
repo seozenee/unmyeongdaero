@@ -7,7 +7,7 @@ const FREE_ITEMS = [
     href: "/free/today",
     icon: "calendar_today",
     iconClass: "bg-primary/15 text-primary",
-    title: "오늘의 운세 & 내 명식",
+    title: "오늘의 운세 & 내 여덟 글자",
     description: "내 생년월일시로 세운 여덟 글자 기운 표",
   },
   {

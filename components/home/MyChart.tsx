@@ -77,11 +77,11 @@ export function MyChart() {
           <div className="flex flex-col gap-space-sm">
             {failed && (
               <p className="rounded-xl bg-error-container/30 p-space-sm font-body-sm text-body-sm text-on-surface">
-                명식을 펼치지 못했어요. 적으신 날짜를 다시 확인해 주세요.
+                글자를 펼치지 못했어요. 적으신 날짜를 다시 확인해 주세요.
               </p>
             )}
             <BirthForm
-              title="내 명식 펼치기"
+              title="내 여덟 글자 펼치기"
               submitLabel={busy ? "펼치는 중…" : "무료로 펼쳐 보기"}
               onSubmit={load}
               onSkip={() => setAsking(false)}
@@ -113,7 +113,7 @@ export function MyChart() {
   return (
     <section className="mt-space-lg px-margin">
       <div className="flex flex-col gap-space-md rounded-2xl bg-surface-container p-space-lg">
-        {/* 누구의 명식인지 — 일간을 간판처럼 */}
+        {/* 누구의 글자인지 — 태어난 날의 글자를 간판처럼 */}
         <div className="flex items-center gap-space-sm">
           {chart.dayMaster && (
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 font-headline-md text-headline-md text-primary">
@@ -121,9 +121,9 @@ export function MyChart() {
             </span>
           )}
           <span className="flex min-w-0 flex-col">
-            <span className="font-label-md text-label-md text-on-surface">{chart.name}님의 사주 원국</span>
+            <span className="font-label-md text-label-md text-on-surface">{chart.name}님이 타고난 여덟 글자</span>
             {chart.dayMaster && (
-              <span className="font-body-sm text-body-sm text-on-surface-variant">{chart.dayMaster.ko} 일간</span>
+              <span className="font-body-sm text-body-sm text-on-surface-variant">태어난 날의 글자 · {chart.dayMaster.ko}</span>
             )}
           </span>
           <button

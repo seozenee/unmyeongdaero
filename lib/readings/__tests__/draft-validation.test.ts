@@ -1,43 +1,48 @@
 import { describe, expect, it } from "vitest";
-import { getReport } from "@/lib/reports/catalog";
+import { getReport, REPORTS, type ReportProduct } from "@/lib/reports/catalog";
 import { readingDraftSchema, validateDraftForReport } from "@/lib/readings/schema";
 
 const product = getReport("child-talent")!;
-const question = product.questions[0]!;
 
 const SUBJECT = {
   name: "김하늘", birthYear: 2012, birthMonth: 5, birthDay: 3,
   birthHour: 9, birthMinute: 0, isFemale: true, isLunar: false, birthCity: "서울",
 };
 
-/** 나머지 질문은 보기 중 하나로 채우고, 보는 질문 하나만 바꾼다 */
-const draft = (answer: string) =>
-  readingDraftSchema.parse({
-    slug: product.slug,
-    subject: SUBJECT,
-    answers: {
-      ...Object.fromEntries(product.questions.map((item) => [item.id, item.options[0]!])),
-      [question.id]: answer,
-    },
-  });
+const draft = (answers: Record<string, string> = {}) =>
+  readingDraftSchema.parse({ slug: product.slug, subject: SUBJECT, answers });
 
 describe("풀이 입력 검증", () => {
-  it("보기 중 하나를 고르면 통과한다", () => {
-    expect(validateDraftForReport(product, draft(question.options[0]!))).toBeNull();
+  it("생년월일만 있으면 통과한다", () => {
+    // 고르는 질문을 없앴으므로 더 받아야 할 답이 없다
+    expect(validateDraftForReport(product, draft())).toBeNull();
   });
 
-  it("보기에 없이 직접 적은 답도 통과한다", () => {
-    // 「기타 — 직접 쓸게요」로 적은 답이 되돌려 보내지고 있었다. 손님 화면에는
-    // "「…」에 답해 주세요"가 떴다 — 방금 적어 놓고 안 적었다는 말을 듣는 셈이다.
-    expect(validateDraftForReport(product, draft("보기에 없는 사정이라 직접 적습니다"))).toBeNull();
+  it("궁금한 것을 적어도 통과한다", () => {
+    expect(validateDraftForReport(product, draft({ detail: "보기에 없는 사정이라 직접 적습니다" }))).toBeNull();
   });
 
-  it("비워 두면 되돌려 보낸다", () => {
-    expect(validateDraftForReport(product, draft("   "))).toContain(question.question);
+  it("상대가 꼭 필요한 상품은 상대를 묻는다", () => {
+    const pair = (REPORTS as readonly ReportProduct[]).find((item) => item.partner === "required")!;
+    const built = readingDraftSchema.parse({ slug: pair.slug, subject: SUBJECT, answers: {} });
+    expect(validateDraftForReport(pair, built)).toContain("상대방");
+  });
+});
+
+describe("상품 목록", () => {
+  it("고르는 질문이 남아 있지 않다", () => {
+    // 보기에서 고른 말은 그 사람의 말이 아니다. 그 말이 풀이에 돌아가면
+    // "버티는 중이라고 하셨는데 사주와 딱 맞아요"가 된다 — 자기가 고른 말을 돌려받는 셈이다.
+    for (const item of REPORTS as readonly ReportProduct[]) {
+      expect(item.questions ?? [], item.slug).toEqual([]);
+    }
   });
 
-  it("입력칸이 받는 길이를 넘기면 되돌려 보낸다", () => {
-    // 화면에서 maxLength 로 막아 두었지만 서버가 그걸 믿을 것은 아니다
-    expect(validateDraftForReport(product, draft("가".repeat(201)))).toContain("너무 길어요");
+  it("상품 이름이 손님의 말이다", () => {
+    // 「명식 전서」처럼 우리끼리 쓰는 이름은 무엇을 파는지 알려 주지 않는다
+    const jargon = /명식|사주|전서|궁합사주/;
+    const reports = (REPORTS as readonly ReportProduct[]).filter((item) => item.kind === "report");
+    const offenders = reports.filter((item) => jargon.test(item.title)).map((item) => item.title);
+    expect(offenders).toEqual([]);
   });
 });
