@@ -4,6 +4,7 @@ import { ReadingExperience } from "@/components/story/ReadingExperience";
 import { getCurrentUser, loginUrl } from "@/lib/auth/session";
 import { getRepository } from "@/lib/db";
 import { modes } from "@/lib/env";
+import { productAccent } from "@/lib/reports/accents";
 import { loadReport } from "@/lib/reports/store";
 import { buildBasisFacts } from "@/lib/saju/basis";
 import {
@@ -49,6 +50,7 @@ export default async function ReportReadPage({ params }: { params: { slug: strin
   return (
     <ReadingExperience
       readingId={reading.id}
+      accent={productAccent(report.slug)}
       guideId={report.guide}
       categoryLabel={report.categoryLabel}
       title={report.title}

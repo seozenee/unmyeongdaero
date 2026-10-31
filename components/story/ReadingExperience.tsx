@@ -17,6 +17,8 @@ import { josa } from "@/lib/text/josa";
 
 interface ReadingExperienceProps {
   readingId: string;
+  /** 이 상품의 색 ("R G B"). 결과 화면의 라벨·선·근거 테두리가 모두 이 색을 쓴다 */
+  accent: string;
   guideId: GuideId;
   categoryLabel: string;
   title: string;
@@ -197,7 +199,7 @@ export function ReadingExperience(props: ReadingExperienceProps) {
 
   if (view === "report" && finalReport) {
     return (
-      <div className="flex w-full flex-col">
+      <div className="flex w-full flex-col" style={{ "--accent": props.accent } as React.CSSProperties}>
         <div className="sticky top-16 z-40 -mx-margin flex items-center justify-between bg-surface/90 px-margin py-space-sm backdrop-blur-xl print:hidden">
           <button
             type="button"
@@ -244,7 +246,11 @@ export function ReadingExperience(props: ReadingExperienceProps) {
   }
 
   return (
-    <div className="flex w-full flex-col gap-space-md pb-space-xl" onClick={() => setSkipSignal((value) => value + 1)}>
+    <div
+      className="flex w-full flex-col gap-space-md pb-space-xl"
+      style={{ "--accent": props.accent } as React.CSSProperties}
+      onClick={() => setSkipSignal((value) => value + 1)}
+    >
       {/* 장면 띠 */}
       <section className="relative -mx-margin h-52 overflow-hidden">
         {stripAsset && <WebtoonMedia asset={stripAsset} />}

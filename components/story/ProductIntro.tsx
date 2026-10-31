@@ -7,6 +7,8 @@ import { FaqSection } from "@/components/home/FaqSection";
 import { getPoster } from "@/components/home/posters";
 import { useInView } from "@/components/home/useInView";
 import { GuideAvatar } from "@/components/story/GuideAvatar";
+import { ProductTease } from "@/components/story/ProductTease";
+import { LockBadge } from "@/components/story/VeiledText";
 import { Icon } from "@/components/ui/Icon";
 import { getWebtoonAsset } from "@/components/webtoon/assets";
 import { WebtoonMedia } from "@/components/webtoon/WebtoonMedia";
@@ -92,12 +94,21 @@ function SceneCut({ guide, cut, className }: { guide: ReportProduct["guide"]; cu
 /** "이런 걸 받아요" 카드에 얹는 장면. 안내자가 실제로 하는 동작 순서대로 */
 const GET_CUTS = ["panel-brush", "panel-second", "panel-unfold"] as const;
 
-/** 섹션 머리. 작은 라틴 라벨 + 큰 한글 한 줄 */
-function SectionHead({ label, title }: { label: string; title: string }) {
+/**
+ * 섹션 머리.
+ *
+ * 한동안 "WHAT YOU GET" 같은 라틴 라벨을 작게 얹었다. 멋은 나는데 아무것도
+ * 알려 주지 않는다 — 읽는 사람은 전부 한글로 읽고, 라틴 글자는 장식으로
+ * 흘려보낸다. 그래서 번호와 한글 이름을 붙인다. 번호가 붙으면 이 화면이
+ * 몇 걸음짜리인지, 지금 어디쯤인지가 보인다.
+ */
+function SectionHead({ no, label, title }: { no: string; label: string; title: string }) {
   return (
-    <div className="flex flex-col gap-0.5 px-space-xs">
-      <span className="font-label-sm text-label-sm font-bold tracking-[0.2em] text-[rgb(var(--accent))]">{label}</span>
-      <h2 className="font-headline-lg-mobile text-headline-lg-mobile leading-tight text-on-surface">{title}</h2>
+    <div className="head-rule flex flex-col gap-1 px-space-xs">
+      <span className="font-label-sm text-label-sm font-bold tracking-[0.14em] text-[rgb(var(--accent))]">
+        {no} · {label}
+      </span>
+      <h2 className="text-[1.45rem] font-extrabold leading-[1.35] tracking-[-0.02em] text-on-surface">{title}</h2>
     </div>
   );
 }
@@ -241,8 +252,45 @@ export function ProductIntro({ report, soldCount, related = [], onStart, resumin
         </div>
       </div>
 
+      {/* ─ 맛보기 — 적어 둔 생일이 있으면 그 사람의 여덟 글자부터 깐다 ─ */}
+      <ProductTease report={report} />
+
       {pitch && (
         <>
+          {/*
+            ─ 맛보기 — 이 풀이가 답하는 것 ─
+
+            상세 화면을 끝까지 내려야 "무엇을 묻고 무엇을 답하는지"가 모이던 자리다.
+            묻는 말과 답하는 자리를 한 장에 나란히 세워 맨 위로 올린다. 사러 온 사람이
+            제일 먼저 재는 것은 값이 아니라 "내 질문이 여기 있나"다.
+          */}
+          <section className="mt-space-xl flex flex-col gap-space-md">
+            <div className="flex flex-col items-center gap-space-xs text-center">
+              <span className="rounded-full border border-[rgb(var(--accent)/0.5)] bg-[rgb(var(--accent)/0.14)] px-3 py-1 font-label-sm text-label-sm font-bold text-on-surface">
+                {["", "한", "두", "세", "네", "다섯", "여섯"][pitch.gets.length] ?? pitch.gets.length} 가지 질문
+              </span>
+              <h2 className="text-[1.45rem] font-extrabold leading-[1.35] tracking-[-0.02em] text-on-surface">
+                이 풀이가 답하는 것
+              </h2>
+            </div>
+
+            <ul className="flex flex-col divide-y divide-outline-variant/35 rounded-3xl bg-surface-container-low px-space-lg">
+              {pitch.gets.map((item) => (
+                <li key={item.title} className="flex flex-col gap-1 py-space-md">
+                  <span className="flex items-start gap-2 text-[1.05rem] font-bold leading-snug tracking-tight text-on-surface">
+                    <span aria-hidden className="mt-[0.08em] shrink-0 text-[rgb(var(--accent))]">
+                      Q
+                    </span>
+                    {item.title}
+                  </span>
+                  <span className="pl-[1.4rem] font-body-sm text-body-sm leading-relaxed text-on-surface-variant">
+                    {item.body}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
           {/* ─ 이 풀이가 내놓는 것 셋 — 번호를 크게, 좌우를 번갈아 ─ */}
           <section className="flex flex-col gap-space-md pt-space-xl">
             {pitch.claims.map((claim, index) => (
@@ -279,7 +327,7 @@ export function ProductIntro({ report, soldCount, related = [], onStart, resumin
 
           {/* ─ 받는 것 — 미는 줄 ─ */}
           <section className="mt-space-xl flex flex-col gap-space-sm">
-            <SectionHead label="WHAT YOU GET" title="이런 걸 받아요" />
+            <SectionHead no="01" label="받는 것" title="이런 걸 받아요" />
             <ol className="no-scrollbar -mx-margin flex snap-x gap-space-sm overflow-x-auto px-margin pb-1">
               {pitch.gets.map((item, index) => (
                 <li key={item.title} className="w-[74vw] max-w-[18rem] shrink-0 snap-start">
@@ -311,8 +359,13 @@ export function ProductIntro({ report, soldCount, related = [], onStart, resumin
       {/* ─ 목차 — 영수증처럼 끊어 둔다 ─ */}
       <Reveal className="mt-space-xl">
         <section className="relative overflow-hidden rounded-3xl border border-dashed border-[rgb(var(--accent)/0.45)] bg-surface-container-lowest p-space-lg">
-          <div className="flex items-baseline justify-between">
-            <span className="font-label-sm text-label-sm font-bold tracking-[0.2em] text-[rgb(var(--accent))]">CONTENTS</span>
+          <div className="head-rule flex flex-col gap-1">
+            <span className="font-label-sm text-label-sm font-bold tracking-[0.14em] text-[rgb(var(--accent))]">
+              02 · 목차
+            </span>
+            <h2 className="text-[1.45rem] font-extrabold leading-[1.35] tracking-[-0.02em] text-on-surface">
+              어떤 순서로 펼쳐지나
+            </h2>
           </div>
           <ol className="mt-space-sm flex flex-col">
             {report.chapters.map((chapter, index) => (
@@ -336,25 +389,43 @@ export function ProductIntro({ report, soldCount, related = [], onStart, resumin
       {/* ─ 펼치면 어떻게 나오는지. 글은 가리고 모양만 보여 준다 ─ */}
       <Reveal className="mt-space-lg">
         <section className="relative overflow-hidden rounded-3xl bg-surface-container-lowest p-space-lg ring-1 ring-outline-variant/40">
-          <span className="font-label-sm text-label-sm font-bold tracking-[0.2em] text-[rgb(var(--accent))]">PREVIEW</span>
-          <h2 className="mt-0.5 font-headline-lg-mobile text-headline-lg-mobile text-on-surface">펼치면 이렇게 나와요</h2>
+          <div className="head-rule flex items-start justify-between gap-space-sm">
+            <div className="flex flex-col gap-1">
+              <span className="font-label-sm text-label-sm font-bold tracking-[0.14em] text-[rgb(var(--accent))]">
+                03 · 미리보기
+              </span>
+              <h2 className="text-[1.45rem] font-extrabold leading-[1.35] tracking-[-0.02em] text-on-surface">
+                펼치면 이렇게 나와요
+              </h2>
+            </div>
+            <LockBadge className="mt-0.5" />
+          </div>
 
+          {/*
+            회색 막대를 네 줄 깔아 두었던 자리다. 모양은 보여 주는데, 그 모양이
+            "아직 안 만든 화면" 과 똑같이 생겼다. 로딩 중인 줄 알고 기다린 사람도
+            있었을 것이다.
+
+            그래서 진짜 글을 깔고 흐린다. 첫 줄은 읽히게 두고 나머지는 서리 낀
+            유리 너머로 민다 — 글이 거기 있다는 것은 보이고, 무슨 말인지는 안 보인다.
+            흐린 글은 복사도 안 되고 읽어 주는 기계에도 가지 않는다.
+          */}
           <div className="mt-space-md flex flex-col gap-space-lg pb-space-xl">
             {report.chapters.slice(0, 2).map((chapter, index) => (
               <div key={chapter} className="flex flex-col gap-space-sm">
-                <span className="font-headline-sm text-headline-sm leading-snug text-on-surface">
-                  <span className="mr-1.5 text-[rgb(var(--accent))]">{String(index + 1).padStart(2, "0")}</span>
+                <span className="text-[1.05rem] font-bold leading-snug tracking-tight text-on-surface">
+                  <span className="mr-1.5 tabular-nums text-[rgb(var(--accent))]">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
                   {chapter}
                 </span>
-                <div className="flex flex-col gap-2">
-                  {[100, 94, 98, 72].map((width) => (
-                    <span
-                      key={width}
-                      className="h-2.5 rounded-full bg-on-surface/10 motion-safe:animate-pulse"
-                      style={{ width: `${width}%` }}
-                    />
-                  ))}
-                </div>
+                <p className="font-body-sm text-body-sm leading-relaxed text-on-surface-variant">
+                  {pitch?.gets[index]?.body ?? report.description}
+                </p>
+                <p aria-hidden className="veil font-body-sm text-body-sm leading-relaxed text-on-surface">
+                  {report.description} {report.tagline}. {chapter}까지 한 편의 글로 이어서 풀어 드립니다.
+                  문장마다 어느 글자에서 나온 말인지 근거를 붙이고, 흐름이 바뀌는 시기는 따로 표로 묶어 둡니다.
+                </p>
               </div>
             ))}
           </div>
@@ -373,7 +444,14 @@ export function ProductIntro({ report, soldCount, related = [], onStart, resumin
         <section className="overflow-hidden rounded-3xl bg-surface-container">
           <SceneCut guide={report.guide} cut="report-cover" className="aspect-[4/3] w-full" />
           <div className="flex flex-col gap-space-sm p-space-lg">
-            <h2 className="font-headline-sm text-headline-sm text-on-surface">받고 나면 이렇게 생겼어요</h2>
+            <div className="head-rule flex flex-col gap-1">
+              <span className="font-label-sm text-label-sm font-bold tracking-[0.14em] text-[rgb(var(--accent))]">
+                04 · 받는 모양
+              </span>
+              <h2 className="text-[1.45rem] font-extrabold leading-[1.35] tracking-[-0.02em] text-on-surface">
+                받고 나면 이렇게 생겼어요
+              </h2>
+            </div>
             <ul className="flex flex-col gap-space-xs">
               {[
                 {
@@ -399,28 +477,60 @@ export function ProductIntro({ report, soldCount, related = [], onStart, resumin
         <section className="flex gap-space-md overflow-hidden rounded-3xl bg-surface-container p-space-sm">
           <SceneCut guide={report.guide} cut="intro-5" className="aspect-[3/4] w-[38%] shrink-0 rounded-2xl" />
           <div className="flex min-w-0 flex-1 flex-col justify-center gap-space-xs py-space-sm pr-space-sm">
-            <span className="font-label-sm text-label-sm font-bold tracking-[0.2em] text-outline">YOUR READER</span>
-            <span className="font-headline-sm text-headline-sm text-on-surface">{guide.title}</span>
+            <span className="font-label-sm text-label-sm font-bold tracking-[0.14em] text-[rgb(var(--accent))]">
+              05 · 쓰는 사람
+            </span>
+            <span className="text-[1.2rem] font-extrabold leading-tight tracking-tight text-on-surface">
+              {guide.title}
+            </span>
             <p className="font-body-sm text-body-sm leading-relaxed text-on-surface-variant">{guide.persona}</p>
             <p className="font-label-sm text-label-sm leading-snug text-tertiary">{guide.voice}</p>
           </div>
         </section>
       </Reveal>
 
-      {/* ─ 어떻게 쓰는지 ─ */}
+      {/*
+        ─ 근거 ─
+
+        같은 세 가지를 점 세 개짜리 목록으로 적어 두었다. 줄글로 흘러가니 아무도
+        세어 보지 않는다. 숫자를 앞으로 꺼내 셋을 나란히 세운다 — 읽지 않고 훑어도
+        "여덟 자 · 문장마다 · 12개월" 은 남는다.
+
+        여기 적는 값은 전부 실제로 그렇게 하는 것만 적는다. 없는 실적이나 자격을
+        지어내 채우지 않는다. 셋이면 셋이다.
+      */}
       <Reveal className="mt-space-lg">
-        <ul className="flex flex-col gap-space-sm rounded-3xl bg-surface-container-low p-space-lg">
-          {[
-            { icon: "calendar_month", text: "생년월일시로 만세력을 직접 계산해요. 절기와 진태양시까지 맞춰서요." },
-            { icon: "fact_check", text: "모든 문장에 근거가 붙어요. 어느 글자에서 나온 말인지 함께 보여 드려요." },
-            { icon: "lock_open", text: "한 번 사면 계속 볼 수 있어요. 구독 결제가 아니에요." },
-          ].map((item) => (
-            <li key={item.icon} className="flex gap-space-sm">
-              <Icon name={item.icon} className="mt-0.5 shrink-0 text-[18px] text-tertiary" />
-              <span className="font-body-sm text-body-sm leading-relaxed text-on-surface-variant">{item.text}</span>
-            </li>
-          ))}
-        </ul>
+        <section className="flex flex-col gap-space-md rounded-3xl bg-surface-container-low p-space-lg">
+          <div className="head-rule flex flex-col gap-1">
+            <span className="font-label-sm text-label-sm font-bold tracking-[0.14em] text-[rgb(var(--accent))]">
+              06 · 근거
+            </span>
+            <h2 className="text-[1.45rem] font-extrabold leading-[1.35] tracking-[-0.02em] text-on-surface">
+              이 풀이가 어디서 나왔냐면
+            </h2>
+          </div>
+
+          <ul className="grid grid-cols-3 gap-space-xs">
+            {[
+              { big: "여덟 자", label: "절기와 진태양시까지 맞춰 직접 세운 만세력" },
+              { big: "문장마다", label: "어느 글자에서 나온 말인지 함께 적어요" },
+              { big: "12개월", label: "보관함에서 다시 열고 내려받아요" },
+            ].map((item) => (
+              <li
+                key={item.big}
+                className="flex flex-col items-center gap-1.5 rounded-2xl bg-surface-container-lowest px-2 py-space-md text-center"
+              >
+                <span className="ink-shine text-[1.05rem] font-extrabold leading-none tracking-tight">{item.big}</span>
+                <span className="font-label-sm text-label-sm leading-snug text-on-surface-variant">{item.label}</span>
+              </li>
+            ))}
+          </ul>
+
+          <p className="font-body-sm text-body-sm leading-relaxed text-on-surface-variant">
+            생년월일시를 받아 그 자리에서 여덟 글자를 세웁니다. 어림잡은 값이 아니라 절입 시각까지 따진 계산이에요.
+            구독 결제는 아예 만들어 두지 않았습니다 — 한 번 사면 그걸로 끝이에요.
+          </p>
+        </section>
       </Reveal>
 
       {/* ─ 결제 직전에 궁금한 것 ─ */}
@@ -429,7 +539,7 @@ export function ProductIntro({ report, soldCount, related = [], onStart, resumin
       {/* ─ 함께 보는 풀이 ─ */}
       {others.length > 0 && (
         <section className="mt-space-xl flex flex-col gap-space-sm">
-          <SectionHead label="ALSO READ" title="이것도 함께 봐요" />
+          <SectionHead no="06" label="함께 보는 풀이" title="이것도 함께 봐요" />
           <ol className="no-scrollbar -mx-margin flex snap-x gap-space-sm overflow-x-auto px-margin pb-1">
             {others.map((item) => (
               <li key={item.slug} className="w-[44vw] max-w-[11rem] shrink-0 snap-start">
@@ -462,7 +572,7 @@ export function ProductIntro({ report, soldCount, related = [], onStart, resumin
         <button
           type="button"
           onClick={onStart}
-          className="flex w-full items-center justify-center gap-1.5 rounded-2xl bg-secondary py-4 font-label-md text-label-md font-bold text-on-secondary shadow-[0_6px_28px_rgb(var(--accent)/0.5)] transition-transform active:scale-[0.98]"
+          className="cta-flow flex w-full items-center justify-center gap-1.5 rounded-2xl bg-secondary py-4 font-label-md text-label-md font-bold text-on-secondary shadow-[0_6px_28px_rgb(var(--accent)/0.5)] transition-transform active:scale-[0.98]"
         >
           {resuming ? "이어서 보기" : `${josa(guide.name, "을/를")} 만나러 가기`}
           <Icon name="arrow_forward" className="text-[18px]" />

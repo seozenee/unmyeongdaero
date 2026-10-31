@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { ReadingExperience } from "@/components/story/ReadingExperience";
+import { productAccent } from "@/lib/reports/accents";
 import { getReport } from "@/lib/reports/catalog";
 import { buildManseTopics } from "@/lib/manse";
 import { buildBasisFacts } from "@/lib/saju/basis";
@@ -70,6 +71,7 @@ export default function ReadingPreviewPage({ searchParams }: { searchParams: { s
   return (
     <ReadingExperience
       readingId={reading.id}
+      accent={productAccent(report.slug)}
       guideId={report.guide}
       categoryLabel={report.categoryLabel}
       title={report.title}

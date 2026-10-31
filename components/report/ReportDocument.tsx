@@ -118,14 +118,27 @@ export function ReportDocument(props: ReportDocumentProps) {
         </div>
       </header>
 
-      {/* 한 줄 결론 */}
-      <Reveal className="flex flex-col gap-space-md rounded-xl bg-surface-container-low p-space-lg">
-        <Icon name="format_quote" filled className="text-[32px] text-tertiary" />
-        <p className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">{report.headline}</p>
+      {/*
+        ─ 한 줄 결론 ─
+
+        큰 따옴표 하나를 얹어 두었는데, 정작 제일 큰 글씨여야 할 결론이 따옴표보다
+        작게 보였다. 돈을 내고 받은 글에서 가장 먼저 읽혀야 하는 한 줄이다.
+        라벨을 작게 깔고 결론을 간판만큼 키운다.
+      */}
+      <Reveal className="head-rule flex flex-col gap-space-md rounded-xl bg-surface-container-low p-space-lg">
+        <span className="font-label-sm text-label-sm font-bold tracking-[0.14em] text-[rgb(var(--accent))]">
+          결론
+        </span>
+        <p className="text-[1.75rem] font-extrabold leading-[1.3] tracking-[-0.03em] text-on-surface">
+          {report.headline}
+        </p>
         <p className="font-body-lg text-body-lg leading-relaxed text-on-surface-variant">{report.summary}</p>
         <div className="flex flex-wrap gap-space-xs">
           {report.keywords.map((keyword) => (
-            <span key={keyword} className="rounded-full bg-primary/15 px-space-sm py-1 font-label-md text-label-md text-primary">
+            <span
+              key={keyword}
+              className="rounded-full border border-[rgb(var(--accent)/0.45)] bg-[rgb(var(--accent)/0.14)] px-space-sm py-1 font-label-md text-label-md text-on-surface"
+            >
               #{keyword}
             </span>
           ))}
@@ -134,7 +147,13 @@ export function ReportDocument(props: ReportDocumentProps) {
 
       {/* 목차 */}
       <Reveal className="flex flex-col gap-space-sm rounded-xl bg-surface-container p-space-lg">
-        <span className="font-label-sm text-label-sm tracking-widest text-outline">CONTENTS</span>
+        <span className="toc-eyebrow font-label-sm text-label-sm font-bold tracking-[0.14em] text-[rgb(var(--accent))]">
+          목차
+        </span>
+        <h2 className="toc-title text-[1.45rem] font-extrabold leading-[1.35] tracking-[-0.02em] text-on-surface">
+          이 글은 이렇게 갑니다
+        </h2>
+        <span aria-hidden className="toc-rule h-px w-full bg-[linear-gradient(90deg,rgb(var(--accent)/0.9),transparent)]" />
         <ol className="flex flex-col">
           {report.sections.map((section, index) => (
             <li key={section.title}>
@@ -157,11 +176,13 @@ export function ReportDocument(props: ReportDocumentProps) {
       {/* 본문 */}
       {report.sections.map((section, index) => (
         <Reveal key={section.title} as="section" id={`section-${index + 1}`} className="flex scroll-mt-20 flex-col gap-space-md">
-          <div className="flex items-end gap-space-sm border-b border-outline-variant/40 pb-space-sm">
-            <span className="font-headline-xl text-headline-xl font-bold leading-none text-outline-variant">
-              {String(index + 1).padStart(2, "0")}
+          <div className="head-rule flex flex-col gap-1">
+            <span className="font-label-sm text-label-sm font-bold tracking-[0.14em] text-[rgb(var(--accent))]">
+              {String(index + 1).padStart(2, "0")} · {props.categoryLabel}
             </span>
-            <h2 className="pb-1 font-headline-md text-headline-md text-on-surface">{section.title}</h2>
+            <h2 className="text-[1.45rem] font-extrabold leading-[1.35] tracking-[-0.02em] text-on-surface">
+              {section.title}
+            </h2>
           </div>
           <p className="border-l-2 border-primary pl-space-md font-body-lg text-body-lg font-semibold leading-relaxed text-primary">
             {section.lead}
@@ -173,19 +194,27 @@ export function ReportDocument(props: ReportDocumentProps) {
           ))}
           <Panel panel={section.panel} panels={panels} />
           {section.evidence.length > 0 && (
-            <aside className="flex flex-col gap-space-sm rounded-lg bg-surface-container-high p-space-md print:break-inside-avoid">
-              <span className="flex items-center gap-1 font-label-sm text-label-sm tracking-wider text-tertiary">
-                <Icon name="fact_check" className="text-[15px]" /> 명리 근거
+            <aside className="flex flex-col gap-space-md rounded-xl border border-[rgb(var(--accent)/0.3)] bg-surface-container-high p-space-lg print:break-inside-avoid">
+              <span className="flex items-center gap-1.5 font-label-sm text-label-sm font-bold tracking-[0.14em] text-[rgb(var(--accent))]">
+                <Icon name="fact_check" className="text-[15px]" /> 이 말이 어디서 나왔냐면
               </span>
-              <ul className="flex flex-col gap-space-sm">
+              <ul className="flex flex-col gap-space-md">
                 {section.evidence.map((item) => (
-                  <li key={item.label} className="flex flex-col gap-0.5">
-                    <GlossaryText
-                      text={item.label}
-                      glossary={props.glossary}
-                      className="font-label-md text-label-md text-on-surface"
+                  <li key={item.label} className="flex gap-space-sm">
+                    <span
+                      aria-hidden
+                      className="mt-[0.55em] h-1.5 w-1.5 shrink-0 rounded-full bg-[rgb(var(--accent))]"
                     />
-                    <span className="font-body-sm text-body-sm text-on-surface-variant">{item.detail}</span>
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <GlossaryText
+                        text={item.label}
+                        glossary={props.glossary}
+                        className="text-[1.02rem] font-bold leading-snug tracking-tight text-on-surface"
+                      />
+                      <span className="font-body-sm text-body-sm leading-relaxed text-on-surface-variant">
+                        {item.detail}
+                      </span>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -197,7 +226,14 @@ export function ReportDocument(props: ReportDocumentProps) {
       {/* 보고서에서 쓰이지 않은 명식 자료는 부록으로 */}
       {(!usedPanels.has("pillars") || !usedPanels.has("elements")) && (panels.pillars || panels.counts) && (
         <Reveal className="flex flex-col gap-space-md">
-          <span className="font-label-sm text-label-sm tracking-widest text-outline">APPENDIX · 나의 명식</span>
+          <div className="head-rule flex flex-col gap-1">
+            <span className="font-label-sm text-label-sm font-bold tracking-[0.14em] text-[rgb(var(--accent))]">
+              부록
+            </span>
+            <h2 className="text-[1.45rem] font-extrabold leading-[1.35] tracking-[-0.02em] text-on-surface">
+              내 여덟 글자
+            </h2>
+          </div>
           {!usedPanels.has("pillars") && <Panel panel="pillars" panels={panels} />}
           {!usedPanels.has("elements") && <Panel panel="elements" panels={panels} />}
         </Reveal>
@@ -205,9 +241,16 @@ export function ReportDocument(props: ReportDocumentProps) {
 
       {/* 시기표 */}
       <Reveal as="section" id="timeline" className="flex scroll-mt-20 flex-col gap-space-md rounded-xl bg-surface-container p-space-lg">
-        <div className="flex items-center justify-between">
-          <h2 className="font-headline-md text-headline-md text-on-surface">흐름 시기표</h2>
-          <Icon name="event_note" className="text-[22px] text-tertiary" />
+        <div className="head-rule flex items-start justify-between gap-space-sm">
+          <div className="flex flex-col gap-1">
+            <span className="font-label-sm text-label-sm font-bold tracking-[0.14em] text-[rgb(var(--accent))]">
+              시기
+            </span>
+            <h2 className="text-[1.45rem] font-extrabold leading-[1.35] tracking-[-0.02em] text-on-surface">
+              흐름 시기표
+            </h2>
+          </div>
+          <Icon name="event_note" className="mt-0.5 shrink-0 text-[22px] text-[rgb(var(--accent))]" />
         </div>
         <ol className="relative flex flex-col gap-space-lg pl-space-lg before:absolute before:bottom-2 before:left-[5px] before:top-2 before:w-px before:bg-outline-variant">
           {report.timeline.map((item) => (

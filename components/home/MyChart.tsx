@@ -185,7 +185,7 @@ export function MyChart() {
           <div className="flex flex-col gap-space-sm rounded-xl bg-primary/10 p-space-md">
             <p className="font-body-md text-body-md leading-relaxed text-on-surface">
               {chart.masked.prefix}{" "}
-              <span className="rounded bg-on-surface/15 px-1.5 py-0.5 align-middle font-label-md text-label-md tracking-widest text-outline">
+              <span className="inline-block whitespace-nowrap rounded bg-on-surface/15 px-1.5 py-0.5 align-middle font-label-md text-label-md tracking-widest text-outline">
                 ●●월
               </span>
               {chart.masked.suffix}
