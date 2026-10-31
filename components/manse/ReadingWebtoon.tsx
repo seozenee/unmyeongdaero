@@ -99,24 +99,43 @@ export function ReadingWebtoon({
    * 표에서 고르던 때는 신강약 셋 × 넘치는 기운 다섯 × 비는 기운 다섯 = 일흔다섯 가지뿐이라,
    * 같은 조합인 사람은 토씨 하나까지 같은 글을 봤다. 친구끼리 비교하면 바로 들킨다.
    *
-   * 그렇다고 AI 를 기다렸다 그리면 결제 전 화면이 몇 초씩 비어 있게 된다. 파는 자리에서
-   * 흰 화면은 가장 비싼 값을 치른다. 그래서 표에 있는 문장으로 먼저 그려 두고, 글이
-   * 오면 조용히 바꿔 끼운다. 못 받아도 화면은 그대로 멀쩡하다.
+   * 한동안 표에 있는 문장을 먼저 그려 두고 글이 오면 바꿔 끼웠다. 흰 화면을 피하려던
+   * 것인데, 그러면 손님이 먼저 보는 것은 결국 그 고정 문장이다. 읽고 넘어간 뒤에 바뀌면
+   * 바뀐 줄도 모르고, 운 나쁘면 친구와 같은 문장을 본 채로 지나간다.
+   *
+   * 그래서 기다리게 한다. 쓰는 동안 안내자가 글자를 짚고 있는 것이 보이고, 다 쓰면
+   * 그때 뜬다. 2~7초다. 못 받으면 한 번 더 부르고, 그래도 안 되면 이 칸을 통째로
+   * 비운다 — 아래 「문이 열리는 때」와 잠긴 칸은 그대로 있다. 지어낸 말로 채우느니
+   * 비워 두는 편이 낫다.
    */
-  const [scenes, setScenes] = useState(teaser.scenes);
+  const [scenes, setScenes] = useState<string[] | null>(null);
 
   useEffect(() => {
     let alive = true;
+    const ask = async () => {
+      const response = await fetch(`/api/readings/${readingId}/teaser`, { method: "POST" });
+      if (!response.ok) return null;
+      const body = (await response.json()) as { scenes?: string[] | null };
+      return body.scenes && body.scenes.length > 0 ? body.scenes : null;
+    };
+
     void (async () => {
-      try {
-        const response = await fetch(`/api/readings/${readingId}/teaser`, { method: "POST" });
-        if (!response.ok) return;
-        const body = (await response.json()) as { scenes?: string[] | null };
-        if (alive && body.scenes && body.scenes.length > 0) setScenes(body.scenes);
-      } catch {
-        // 표에 있는 문장이 이미 떠 있다
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          const written = await ask();
+          if (!alive) return;
+          if (written) {
+            setScenes(written);
+            return;
+          }
+        } catch {
+          if (!alive) return;
+        }
       }
+      // 두 번 다 안 되면 이 칸은 접는다
+      if (alive) setScenes([]);
     })();
+
     return () => {
       alive = false;
     };
@@ -136,8 +155,21 @@ export function ReadingWebtoon({
         </div>
       </Panel>
 
+      {/* 글자를 읽는 동안 */}
+      {scenes === null && (
+        <div className="flex flex-col gap-space-md bg-surface px-margin py-space-xl">
+          <Says guide={guide}>{name}님의 글자를 한 자씩 짚어 보고 있어요.</Says>
+          {[0, 1, 2].map((row) => (
+            <div key={row} className="flex flex-col gap-space-xs rounded-2xl bg-surface-container p-space-lg">
+              <span className="h-3.5 w-full animate-pulse rounded-full bg-on-surface/10" />
+              <span className="h-3.5 w-3/5 animate-pulse rounded-full bg-on-surface/10" />
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* 맞혀 보이는 칸들 */}
-      {scenes.length > 0 && (
+      {scenes !== null && scenes.length > 0 && (
         <div className="flex flex-col gap-space-md bg-surface px-margin py-space-xl">
           <Panel>
             <Says guide={guide}>{name}님, 여덟 글자를 펼쳐 놓고 보니 짚이는 게 있어요.</Says>
