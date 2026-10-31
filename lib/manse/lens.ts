@@ -38,8 +38,8 @@ export interface Lens {
   차원: LensDimension[];
 }
 
-/** 십성 열 가지를 다섯 묶음으로. 여덟 글자에 흩어져 있는 것을 센다 */
-const GROUP_OF: Record<string, keyof typeof GROUP_LABEL> = {
+/** 십성 열 가지를 다섯 묶음으로 */
+const GROUP_OF: Record<string, Group> = {
   비견: "비겁", 겁재: "비겁",
   식신: "식상", 상관: "식상",
   편재: "재성", 정재: "재성",
@@ -50,34 +50,88 @@ const GROUP_OF: Record<string, keyof typeof GROUP_LABEL> = {
 const GROUP_LABEL = { 비겁: "주도", 식상: "표현", 재성: "현실", 관성: "규율", 인성: "흡수" } as const;
 type Group = keyof typeof GROUP_LABEL;
 
-function tally(modules: SazuModules): Record<Group, number> {
-  const counts: Record<Group, number> = { 비겁: 0, 식상: 0, 재성: 0, 관성: 0, 인성: 0 };
-  const four = modules.fourPillars as Record<string, Record<string, unknown>> | undefined;
-  if (!four) return counts;
-
-  for (const slot of ["year", "month", "day", "hour"]) {
-    for (const key of ["sippiSeong", "earthSippiSeong"]) {
-      const name = four[slot]?.[key];
-      const group = typeof name === "string" ? GROUP_OF[name] : undefined;
-      if (group) counts[group] += 1;
-    }
-  }
-  return counts;
-}
+const STEM_ELEMENT: Record<string, Element> = {
+  갑: "목", 을: "목", 병: "화", 정: "화", 무: "토",
+  기: "토", 경: "금", 신: "금", 임: "수", 계: "수",
+};
+type Element = "목" | "화" | "토" | "금" | "수";
 
 /**
- * 여덟 글자를 다섯 묶음에 나누면 한 묶음에 1.6자가 평균이다.
- * 셋 이상이면 그쪽으로 뚜렷이 기울었고, 하나 이하면 비어 있는 쪽이다.
+ * 자리마다 무게가 다르다.
+ *
+ * 여덟 글자를 하나씩 똑같이 세고 있었다. 그런데 명리에서 월지는 계절을 쥔 자리라
+ * 나머지와 무게가 다르고(월령), 일지는 바로 내 자리다. 년지·시지는 그보다 가볍다.
+ * 똑같이 세면 월지에 무엇이 앉았든 결과가 같아져, 사람이 덜 갈린다.
  */
-function levelOf(count: number): Level {
-  if (count >= 3) return "높은 쪽";
-  if (count <= 1) return "낮은 쪽";
-  return "보통";
+const POSITION_WEIGHT: Record<string, number> = { year: 0.8, month: 1.5, day: 1.2, hour: 0.8 };
+
+/**
+ * 지지 속에 숨은 글자(지장간)까지 센다.
+ *
+ * 엔진은 이미 지장간을 계산해 두고 있었는데 한 번도 쓰지 않았다. 겉으로 드러난 여덟
+ * 글자만 세면 유(酉) 하나를 금 하나로 치지만, 그 안에는 경·신이 들어 있다. 반대로
+ * 미(未)는 토로만 보이지만 안에 정(화)과 을(목)이 섞여 있다. 숨은 글자를 빼놓으면
+ * 치우침이 실제보다 단순하게 보인다.
+ *
+ * 본기는 그 지지의 주인이라 온전히 세고, 중기와 여기는 섞여 있는 만큼만 센다.
+ */
+const HIDDEN_WEIGHT = { main: 1, middle: 0.5, residue: 0.3 } as const;
+
+interface Weighted {
+  십성: Record<Group, number>;
+  오행: Record<Element, number>;
 }
 
-/** 두 신호를 합쳐 본다 — 십성 묶음과 오행 어느 쪽도 한쪽만으로는 얇다 */
-function blend(primary: number, bonus: number): Level {
-  return levelOf(primary + (bonus >= 3 ? 1 : bonus === 0 ? -1 : 0));
+function weigh(modules: SazuModules): Weighted {
+  const 십성: Record<Group, number> = { 비겁: 0, 식상: 0, 재성: 0, 관성: 0, 인성: 0 };
+  const 오행: Record<Element, number> = { 목: 0, 화: 0, 토: 0, 금: 0, 수: 0 };
+  const four = modules.fourPillars as Record<string, Record<string, unknown>> | undefined;
+  if (!four) return { 십성, 오행 };
+
+  for (const [slot, weight] of Object.entries(POSITION_WEIGHT)) {
+    const cell = four[slot];
+    if (!cell) continue;
+
+    // 천간 — 드러난 글자 하나
+    const skyGroup = typeof cell.sippiSeong === "string" ? GROUP_OF[cell.sippiSeong] : undefined;
+    if (skyGroup) 십성[skyGroup] += weight;
+    const skyElement = typeof cell.sky === "string" ? STEM_ELEMENT[cell.sky] : undefined;
+    if (skyElement) 오행[skyElement] += weight;
+
+    // 지지 — 드러난 결은 십성으로, 속에 든 글자는 오행으로
+    const earthGroup = typeof cell.earthSippiSeong === "string" ? GROUP_OF[cell.earthSippiSeong] : undefined;
+    if (earthGroup) 십성[earthGroup] += weight;
+
+    const hidden = cell.jiJangGan as Record<string, { stem?: string } | null> | undefined;
+    for (const [part, share] of Object.entries(HIDDEN_WEIGHT)) {
+      const stem = hidden?.[part]?.stem;
+      const element = typeof stem === "string" ? STEM_ELEMENT[stem] : undefined;
+      if (element) 오행[element] += weight * share;
+    }
+  }
+  return { 십성, 오행 };
+}
+
+const share = (value: number, total: number) => (total > 0 ? value / total : 0);
+
+/**
+ * 어디에 서 있는가.
+ *
+ * 무게를 매기고 나면 합이 더 이상 여덟이 아니다. 그래서 절대 숫자가 아니라 전체에서
+ * 차지하는 몫으로 본다. 다섯으로 고르게 나뉘면 각자 20%다.
+ *
+ * 처음에는 30%를 기준으로 삼았다가 거의 모두 "보통"으로 뭉개졌다. 평균이 20%인데
+ * 30%를 요구하면 평균의 1.5배를 넘겨야 기운 쪽이 되는 셈이라 너무 빡빡하다. 평균보다
+ * 뚜렷이 많다는 말은 1.35배쯤이면 충분하다.
+ *
+ * 두 신호를 섞는다. 어떤 글자를 쓰는가(십성)가 그 사람이 쓰는 힘에 더 가까우므로
+ * 조금 더 무겁게 보고, 어떤 기운이 깔려 있는가(오행)를 거든다. 한쪽만 보면 얇다.
+ */
+function levelOf(sipseong: number, element: number): Level {
+  const blended = sipseong * 0.6 + element * 0.4;
+  if (blended >= 0.27) return "높은 쪽";
+  if (blended <= 0.13) return "낮은 쪽";
+  return "보통";
 }
 
 const BEHAVIOUR: Record<string, Record<Level, string[]>> = {
@@ -153,20 +207,26 @@ const dimension = (이름: string, 수준: Level, 왜: string): LensDimension =>
  * 분야마다 그 분야에서 쓰이는 눈금을 쓴다.
  */
 export function buildLens(modules: SazuModules, category: string): Lens | null {
-  const counts = tally(modules);
-  const elements = parseElementCounts(modules);
-  const fire = elements?.fire ?? 0;
-  const wood = elements?.wood ?? 0;
-  const earth = elements?.earth ?? 0;
-  const water = elements?.water ?? 0;
+  const { 십성, 오행 } = weigh(modules);
+  const 십성합 = Object.values(십성).reduce((sum, value) => sum + value, 0);
+  const 오행합 = Object.values(오행).reduce((sum, value) => sum + value, 0);
+
+  const read = (group: Group, element: Element): Level =>
+    levelOf(share(십성[group], 십성합), share(오행[element], 오행합));
+
+  /** 어디서 그렇게 봤는지 — 숫자를 그대로 적어 둔다. 따져 볼 수 있어야 근거다 */
+  const why = (group: Group, element: Element) =>
+    `${GROUP_LABEL[group]} 쪽 글자 ${Math.round(share(십성[group], 십성합) * 100)}% · ` +
+    `${element} 기운 ${Math.round(share(오행[element], 오행합) * 100)}% ` +
+    `(고르게 나뉘면 각 20%). 월지·일지를 무겁게 세고, 지지 속에 숨은 글자까지 넣었다.`;
 
   if (category === "child" || category === "study") {
     return {
       틀: "렌줄리의 세 고리 — 재능은 능력 하나로 나오지 않고, 능력·과제 집착력·창의성 셋이 겹치는 자리에서 나온다",
       차원: [
-        dimension("배우는힘", blend(counts.인성, water), "받아들이고 쌓는 쪽의 글자가 몇인지, 그리고 생각을 깊이 미는 기운이 얼마나 있는지로 본다"),
-        dimension("과제집착력", blend(counts.관성, earth), "스스로를 누르고 끝까지 가게 하는 글자와, 한자리를 지키는 기운이 얼마나 있는지로 본다"),
-        dimension("창의성", blend(counts.식상, fire + wood), "밖으로 내보내고 만들어 내는 글자와, 뻗고 피어나는 기운이 얼마나 있는지로 본다"),
+        dimension("배우는힘", read("인성", "수"), why("인성", "수")),
+        dimension("과제집착력", read("관성", "토"), why("관성", "토")),
+        dimension("창의성", read("식상", "화"), why("식상", "화")),
       ],
     };
   }
@@ -175,8 +235,8 @@ export function buildLens(modules: SazuModules, category: string): Lens | null {
     return {
       틀: "가까워지는 방식 — 먼저 다가가는 힘과 붙들고 있는 힘은 따로 논다",
       차원: [
-        dimension("다가가는힘", blend(counts.식상, fire), "마음을 밖으로 내보내는 글자와, 드러내는 기운이 얼마나 있는지로 본다"),
-        dimension("버티는힘", blend(counts.관성, earth), "한자리를 지키게 하는 글자와 기운이 얼마나 있는지로 본다"),
+        dimension("다가가는힘", read("식상", "화"), why("식상", "화")),
+        dimension("버티는힘", read("관성", "토"), why("관성", "토")),
       ],
     };
   }
@@ -185,9 +245,9 @@ export function buildLens(modules: SazuModules, category: string): Lens | null {
     return {
       틀: "일과 돈을 대하는 결 — 버는 힘, 끌고 가는 힘, 쓰는 결은 서로 다른 자리에서 나온다",
       차원: [
-        dimension("쓰는결", blend(counts.재성, fire), "돈과 현실을 다루는 글자가 몇인지, 그리고 쓰는 쪽으로 기우는 기운이 얼마나 있는지로 본다"),
-        dimension("버티는힘", blend(counts.관성, earth), "끝까지 밀고 가게 하는 글자와 기운이 얼마나 있는지로 본다"),
-        dimension("창의성", blend(counts.식상, fire + wood), "새로 만들어 내는 글자와 기운이 얼마나 있는지로 본다"),
+        dimension("쓰는결", read("재성", "화"), why("재성", "화")),
+        dimension("버티는힘", read("관성", "토"), why("관성", "토")),
+        dimension("창의성", read("식상", "목"), why("식상", "목")),
       ],
     };
   }
