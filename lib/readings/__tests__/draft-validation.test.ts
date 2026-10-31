@@ -39,8 +39,13 @@ describe("상품 목록", () => {
   });
 
   it("상품 이름이 손님의 말이다", () => {
-    // 「명식 전서」처럼 우리끼리 쓰는 이름은 무엇을 파는지 알려 주지 않는다
-    const jargon = /명식|사주|전서|궁합사주/;
+    // 「명식 전서」처럼 우리끼리 쓰는 이름은 무엇을 파는지 알려 주지 않는다.
+    //
+    // 「사주」는 뺐다. 한동안 이것도 막아 두었는데, 막아 놓고 보니 열일곱 개가 전부
+    // "~할까?" 한 틀로 찍혀 나왔다. 틀이 하나뿐이면 손으로 지은 이름처럼 보이지 않는다.
+    // 재회사주·궁합사주·평생사주는 우리끼리 쓰는 말이 아니라 시장에서 쓰는 말이고,
+    // 이름만 보고 무엇을 사는지 바로 안다 — 막을 이유가 없다.
+    const jargon = /명식|전서|원국|일간|용신/;
     const reports = (REPORTS as readonly ReportProduct[]).filter((item) => item.kind === "report");
     const offenders = reports.filter((item) => jargon.test(item.title)).map((item) => item.title);
     expect(offenders).toEqual([]);
