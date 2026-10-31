@@ -8,6 +8,7 @@ import { ReadingWebtoon } from "@/components/manse/ReadingWebtoon";
 import { buildManseTopics } from "@/lib/manse";
 import { getGuide } from "@/lib/story/guides";
 import { buildReadingTeaser } from "@/lib/manse/teaser";
+import { teaserFacts, writeTeaserScenes } from "@/lib/manse/teaser-ai";
 import { Icon } from "@/components/ui/Icon";
 import { getCurrentUser, loginUrl } from "@/lib/auth/session";
 import { getRepository } from "@/lib/db";
@@ -106,6 +107,21 @@ export default async function MansePage({
     ? modules
     : mergedModules({ ...(reading.sazu ?? {}), ...buildManseTopics(["today"], reading.subject, reading.partner) });
   const teaser = buildReadingTeaser(teaserModules, reading.subject.name);
+
+  /**
+   * 맞혀 보이는 장면은 화면을 그리기 전에 미리 받아 둔다.
+   *
+   * 한동안 화면을 먼저 띄우고 글은 뒤에서 받아 바꿔 끼웠다. 그러면 손님이 먼저 보는
+   * 것은 빈 칸이고, 글은 다 읽고 내려간 뒤에 들어찬다 — 가장 먼저 읽혀야 할 자리가
+   * 가장 늦게 도착하는 셈이다.
+   *
+   * 여기서 기다린다. 그동안 손님은 loading.tsx 의 대기 화면을 본다. 2~7초 뒤에 화면이
+   * 뜰 때는 이미 다 적혀 있다.
+   *
+   * 못 받으면 이 칸은 비운다. 아래 「문이 열리는 때」와 잠긴 칸은 그대로 있다 —
+   * 지어낸 말로 채우느니 비워 두는 편이 낫다.
+   */
+  const scenes = await writeTeaserScenes(teaserFacts(teaserModules, reading.subject.name));
   const guide = getGuide(report.guide);
 
   // 계산 기준을 사람이 읽을 문장으로 옮긴다. 진태양시 보정처럼 "왜 이 글자가 나왔는지"를
@@ -142,7 +158,7 @@ export default async function MansePage({
         </p>
       )}
 
-      <ReadingWebtoon teaser={teaser} name={reading.subject.name} guide={guide} poster={getPoster(report.slug, report.guide)} readingId={reading.id} />
+      <ReadingWebtoon teaser={teaser} name={reading.subject.name} guide={guide} poster={getPoster(report.slug, report.guide)} scenes={scenes} />
 
       <ManseSheet
         name={reading.subject.name}
