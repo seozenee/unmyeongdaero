@@ -57,6 +57,34 @@ const STAGE_FORCE: Record<string, string> = {
 
 export type Wind = "순풍" | "역풍" | "보통";
 
+/*
+  나이를 글자로 적어 둔다.
+
+  모델에게 숫자만 주면 연도에서 나이를 다시 셈하다 틀린다. 2012년생에게 "2028년
+  스물일곱" 이라고 쓴 적이 있다 — 연도 뒷자리에서 하나를 뺀 꼴이다. 열일곱이 맞다.
+  그 한 살 때문에 읽는 사람은 나머지 전부를 의심한다.
+
+  그래서 셈할 여지를 없앤다. 글에 그대로 옮길 수 있는 말을 미리 만들어 둔다.
+*/
+const TENS = ["", "열", "스물", "서른", "마흔", "쉰", "예순", "일흔", "여든", "아흔"];
+const ONES_ATTR = ["", "한", "두", "세", "네", "다섯", "여섯", "일곱", "여덟", "아홉"];
+const ONES_PLAIN = ["", "하나", "둘", "셋", "넷", "다섯", "여섯", "일곱", "여덟", "아홉"];
+
+/** 스물여섯 — 홀로 쓰는 꼴 */
+export function ageWord(age: number) {
+  if (age < 1 || age >= 100) return `${age}세`;
+  if (age < 10) return ONES_PLAIN[age]!;
+  return `${TENS[Math.floor(age / 10)]}${ONES_PLAIN[age % 10]}`;
+}
+
+/** 스무 살 · 스물한 살 — 「살」이 붙는 꼴 */
+export function ageWithSal(age: number) {
+  if (age < 1 || age >= 100) return `${age}세`;
+  if (age === 20) return "스무 살";
+  if (age < 10) return `${ONES_ATTR[age]} 살`;
+  return `${TENS[Math.floor(age / 10)]}${ONES_ATTR[age % 10]} 살`;
+}
+
 export interface LifeSpan {
   /** 이 칸이 시작되는 나이(세는 나이) */
   startAge: number;
@@ -74,6 +102,8 @@ export interface LifeSpan {
   바람: Wind;
   /** 삶의 어느 자리가 흔들리는가 */
   흔들리는자리: string[];
+  /** 글에 그대로 옮겨 쓰는 말. 나이를 다시 세지 말 것 */
+  label: string;
 }
 
 export interface YearSpan {
@@ -84,6 +114,8 @@ export interface YearSpan {
   일어나는일: string;
   바람: Wind;
   흔들리는자리: string[];
+  /** 글에 그대로 옮겨 쓰는 말. 나이를 다시 세지 말 것 */
+  label: string;
 }
 
 export interface LifeTimeline {
@@ -179,27 +211,35 @@ export function buildLifeTimeline(input: LifeTimelineInput): LifeTimeline {
 
   const 열해 = input.decades.map((item, index) => {
     const next = input.decades[index + 1];
+    const endAge = next ? next.startAge - 1 : item.startAge + 9;
+    const endYear = next ? next.startYear - 1 : item.startYear + 9;
     return {
       startAge: item.startAge,
-      endAge: next ? next.startAge - 1 : item.startAge + 9,
+      endAge,
       startYear: item.startYear,
-      endYear: next ? next.startYear - 1 : item.startYear + 9,
+      endYear,
+      label: `${ageWord(item.startAge)}부터 ${ageWord(endAge)}까지(${item.startYear}~${endYear}년)`,
       ...spanOf(input.pillars, dayStem, item.full, "대운", input.yongsin, input.gisin),
     };
   });
 
-  const 해마다 = input.years.map((item) => ({
-    age: item.year - input.birthYear + 1,
-    year: item.year,
-    ...spanOf(input.pillars, dayStem, item.full, "세운", input.yongsin, input.gisin),
-  }));
+  const 해마다 = input.years.map((item) => {
+    const age = item.year - input.birthYear + 1;
+    return {
+      age,
+      year: item.year,
+      label: `${item.year}년(${ageWithSal(age)})`,
+      ...spanOf(input.pillars, dayStem, item.full, "세운", input.yongsin, input.gisin),
+    };
+  });
 
   return {
     나이,
     열해,
-    해마다: 해마다.map(({ ganji, 영역, 일어나는일, 바람, 흔들리는자리, age, year }) => ({
+    해마다: 해마다.map(({ ganji, 영역, 일어나는일, 바람, 흔들리는자리, age, year, label }) => ({
       age,
       year,
+      label,
       ganji,
       영역,
       일어나는일,

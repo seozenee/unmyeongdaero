@@ -7,6 +7,7 @@
 //   · 짝별              남자는 재성, 여자는 관성을 배우자 쪽 별로 본다.
 //   · 도화·홍염          사람이 모이고 눈에 띄는 결.
 //   · 일지의 합충        그 자리가 묶이는지 흔들리는지 — 관계가 오래가는 결인지 자주 바뀌는 결인지.
+import { ageWithSal } from "./life";
 import type { FourPillars } from "./pillars";
 import { computeNatalRelations } from "./relations";
 import {
@@ -54,6 +55,8 @@ const COMER: Record<TenGod, string> = {
 export interface Meeting {
   age: number;
   year: number;
+  /** 글에 그대로 옮겨 쓰는 말. 나이를 다시 세지 말 것 */
+  label: string;
   /** 왜 그 해인가 — 근거를 그대로 적어 둔다 */
   reasons: string[];
   /** 어떤 결의 사람이 닿는가 */
@@ -163,6 +166,7 @@ export function readRomance(
     meetings.push({
       age: item.age,
       year: item.year,
+      label: `${item.year}년(${ageWithSal(item.age)})`,
       reasons,
       comer: COMER[tenGod(dayStem, stem)],
       weight: reasons.length,

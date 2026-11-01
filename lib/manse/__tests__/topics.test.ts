@@ -64,6 +64,27 @@ describe("토픽 전용 계산", () => {
     expect(JSON.stringify(romance.meetings)).not.toMatch(/키가|얼굴|이름은|직업은/);
   });
 
+  it("나이를 글자로 적어 둔다 — 모델이 다시 세지 못하게", () => {
+    // 2012년생에게 "2028년 스물일곱" 이라고 쓴 적이 있다. 열일곱이 맞다.
+    const kid = buildManseTopics(["life"], { ...male, birthYear: 2012, birthMonth: 5, birthDay: 15, birthHour: 12 }, null, new Date("2026-11-01"));
+    const life = (kid.life!.modules as Record<string, Record<string, unknown>>).lifeTimeline as {
+      해마다: Array<{ age: number; year: number; label: string }>;
+      열해: Array<{ startAge: number; endAge: number; label: string }>;
+    };
+    const y2028 = life.해마다.find((item) => item.year === 2028)!;
+    expect(y2028.age).toBe(17);
+    expect(y2028.label).toBe("2028년(열일곱 살)");
+
+    const y2031 = life.해마다.find((item) => item.year === 2031)!;
+    expect(y2031.label).toBe("2031년(스무 살)");
+
+    // 스물한 살 — 「살」 앞에서는 하나가 아니라 한
+    const y2032 = life.해마다.find((item) => item.year === 2032)!;
+    expect(y2032.label).toBe("2032년(스물한 살)");
+
+    expect(life.열해[1]!.label).toBe("열일곱부터 스물여섯까지(2029~2038년)");
+  });
+
   it("짝 쪽 별은 남녀가 다르다", () => {
     const his = (buildManseTopics(["love"], male, null).love!.modules as Record<string, Record<string, unknown>>)
       .romance as { partnerStar: { element: string } };
