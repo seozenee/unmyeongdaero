@@ -13,6 +13,9 @@ import { computeGyeokguk, computeYongsin, ELEMENT_USAGE } from "./gyeokguk";
 import { computeLuck, computeSeun } from "./luck";
 import { computeFourPillars, type PillarsResult } from "./pillars";
 import { readCharacter } from "./character";
+import { readHealth } from "./health";
+import { readRomance } from "./romance";
+import { readWealth } from "./wealth";
 import { buildLifeTimeline } from "./life";
 import { computeCrossRelations, computeNatalRelations } from "./relations";
 import { computeSinsal } from "./sinsal";
@@ -129,6 +132,30 @@ export function computeManse(profile: BirthProfile, now = new Date()) {
     const year = now.getFullYear() + offset;
     return { year, full: computeSeun(pillars, profile.birthYear, year).ganji };
   });
+  /*
+    토픽 전용 계산.
+
+    상품마다 재료가 같아서 재물운 사주와 평생사주의 글이 비슷했다. 돈을 보는 자리와
+    몸을 보는 자리와 인연을 보는 자리는 명리에서 따로 정해져 있는데, 그걸 계산하지
+    않고 원국만 넘기고 있었다.
+
+    늘 세어 둔다. 비용은 표를 몇 번 더 읽는 정도이고, 어느 토픽에 실을지는 아래에서 고른다.
+  */
+  const nowAge = now.getFullYear() - profile.birthYear + 1;
+  const currentDecade = decade.items.filter((item) => item.startAge <= nowAge).at(-1) ?? decade.items[0];
+  const incoming = [
+    { label: "열 해 흐름", ganji: currentDecade?.full ?? "" },
+    { label: "그해 흐름", ganji: luck.seun.currentSeun.ganji },
+    { label: "그달 흐름", ganji: luck.weolun.currentWeolun.ganji },
+  ].filter((item) => item.ganji.length === 2);
+  const wealth = readWealth({ pillars, strength: strength.strength, incoming });
+  const health = readHealth(pillars, strength.strength);
+  const romance = readRomance(
+    pillars,
+    profile.isFemale,
+    years.map((item) => ({ year: item.year, age: item.year - profile.birthYear + 1, ganji: item.full })),
+  );
+
   const life = buildLifeTimeline({
     pillars,
     decades: decade.items,
@@ -226,6 +253,9 @@ export function computeManse(profile: BirthProfile, now = new Date()) {
       // 원국만 던져 주면 "성실하시네요" 로 돌아간다.
       character: readCharacter(pillars, strength.strength),
       lifeTimeline: life,
+      wealth,
+      healthBalance: health,
+      romance,
       seun: luck.seun,
       weolun: luck.weolun,
       dailyInteraction: {
