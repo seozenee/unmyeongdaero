@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { ReadingWebtoon } from "@/components/manse/ReadingWebtoon";
 import { ManseSheet } from "@/components/manse/ManseSheet";
+import { ManseConfirm } from "@/components/manse/ManseConfirm";
 import { getPoster } from "@/components/home/posters";
 import { buildManseTopics } from "@/lib/manse";
 import { buildPreviewContext, buildFallbackPreview } from "@/lib/manse/preview";
@@ -26,5 +27,8 @@ export default async function MansePreview({ searchParams }: { searchParams: { a
       narrative={narrative} context={context} chapters={product.chapters}
       chart={<ManseSheet name={profile.name} birthLine="가상 고객 · 화면 검토용" pillars={parseFourPillars(modules)}
         counts={parseElementCounts(modules)} facts={[]} basis={[]} decade={null} />} />
+    <ManseConfirm readingId="sample-reading" slug={product.slug} title={product.title}
+      categoryLabel={product.categoryLabel} price={product.price} originalPrice={product.originalPrice ?? null}
+      chapterCount={product.chapters.length} />
   </div>;
 }

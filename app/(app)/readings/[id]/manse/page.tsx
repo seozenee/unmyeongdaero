@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { ProductLink } from "@/components/ui/ProductLink";
 import { notFound, redirect } from "next/navigation";
 import { ManseConfirm } from "@/components/manse/ManseConfirm";
 import { ManseSheet, type ManseFact } from "@/components/manse/ManseSheet";
@@ -20,7 +20,7 @@ import { mergedModules } from "@/lib/sazu/readings";
 import { describeBirth } from "@/lib/story/format";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 90;
 export const metadata: Metadata = { title: "만세력 확인", robots: { index: false } };
 
 type Json = unknown;
@@ -126,12 +126,12 @@ export default async function MansePage({
 
   return (
     <div className="flex w-full flex-col gap-space-lg py-space-md">
-      <Link
+      <ProductLink
         href={`/reports/${report.slug}`}
         className="flex items-center gap-1 font-label-md text-label-md text-on-surface-variant transition-colors hover:text-on-surface"
       >
         <Icon name="chevron_left" className="text-[18px]" /> 입력 정보 수정
-      </Link>
+      </ProductLink>
 
       {searchParams.error === "payment" && (
         <p className="rounded-lg bg-error-container/30 p-space-sm font-body-sm text-body-sm text-on-surface">

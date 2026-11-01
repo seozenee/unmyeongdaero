@@ -35,7 +35,7 @@ export function ManseConfirm({
 
   return (
     // 하단 내비게이션(h-16) 위에 얹는다. bottom-0 으로 두면 내비 뒤로 들어가 버튼이 가려진다.
-    <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] z-20 -mx-margin mt-space-md bg-gradient-to-t from-surface via-surface to-transparent px-margin pb-space-sm pt-space-lg">
+    <div id="reading-purchase" className="scroll-mt-20 sticky bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] z-20 -mx-margin mt-space-md bg-gradient-to-t from-surface via-surface to-transparent px-margin pb-space-sm pt-space-lg">
       <div className="flex flex-col gap-space-sm rounded-xl bg-surface-container-lowest/95 p-space-md shadow-2xl ring-1 ring-outline-variant/40 backdrop-blur-xl motion-safe:animate-fade-up">
         {/* 상품과 금액을 한 줄에 — 아래 칸이 두꺼우면 정작 확인해야 할 명식이 가려진다 */}
         <div className="flex items-baseline gap-space-sm">
@@ -62,7 +62,7 @@ export function ManseConfirm({
           }}
           className="group flex w-full items-center justify-center gap-2 rounded-lg bg-on-surface py-3.5 font-label-md text-label-md text-surface shadow-lg transition-[transform,opacity] active:scale-[0.99] disabled:opacity-60"
         >
-          {moving ? "결제 화면으로 가는 중…" : "이 명식이 맞아요 · 풀이 받기"}
+          {moving ? "결제 화면으로 가는 중…" : `전체 ${chapterCount}개 장 풀이 열어보기`}
           {!moving && (
             <Icon
               name="arrow_forward"

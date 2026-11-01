@@ -15,6 +15,8 @@ import { WebtoonIntro } from "@/components/webtoon/WebtoonIntro";
 import { cn } from "@/lib/cn";
 import type { BirthProfile } from "@/lib/db/types";
 import { formatKRW } from "@/lib/format";
+import type { WritingSample } from "@/lib/reports/writing-sample";
+import { normalizeReportIdentity } from "@/lib/reports/identity";
 import type { ReportProduct } from "@/lib/reports/catalog";
 import { describeBirth, fillName } from "@/lib/story/format";
 import { buildFunnel, type FunnelStep } from "@/lib/story/funnel";
@@ -113,16 +115,24 @@ function SheetCard({ children }: { children: React.ReactNode }) {
 }
 
 export function StoryFunnel({
-  report,
-  related = [],
+  report: incomingReport,
+  related: incomingRelated = [],
   owned = false,
+  writingSample = null,
 }: {
   report: ReportProduct;
   related?: ReportProduct[];
   /** 이미 이 풀이를 산 적이 있는가 — 다시 보러 온 사람에게 지름길을 준다 */
   owned?: boolean;
+  writingSample?: WritingSample | null;
 }) {
+  const report = useMemo(() => normalizeReportIdentity(incomingReport), [incomingReport]);
+  const related = useMemo(() => incomingRelated.map(normalizeReportIdentity), [incomingRelated]);
   const router = useRouter();
+  // 이전 화면을 복원한 경우에도 브라우저 탭과 본문의 이름이 같아야 한다.
+  useEffect(() => {
+    if (report.title !== incomingReport.title) document.title = `${report.title} | 운명대로`;
+  }, [report.title, incomingReport.title]);
   const guide = getGuide(report.guide);
   const steps = useMemo(() => buildFunnel(report), [report]);
   const sound = useAmbientSound();
@@ -303,6 +313,7 @@ export function StoryFunnel({
         related={related}
         onStart={() => setPhase(cursor > 0 ? "chat" : "intro")}
         resuming={cursor > 0}
+        writingSample={writingSample}
       />
     </>
   );

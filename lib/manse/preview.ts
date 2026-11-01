@@ -4,6 +4,8 @@ import type { ReportProduct } from "../reports/catalog";
 import type { SazuModules } from "../saju/modules";
 import { plain } from "../story/sanitize";
 import { computeFourPillars } from "./pillars";
+import { buildManseExplanation } from "./explanation";
+import { buildRecognitionHook } from "./conversion";
 import { computePastYears } from "./past";
 import { buildReadingTeaser } from "./teaser";
 
@@ -60,7 +62,7 @@ export function buildPreviewContext(modules: SazuModules, profile: BirthProfile,
   const teaser = buildReadingTeaser(modules, profile.name);
   return { today, name: profile.name, age, child: product.roles?.subject === "child", minor: age < 20,
     speech: product.guide === "gangho" ? "반말" : "존대", category: product.category, product: product.title,
-    unknownHour: profile.birthHour === null, concern, facts, past,
+    unknownHour: profile.birthHour === null, concern, facts, past, basis: buildManseExplanation(modules),
     months: teaser.months.slice(0, 6).map(month => ({ period: month.label, tone: month.tone, note: plain(month.note) })),
     character: { inside: text(character.안에서), outside: text(character.밖에서) },
     topics: product.chapters,
@@ -68,35 +70,69 @@ export function buildPreviewContext(modules: SazuModules, profile: BirthProfile,
 }
 export type PreviewContext = ReturnType<typeof buildPreviewContext>;
 
+const GROUP_PROSE: Record<string, { lead: string; scene: string; burden: string; support: string }> = {
+  인성: {
+    lead: "충분히 이해하고 자기 것으로 만든 뒤 움직이는 힘이 중심에 있어요.",
+    scene: "설명을 들으면 바로 답하기보다, 앞뒤가 맞는지 속으로 한 번 정리하는 모습이에요. 같은 내용을 다시 읽더라도 이유를 납득하면 오래 붙잡고, 설명이 생략되면 다음 단계로 넘어가기를 어려워할 수 있습니다.",
+    burden: "차근차근 이해하는 힘은 장점이지만, 모든 것을 알 때까지 시작을 미루면 부담이 됩니다. 준비가 모자라서라기보다, 확실한 답을 갖고 싶다는 마음이 발을 붙잡는 쪽에 가까워요.",
+    support: "설명을 읽는 데서 끝내지 말고, 이해한 내용을 짧게 설명해 볼 자리를 함께 두는 편이 좋습니다. 완벽하게 정리한 뒤 말하기보다, 설명하다 막히는 부분을 다시 배우면 준비와 실행이 함께 자라요.",
+  },
+  식상: {
+    lead: "배운 것을 자기 방식으로 바꿔 밖으로 꺼낼 때 힘이 나는 사람이에요.",
+    scene: "설명을 그대로 받아 적을 때보다, 직접 말하거나 만들면서 이해가 깊어지는 모습입니다. 같은 과제라도 자기 생각을 넣을 여지가 있으면 오래 붙잡고, 정해진 답만 반복하라는 요구에는 답답함을 느낄 수 있어요.",
+    burden: "표현하는 힘이 앞서면 설명보다 결론이 먼저 나올 수 있습니다. 머릿속에서는 이미 여러 단계를 거쳤는데 상대에게는 마지막 말만 전달되어, 맞는 말도 급하거나 차갑게 들리는 것이지요.",
+    support: "결과물을 보여 주기 전에 왜 이렇게 생각했는지 한 문장만 먼저 붙여 주세요. 표현을 줄이는 것보다, 생각의 순서를 상대가 따라올 수 있게 하는 편이 이 강점을 살리는 방법입니다.",
+  },
+  관성: {
+    lead: "맡은 역할을 분명히 알고 끝까지 해내려는 힘이 중심에 있어요.",
+    scene: "언제까지 무엇을 해야 하는지 정해져 있을 때 집중이 붙는 모습입니다. 스스로 맡겠다고 한 일에는 책임을 크게 느끼고, 약속이 흐트러지면 결과뿐 아니라 과정도 마음에 오래 남을 수 있어요.",
+    burden: "책임감이 지나치면 쉬는 시간에도 해야 할 일이 먼저 떠오릅니다. 다른 사람의 기대와 자기 기준을 한꺼번에 지키려다, 충분히 해냈는데도 아직 부족하다고 느끼는 것이 어려운 지점이에요.",
+    support: "시작할 때 잘해야 한다는 목표와 함께 여기까지 하면 끝이라는 기준도 정해 주세요. 끝나는 선이 있어야 책임감이 자신을 몰아세우는 압박이 아니라, 믿고 맡길 수 있는 꾸준함으로 남습니다.",
+  },
+  재성: {
+    lead: "눈에 보이는 목표와 결과가 있을 때 움직임이 또렷해지는 사람이에요.",
+    scene: "무엇을 위해 하는지 알면 시간과 노력을 현실적으로 배분하는 모습입니다. 막연히 오래 하라는 말보다, 마쳤을 때 무엇이 남는지 분명한 일에 힘이 붙고 작은 결과를 모아 다음 단계를 정하는 쪽이 어울려요.",
+    burden: "결과를 챙기는 장점은 성과가 늦게 보일 때 조급함으로 바뀔 수 있습니다. 아직 쌓이는 중인 과정을 실패로 판단하거나, 당장 눈에 띄는 쪽으로 방향을 자주 바꾸면 힘이 흩어질 수 있어요.",
+    support: "큰 목표와 함께 중간에 확인할 작은 결과를 나누어 두는 편이 좋습니다. 한 번에 완성하려 하지 말고, 끝낸 일과 다음 일을 구분해 주면 현실적인 판단력이 꾸준함으로 이어집니다.",
+  },
+  비겁: {
+    lead: "자기 판단으로 정하고 움직일 때 오래 버티는 힘이 나와요.",
+    scene: "남이 정해 준 방식에는 답답함을 느껴도, 스스로 고른 일에는 쉽게 물러서지 않는 모습입니다. 의견을 내거나 기준을 세울 자리가 있을 때 참여가 깊어지고, 이유 없이 따라야 하는 상황에서는 마음부터 멀어질 수 있어요.",
+    burden: "자기 기준을 지키는 힘이 지나치면 도움을 받는 일까지 양보처럼 느낄 수 있습니다. 혼자 책임져야 한다는 마음 때문에 나눌 수 있는 일도 붙들고, 조언을 간섭으로 받아들이는 것이 주의할 지점이에요.",
+    support: "목표까지 남에게 맡기기보다, 스스로 정한 목표 안에서 방법 하나를 함께 비교해 보는 편이 좋습니다. 선택권을 지키면서 다른 방식을 받아들이면 독립성과 협력이 서로를 해치지 않아요.",
+  },
+};
+
 /** 연결이 늦어도 같은 계산 근거로 읽을 수 있는 완결된 미리보기를 제공한다. */
 export function buildFallbackPreview(context: PreviewContext): PreviewReading {
   const fact = (id: string) => context.facts.find(item => item.id === id)?.note;
-  const name = context.name;
-  const who = context.child ? name : `${name}님`;
-  const activity = context.minor || context.child ? "학교에서 맡은 일이나 공부" : "맡은 일과 일상의 약속";
+  const hook = buildRecognitionHook(context);
+  const group = context.basis.prominent?.term ?? "";
+  const prose = GROUP_PROSE[group] ?? GROUP_PROSE.식상!;
+  const relatedTerms: Record<string, string[]> = { 인성: ["정인", "편인"], 식상: ["식신", "상관"], 관성: ["정관", "편관"], 재성: ["정재", "편재"], 비겁: ["비견", "겁재"] };
+  const placement = context.basis.placements.find(item => relatedTerms[group]?.includes(item.term));
+  const reason = context.basis.prominent
+    ? `사주에서는 이런 힘을 '${group}'이라고 해요. ${context.basis.prominent.meaning ?? "평소 자주 쓰는 힘을 함께 묶어 읽는 이름이에요."}${placement ? ` ${placement.position}에 있는 '${placement.character}'도 ${placement.term}에 해당해, 이 대목을 함께 봅니다.` : ""}`
+    : "타고난 기질과 사람들 앞에서 드러나는 모습을 함께 살핀 결과예요.";
   return {
-    headline: `${who}, 앞으로의 운보다 먼저 지나온 시간을 짚어볼게요`,
-    intro: `${who}의 풀이에서 먼저 볼 것은 남들에게 보이는 모습과 가까운 사람 앞에서의 차이예요. 그 차이가 지난 몇 년 동안 어디에서 드러났는지부터 살펴볼게요.`,
+    headline: hook.question,
+    intro: hook.scene,
     personality: {
       title: "남들이 보는 모습과 가까운 사람이 아는 모습",
-      lead: fact("outside") ? `밖에서는 ‘${plain(fact("outside")!)}’는 모습이 먼저 드러나요.` : "자주 쓰는 힘과 마음이 지치는 순간을 함께 볼게요.",
-      body: [
-        `타고난 기질에서는 ${fact("character") ?? "자기 방식과 주변의 요구를 조율하는 모습"} 이 해석은 잘한다·못한다를 가르는 평가보다, 어떤 순간에 힘을 많이 쓰는지 살피는 기준이에요.`,
-        `가까운 관계에서는 ‘${plain(fact("inside") ?? "상대의 말과 내 마음을 함께 살피는 모습")}’는 해석이 나와요. ${activity}에서는 괜찮다가 가까운 사람의 한마디에 오래 마음이 쓰였던 장면을 떠올려 보세요. 밖에서의 기준과 안에서의 기대가 달랐는지를 비교하면 읽히는 대목이 더 분명해져요.`,
-        `강점이 부담으로 바뀌는 지점도 있어요. ${fact("strength") ?? "이미 익숙한 방식에만 기대면 바꿔야 할 때를 알아차리기 어려워져요."} 최근 반복된 장면 하나를 골라, 그때 지키려 했던 것이 결과인지 약속인지 관계였는지부터 나눠 보세요.`,
-      ], evidenceIds: context.facts.filter(item => ["character", "inside", "outside"].includes(item.id)).map(item => item.id).slice(0, 3),
+      lead: prose.lead,
+      body: [reason, prose.scene, prose.burden, prose.support], evidenceIds: context.facts.filter(item => ["character", "inside", "outside"].includes(item.id)).map(item => item.id).slice(0, 3),
     },
     past: context.past.map(item => ({ year: item.year, title: item.interpretation.split("—")[0]!.trim(),
       body: [
-        `${item.year}년, ${item.age}살 무렵을 먼저 볼게요. 이 해의 해석은 ‘${item.interpretation}’에 무게가 있어요. 새로운 사건을 단정하기보다, 이전과 같은 방식으로 해도 반응이 달랐던 시점이었는지를 짚어보는 대목이에요.`,
-        `${item.reasons[0] ?? "타고난 기질과 그해 들어온 흐름을 함께 비교한 결과예요."} ${context.minor || context.child ? "공부의 방식, 친구와의 거리, 부모와 약속을 정하는 과정" : "맡은 역할, 돈을 쓰는 기준, 가까운 사람과의 거리"} 중 어디에서 가장 먼저 변화를 느꼈는지 떠올려 보세요. 일어난 일을 운으로 확정하는 것이 아니라, 당시의 경험과 계산의 해석을 나란히 놓고 보는 거예요.`,
+        `${item.year}년, ${item.age}살 무렵을 먼저 볼게요. 이 해의 해석은 ‘${item.interpretation}’에 무게가 있어요. 이전과 같은 방식으로 해도 주변의 반응이 달라지면서, 자기 기준을 다시 생각하게 되는 시기로 볼 수 있습니다.`,
+        `${item.reasons[0] ?? "타고난 기질과 그해 들어온 흐름을 함께 비교한 결과예요."} ${context.minor || context.child ? "공부의 방식, 친구와의 거리, 부모와 약속을 정하는 과정" : "맡은 역할, 돈을 쓰는 기준, 가까운 사람과의 거리"} 중 어디에서 가장 먼저 변화를 느꼈는지 떠올려 보세요. 그때 되풀이된 선택을 이해하면, 지금 같은 장면에서 어떤 말을 먼저 건네야 할지도 더 분명해집니다.`,
       ], check: "그해 달력·사진·기록을 보면서, 이전과 달라진 일 하나와 달라지지 않은 일 하나를 비교해 보세요." })),
     areas: [
       { title: context.child ? "아이에게 닿는 말과 부담이 되는 말" : "사람에게 마음을 쓰는 방식", lead: "가까울수록 기대를 말로 확인하는 과정이 필요해요.",
         body: [`가까운 사이에 대한 해석은 ‘${fact("inside") ?? "서로의 기대를 확인하는 모습"}’에서 출발해요. 마음을 많이 썼다는 사실과 상대가 그것을 알아차렸다는 사실은 다를 수 있어요.`,
           `최근 서운했던 대화 하나에서 상대가 실제로 한 말과 내가 기대했던 말을 따로 적어 보세요. 다음에는 ‘왜 몰라줘?’ 대신 ‘이럴 때 이 말을 들으면 좋겠어’처럼 원하는 반응을 하나만 말해 보는 편이 도움이 돼요.`], evidenceIds: [context.facts.some(f => f.id === "inside") ? "inside" : context.facts[0]!.id] },
       { title: context.minor || context.child ? "배우는 힘이 성과로 이어지는 조건" : "일과 돈에서 힘을 덜 낭비하는 조건", lead: "결과를 재촉하기 전에, 힘을 쓰는 방식부터 맞춰 보세요.",
-        body: [`‘${fact("outside") ?? fact("character")}’는 해석을 구체적인 ${context.minor || context.child ? "성적이나 합격 가능성" : "수입이나 특정 직업의 성공"}으로 바꾸어 말하지는 않아요. 대신 같은 시간을 쓰고도 덜 지치는 방식이 무엇인지를 비교하는 데 쓸 수 있어요.`,
+        body: [`핵심은 같은 시간을 쓰더라도 힘이 붙는 방식으로 시작하는 것입니다. ${prose.scene} 그래서 남들이 좋다는 방법을 그대로 따르기보다, 스스로 납득하고 끝까지 해낼 수 있는 순서를 만드는 것이 먼저예요.`,
           `${context.minor || context.child ? "이번 주에는 배운 내용을 다시 읽는 시간과 자기 말로 설명하는 시간을 짧게 나누어 비교해 보세요. 어느 쪽에서 막히는지가 보이면, 양을 늘리기 전에 그 단계부터 바꿔 볼 수 있어요." : "이번 주에 맡은 일 하나의 범위와 끝나는 기준을 먼저 정해 보세요. 추가 요청이 들어왔을 때 무엇을 줄여야 하는지도 함께 확인하면, 더 버티는 것만으로 해결하려는 부담을 줄일 수 있어요."}`], evidenceIds: [context.facts.some(f => f.id === "outside") ? "outside" : context.facts[0]!.id] },
     ],
     outlook: { title: "앞으로는 무엇을 준비하면 좋을까요", body: [

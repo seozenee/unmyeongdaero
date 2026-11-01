@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { ProductLink } from "@/components/ui/ProductLink";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { STITCH_ASSETS } from "@/components/home/assets";
 import { getPoster } from "@/components/home/posters";
@@ -81,7 +81,7 @@ export function HeroCarousel({ products }: HeroCarouselProps) {
           const font = productFont(report.slug);
           return (
             <li key={report.slug} className="w-[78vw] max-w-[20rem] shrink-0 snap-center">
-              <Link
+              <ProductLink
                 href={`/reports/${report.slug}`}
                 className="group relative flex aspect-[3/4.3] flex-col justify-end overflow-hidden rounded-[1.75rem] bg-surface-container shadow-2xl transition-transform active:scale-[0.98]"
               >
@@ -137,7 +137,7 @@ export function HeroCarousel({ products }: HeroCarouselProps) {
                     {report.tagline}
                   </span>
                 </div>
-              </Link>
+              </ProductLink>
             </li>
           );
         })}

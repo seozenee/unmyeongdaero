@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { ProductLink } from "@/components/ui/ProductLink";
 import { getPoster } from "@/components/home/posters";
 import { useInView } from "@/components/home/useInView";
 import { WebtoonMedia } from "@/components/webtoon/WebtoonMedia";
@@ -61,7 +61,7 @@ function DossierCard({ report }: { report: ReportProduct }) {
   const font = productFont(report.slug);
 
   return (
-    <Link
+    <ProductLink
       ref={ref}
       href={`/reports/${report.slug}`}
       className="group relative block aspect-[4/5] h-full w-full overflow-hidden rounded-2xl bg-surface-container-low transition-transform active:scale-[0.99]"
@@ -92,6 +92,6 @@ function DossierCard({ report }: { report: ReportProduct }) {
           </span>
         )}
       </div>
-    </Link>
+    </ProductLink>
   );
 }

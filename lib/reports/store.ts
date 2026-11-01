@@ -1,5 +1,6 @@
 import "server-only";
 
+import { normalizeReportIdentity } from "./identity";
 import { modes } from "@/lib/env";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import type { GuideId } from "@/lib/story/guides";
@@ -54,7 +55,7 @@ function toProduct(row: Row): ReportProduct | null {
   // 이 넷이 없으면 풀이를 만들 수 없다. 반쯤 채워진 상품은 파는 것보다 감추는 게 낫다.
   if (!category || !title || !description || !price || !guide || !chapters) return null;
 
-  return {
+  return normalizeReportIdentity({
     slug,
     kind: ((str(row.kind) ?? base?.kind) ?? "report") as ProductKind,
     category,
@@ -75,7 +76,7 @@ function toProduct(row: Row): ReportProduct | null {
     detail: (row.detail as ReportProduct["detail"]) ?? base?.detail,
     cover: (own(str(row.cover)) ?? base?.cover ?? "thumbLife") as ReportProduct["cover"],
     disclaimer: str(row.disclaimer) ?? base?.disclaimer,
-  };
+  });
 }
 
 async function dbRows(options: { includeHidden?: boolean } = {}): Promise<Row[]> {

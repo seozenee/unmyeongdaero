@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { ProductLink } from "@/components/ui/ProductLink";
 import { useCallback, useEffect, useState } from "react";
 import { BirthForm } from "@/components/story/BirthForm";
 import { Icon } from "@/components/ui/Icon";
@@ -190,13 +190,13 @@ export function MyChart() {
               </span>
               {chart.masked.suffix}
             </p>
-            <Link
+            <ProductLink
               href="/reports/life"
               className="flex items-center justify-center gap-1 rounded-xl bg-primary py-3 font-label-md text-label-md text-on-primary"
             >
               내 결과 이어 보기
               <Icon name="arrow_forward" className="text-[18px]" />
-            </Link>
+            </ProductLink>
           </div>
         )}
       </div>

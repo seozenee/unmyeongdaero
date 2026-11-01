@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { StoryFunnel } from "@/components/story/StoryFunnel";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getRepository } from "@/lib/db";
+import { buildDetailWritingSample } from "@/lib/reports/writing-sample";
 import { loadReport, loadReports } from "@/lib/reports/store";
 
 export const dynamic = "force-dynamic";
@@ -32,5 +33,5 @@ export default async function ReportStoryPage({ params }: { params: { slug: stri
     ...products.filter((item) => item.category !== report.category),
   ];
 
-  return <StoryFunnel report={report} related={related} owned={owned} />;
+  return <StoryFunnel report={report} related={related} owned={owned} writingSample={buildDetailWritingSample(report)} />;
 }

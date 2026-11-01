@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { ProductLink } from "@/components/ui/ProductLink";
 import { useEffect, useRef, useState } from "react";
 import { STITCH_ASSETS } from "@/components/home/assets";
 import { FaqSection } from "@/components/home/FaqSection";
@@ -20,7 +20,10 @@ import { getPitch } from "@/lib/reports/pitch";
 import { getGuide } from "@/lib/story/guides";
 import { josa } from "@/lib/text/josa";
 
+import type { WritingSample } from "@/lib/reports/writing-sample";
+
 interface ProductIntroProps {
+  writingSample?: WritingSample | null;
   report: ReportProduct;
   /** 이 상품을 이미 몇 사람이 받아 갔는지. 모르면 숨긴다 — 숫자를 지어내지 않는다 */
   soldCount?: number | null;
@@ -128,7 +131,7 @@ function SectionHead({ no, label, title }: { no: string; label: string; title: s
  *
  * 값과 시작 버튼은 아래에 붙어 어디까지 읽든 손이 닿는다.
  */
-export function ProductIntro({ report, soldCount, related = [], onStart, resuming = false }: ProductIntroProps) {
+export function ProductIntro({ writingSample = null, report, soldCount, related = [], onStart, resuming = false }: ProductIntroProps) {
   const guide = getGuide(report.guide);
   const pitch = getPitch(report.slug);
   const poster = getPoster(report.slug, report.guide);
@@ -386,6 +389,21 @@ export function ProductIntro({ report, soldCount, related = [], onStart, resumin
         </section>
       </Reveal>
 
+      {writingSample ? <Reveal className="mt-space-lg">
+        <section className="rounded-3xl bg-surface-container-lowest p-space-lg ring-1 ring-outline-variant/40">
+          <span className="font-label-sm text-label-sm tracking-[0.14em] text-[rgb(var(--accent))]">03 · 실제 글의 모양</span>
+          <h2 className="mt-space-sm text-[1.45rem] font-bold leading-snug text-on-surface">{writingSample.title}</h2>
+          <p className="mt-space-lg text-[1.15rem] font-semibold leading-relaxed text-[rgb(var(--accent))]">{writingSample.lead}</p>
+          <div className="mt-space-md flex flex-col gap-space-md">
+            {writingSample.paragraphs.slice(0, 2).map((paragraph, index) => <p key={index} className="font-body-md text-body-md leading-[1.9] text-on-surface-variant">{paragraph}</p>)}
+          </div>
+          <div className="mt-space-md rounded-xl bg-surface-container p-space-md">
+            <p className="font-body-sm text-body-sm leading-relaxed text-on-surface">같은 성향이 강점이 되는 때와, 반복되는 어려움으로 바뀌는 때는 언제일까요? 그 시기와 나에게 맞는 대응은 전체 풀이에서 이어집니다.</p>
+            <button type="button" onClick={onStart} className="mt-space-sm flex w-full items-center justify-center gap-space-xs rounded-lg bg-[rgb(var(--accent))] py-3 font-label-md text-label-md text-surface">내 사주로 먼저 확인하기<Icon name="arrow_forward" className="text-[18px]" /></button>
+          </div>
+          <p className="mt-space-lg border-t border-outline-variant/40 pt-space-md font-body-sm text-body-sm leading-relaxed text-outline">{writingSample.caption}</p>
+        </section>
+      </Reveal> : <>
       {/* ─ 펼치면 어떻게 나오는지. 글은 가리고 모양만 보여 준다 ─ */}
       <Reveal className="mt-space-lg">
         <section className="relative overflow-hidden rounded-3xl bg-surface-container-lowest p-space-lg ring-1 ring-outline-variant/40">
@@ -438,6 +456,8 @@ export function ProductIntro({ report, soldCount, related = [], onStart, resumin
           </div>
         </section>
       </Reveal>
+
+      </>}
 
       {/* ─ 받고 나면 어떻게 생겼는지 ─ */}
       <Reveal className="mt-space-lg">
@@ -592,7 +612,7 @@ function RelatedCard({ report }: { report: ReportProduct }) {
   const font = productFont(report.slug);
 
   return (
-    <Link ref={ref} href={`/reports/${report.slug}`} className="flex flex-col gap-space-xs active:scale-[0.98]">
+    <ProductLink ref={ref} href={`/reports/${report.slug}`} className="flex flex-col gap-space-xs active:scale-[0.98]">
       <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-surface-container shadow-lg">
         {poster ? (
           <WebtoonMedia asset={poster} active={inView} className="absolute inset-0" />
@@ -613,6 +633,6 @@ function RelatedCard({ report }: { report: ReportProduct }) {
         </span>
       </div>
       <span className="px-0.5 font-label-sm text-label-sm text-on-surface-variant">{report.categoryLabel}</span>
-    </Link>
+    </ProductLink>
   );
 }

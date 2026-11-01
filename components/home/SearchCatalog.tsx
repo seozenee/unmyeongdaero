@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { ProductLink } from "@/components/ui/ProductLink";
 import { useMemo, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import type { ReportProduct } from "@/lib/reports/catalog";
@@ -36,14 +36,14 @@ export function SearchCatalog({ products }: { products: ReportProduct[] }) {
       <ul className="flex flex-col gap-space-sm">
         {results.map((report) => (
           <li key={report.slug}>
-            <Link
+            <ProductLink
               href={report.kind === "consult" ? "/consult" : `/reports/${report.slug}`}
               className="flex flex-col gap-1 rounded-xl bg-surface-container p-space-md transition-colors hover:bg-surface-container-high"
             >
               <span className="font-label-sm text-label-sm text-secondary">{report.categoryLabel}</span>
               <span className="font-label-md text-label-md text-on-surface">{report.title}</span>
               <span className="line-clamp-1 font-body-sm text-body-sm text-on-surface-variant">{report.description}</span>
-            </Link>
+            </ProductLink>
           </li>
         ))}
         {results.length === 0 && (

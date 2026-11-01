@@ -26,6 +26,8 @@ const ALLOWED = [
   path.join("app", "(admin)"),
   // 명식을 다 보여 준 다음 결제로 넘기는 화면. 값을 ManseConfirm 으로 내려 준다
   path.join("app", "(app)", "readings", "[id]", "manse", "page.tsx"),
+  // 위 명식 확인 화면의 개발 전용 샘플도 같은 결제 패널을 검증한다.
+  path.join("app", "(app)", "dev", "manse-preview", "page.tsx"),
   path.join("components", "admin"),
   path.join("components", "checkout"),
   path.join("components", "consult"),

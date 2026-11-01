@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { ProductLink } from "@/components/ui/ProductLink";
 import { STITCH_ASSETS } from "@/components/home/assets";
 import { getPoster } from "@/components/home/posters";
 import { useInView } from "@/components/home/useInView";
@@ -162,7 +162,7 @@ function RailCard({ report, hook }: { report: ReportProduct; hook?: string }) {
   const font = productFont(report.slug);
 
   return (
-    <Link
+    <ProductLink
       ref={ref}
       href={`/reports/${report.slug}`}
       className="group relative block aspect-[4/5] w-full overflow-hidden rounded-2xl bg-surface-container-low transition-transform duration-200 active:scale-[0.99]"
@@ -198,6 +198,6 @@ function RailCard({ report, hook }: { report: ReportProduct; hook?: string }) {
           {hook ?? report.tagline}
         </span>
       </div>
-    </Link>
+    </ProductLink>
   );
 }

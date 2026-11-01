@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ProductLink } from "@/components/ui/ProductLink";
 import { STITCH_ASSETS } from "@/components/home/assets";
 import { Icon } from "@/components/ui/Icon";
 import { getReport } from "@/lib/reports/catalog";
@@ -46,13 +46,13 @@ export function HighlightCard() {
             </span>
           </div>
 
-          <Link
+          <ProductLink
             href={`/reports/${report.slug}`}
             className="mt-space-xs flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-secondary-container to-secondary py-3.5 font-label-md text-label-md text-on-secondary shadow-lg shadow-secondary-container/30 transition-transform active:scale-[0.98]"
           >
             <span>지금 즉시 열람하기</span>
             <Icon name="arrow_forward" className="text-[18px]" />
-          </Link>
+          </ProductLink>
           <p className="text-center font-label-sm text-label-sm text-outline">구독 결제 없음 · 12개월 열람권</p>
         </div>
       </div>

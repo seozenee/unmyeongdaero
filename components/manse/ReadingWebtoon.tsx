@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { GuideAvatar } from "@/components/story/GuideAvatar";
 import { Icon } from "@/components/ui/Icon";
@@ -111,18 +110,18 @@ function Evidence({ ids, facts }: { ids: string[]; facts: PreviewEvidence[] }) {
   );
 }
 
-function ReadingBlock({ block, facts }: { block: PreviewReading["personality"]; facts: PreviewEvidence[] }) {
+function ReadingBlock({ block, facts, limit = 2 }: { block: PreviewReading["personality"]; facts: PreviewEvidence[]; limit?: number }) {
   return <article className="px-margin py-space-lg">
     <h3 className="text-[1.4rem] font-bold leading-snug tracking-tight text-on-surface">{block.title}</h3>
     <p className="mt-space-md text-[1.1rem] font-semibold leading-relaxed text-secondary">{block.lead}</p>
     <div className="mt-space-md flex flex-col gap-space-md">
-      {block.body.map((paragraph, index) => <p key={index} className="font-body-md text-body-md leading-[1.9] text-on-surface-variant">{paragraph}</p>)}
+      {block.body.slice(0, limit).map((paragraph, index) => <p key={index} className="font-body-md text-body-md leading-[1.9] text-on-surface-variant">{paragraph}</p>)}
     </div>
     <Evidence ids={block.evidenceIds} facts={facts} />
   </article>;
 }
 
-/** 원국 → 성격 → 과거 회고 → 분야별 해석 → 앞으로의 준비 순서로 읽는 결제 전 풀이. */
+/** 자기 인식 → 원국의 이유 → 과거 회고 → 잠긴 질문으로 이어지는 결제 전 미리보기. */
 export function ReadingWebtoon({ teaser, name, guide, poster, narrative, context, chapters, productTitle, chart }: {
   teaser: Teaser; name: string; guide: Guide; poster: WebtoonAsset | null;
   narrative: PreviewReading; context: PreviewContext; chapters: readonly string[];
@@ -137,14 +136,17 @@ export function ReadingWebtoon({ teaser, name, guide, poster, narrative, context
           <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-black via-black/65 to-transparent" />
           <div className="absolute inset-x-margin bottom-space-xl flex flex-col gap-space-md">
             <span className="font-label-sm text-label-sm tracking-widest text-white/70">{productTitle} · {name}님의 풀이</span>
-            <h1 className="text-[2rem] font-bold leading-[1.3] tracking-tight text-white">{narrative.headline}</h1>
-            <p className="font-body-sm text-body-sm leading-relaxed text-white/70">타고난 모습부터 지나온 시간, 앞으로의 선택까지</p>
+            <h1 className="text-[2rem] font-bold leading-[1.3] tracking-tight text-white">{name}님,<br />{narrative.headline}</h1>
+            <p className="font-body-sm text-body-sm leading-relaxed text-white/70">왜 늘 같은 데서 마음이 걸리는지, 먼저 짚어볼게요</p>
           </div>
         </div>
       </Panel>
 
-      <Panel className="px-margin py-space-xl"><Says guide={guide}>{narrative.intro}</Says></Panel>
-      <ChapterMark no={1} title="타고난 모습부터 살펴볼게요" />
+      <Panel className="px-margin py-space-xl">
+        <Says guide={guide}>{narrative.intro}</Says>
+        <p className="mt-space-lg text-center font-body-md text-body-md leading-relaxed text-on-surface-variant">익숙하게 느껴지는 모습이 있다면, 원국에서 그 이유를 함께 볼게요.</p>
+      </Panel>
+      <ChapterMark no={1} title="어떻게 이런 모습이 나올까요?" />
       <div className="px-margin py-space-md">{chart}</div>
       <Panel><ReadingBlock block={narrative.personality} facts={context.facts} /></Panel>
 
@@ -152,14 +154,14 @@ export function ReadingWebtoon({ teaser, name, guide, poster, narrative, context
         <ChapterMark no={2} title="지나온 시간에 남은 흔적" />
         <p className="px-margin pt-space-md font-body-sm text-body-sm leading-relaxed text-outline">지난 해의 운을 따로 계산해 읽었어요. 당시의 경험과 나란히 놓고 살펴보세요.</p>
         <div className="flex flex-col gap-space-lg px-margin py-space-lg">
-          {narrative.past.map(item => {
+          {narrative.past.slice(0, 1).map(item => {
             const source = context.past.find(past => past.year === item.year)!;
             return <Panel key={item.year}>
               <article className="rounded-2xl border border-secondary/20 bg-surface-container-low p-space-lg">
                 <p className="font-label-sm text-label-sm tracking-widest text-secondary">{item.year}년 · {source.age}살 무렵</p>
                 <h3 className="mt-space-sm text-[1.35rem] font-bold leading-snug tracking-tight text-on-surface">{item.title}</h3>
                 <div className="mt-space-md flex flex-col gap-space-md">
-                  {item.body.map((paragraph, index) => <p key={index} className="font-body-md text-body-md leading-[1.9] text-on-surface-variant">{paragraph}</p>)}
+                  {item.body.slice(0, 1).map((paragraph, index) => <p key={index} className="font-body-md text-body-md leading-[1.9] text-on-surface-variant">{paragraph}</p>)}
                 </div>
                 <p className="mt-space-lg border-l-2 border-secondary/60 pl-space-md font-body-sm text-body-sm leading-relaxed text-on-surface">{item.check}</p>
                 <details className="mt-space-md font-body-sm text-body-sm text-outline">
@@ -174,25 +176,29 @@ export function ReadingWebtoon({ teaser, name, guide, poster, narrative, context
       </>}
 
       <ChapterMark no={areaChapter} title="같은 모습이 다른 곳에서도 나타나요" />
-      {narrative.areas.map(block => <Panel key={block.title}><ReadingBlock block={block} facts={context.facts} /></Panel>)}
-
-      <ChapterMark no={areaChapter + 1} title="앞으로 여섯 달, 준비할 방향" />
-      <div className="flex flex-col gap-space-md px-margin py-space-lg">
-        {narrative.outlook.body.map((paragraph, index) => <p key={index} className="font-body-md text-body-md leading-[1.9] text-on-surface-variant">{paragraph}</p>)}
-        <div className="grid grid-cols-1 gap-space-sm sm:grid-cols-2">
-          {[{ month: teaser.best, title: "작게 시도해 볼 때" }, { month: teaser.risk, title: "부담을 먼저 살필 때" }].map(({ month, title }) => month ?
-            <div key={title} className="rounded-xl bg-surface-container p-space-md">
-              <span className="font-label-sm text-label-sm text-outline">{title}</span>
-              <p className="mt-space-xs font-bold text-on-surface">{month.label}</p>
-              <p className="mt-space-xs font-body-sm text-body-sm leading-relaxed text-on-surface-variant">{month.note}</p>
-            </div> : null)}
+      {narrative.areas.map(block => <Panel key={block.title}>
+        <ReadingBlock block={block} facts={context.facts} limit={1} />
+        <div className="mx-margin mb-space-lg flex items-start gap-space-sm rounded-xl bg-surface-container p-space-md">
+          <Icon name="lock" className="mt-1 text-[18px] text-secondary" />
+          <p className="font-body-sm text-body-sm leading-relaxed text-on-surface-variant">이 성향이 언제 강점이 되고, 어떤 선택에서 발목을 잡는지. 구체적인 시기와 대응은 전체 풀이로 이어집니다.</p>
         </div>
-      </div>
+      </Panel>)}
 
-      <Panel className="px-margin py-space-lg"><Says guide={guide}>{narrative.closing}</Says></Panel>
-      <Punch lead="지금까지는 먼저 펼쳐 본 이야기예요." hit="전체 흐름은 한 권으로 이어집니다" />
+      <ChapterMark no={areaChapter + 1} title="그다음 이야기는 아직 남아 있어요" />
+      <div className="flex flex-col gap-space-sm px-margin py-space-lg">
+        {[
+          { label: "나에게 힘이 붙는 시기", value: teaser.best?.label ?? "흐름이 바뀌는 시기", detail: "그때 무엇을 준비하고 어떤 선택을 해야 하는지" },
+          { label: context.minor || context.child ? "배움과 관계에서의 갈림길" : "인연과 돈에서 반복되는 선택", value: "자꾸 같은 데서 막히는 이유", detail: "남에게 맞는 답과 나에게 맞는 답이 달라지는 지점" },
+          { label: "앞으로의 방향", value: "지금 붙들 것과 바꿀 것", detail: "지나온 시간과 앞으로의 흐름을 함께 놓고 읽는 기준" },
+        ].map(item => <div key={item.label} className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-space-lg">
+          <span className="font-label-sm text-label-sm text-secondary">{item.label}</span>
+          <p className="mt-space-sm text-[1.2rem] font-bold leading-snug text-on-surface">{item.value}</p>
+          <div className="mt-space-sm flex items-center gap-space-xs font-body-sm text-body-sm text-outline"><Icon name="lock" className="text-[16px]" /><span>{item.detail}</span></div>
+        </div>)}
+      </div>
+      <Punch lead="여기까지 읽으며 떠오른 장면이 있었나요?" hit={`${name}님의 이야기는 여기서 끝나지 않아요`} />
       <div className="px-margin pb-space-lg">
-        <h2 className="text-[1.35rem] font-bold text-on-surface">전체 보고서에서 이어 읽을 내용</h2>
+        <h2 className="text-[1.35rem] font-bold text-on-surface">전체 풀이에서 확인할 이야기</h2>
         <ol className="mt-space-md divide-y divide-outline-variant/30 rounded-2xl border border-outline-variant/30 bg-surface-container-low px-space-md">
           {chapters.map((title, index) => <li key={title} className="flex items-center gap-space-sm py-space-md">
             <span className="font-label-sm text-label-sm text-secondary">{String(index + 1).padStart(2, "0")}</span>
@@ -200,7 +206,8 @@ export function ReadingWebtoon({ teaser, name, guide, poster, narrative, context
             <Icon name="lock" className="text-[17px] text-outline" />
           </li>)}
         </ol>
-        <p className="mt-space-md font-body-sm text-body-sm leading-relaxed text-outline">입력한 정보가 맞는지 확인한 뒤, 원하시면 전체 풀이를 이어 읽으세요.</p>
+        <p className="mt-space-md font-body-sm text-body-sm leading-relaxed text-outline">성격만이 아니라 지나온 변화, 앞으로의 시기와 선택까지 한 편으로 이어서 읽어 드려요.</p>
+        <a href="#reading-purchase" className="mt-space-lg flex w-full items-center justify-center gap-space-xs rounded-xl bg-secondary px-space-md py-space-md font-label-md text-label-md font-bold text-on-secondary">내 전체 풀이 확인하기<Icon name="arrow_forward" className="text-[18px]" /></a>
       </div>
     </section>
   );

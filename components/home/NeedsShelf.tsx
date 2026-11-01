@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { ProductLink } from "@/components/ui/ProductLink";
 import { useEffect, useState } from "react";
 import { GuideAvatar } from "@/components/story/GuideAvatar";
 import { Icon } from "@/components/ui/Icon";
@@ -36,7 +36,7 @@ export function NeedsShelf({ products }: { products: ReportProduct[] }) {
         {reports.map((report) => {
           const guide = getGuide(report.guide);
           return (
-            <Link
+            <ProductLink
               key={report.slug}
               href={`/reports/${report.slug}`}
               className="group relative flex flex-col overflow-hidden rounded-xl bg-surface-container transition-transform active:scale-[0.98] motion-safe:animate-fade-up"
@@ -71,7 +71,7 @@ export function NeedsShelf({ products }: { products: ReportProduct[] }) {
                   />
                 </span>
               </div>
-            </Link>
+            </ProductLink>
           );
         })}
       </div>

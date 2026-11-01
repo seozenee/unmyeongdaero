@@ -20,6 +20,17 @@ describe("만세력 개인 풀이", () => {
     }
     expect(context.past[0]!.year).toBeLessThan(context.past[1]!.year);
   });
+  it("원국의 실제 글자와 용어의 뜻을 함께 전달한다", () => {
+    expect(context.basis.dayMaster?.character).toBe((modules.fourPillars as { day: { sky: string } }).day.sky);
+    expect(context.basis.placements.length).toBeGreaterThan(0);
+    for (const item of context.basis.placements) {
+      expect(item.character.length).toBe(1);
+      expect(item.meaning.length).toBeGreaterThan(5);
+    }
+    const reading = buildFallbackPreview(context);
+    expect(reading.personality.body[0]).toContain("사주에서는");
+    expect(JSON.stringify(reading)).not.toContain("이 해석을 구체적인");
+  });
   it("AI가 연결되지 않아도 성격·과거·두 분야·앞날 풀이가 모두 있다", () => {
     const reading = buildFallbackPreview(context);
     expect(() => validatePreview(reading, context)).not.toThrow();
