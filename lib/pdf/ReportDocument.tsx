@@ -259,13 +259,17 @@ export function ReportDocument(input: ReportPdfInput) {
       {/* 실천과 맺음 */}
       <Page size="A5" style={styles.page}>
         <RunningHead title={productTitle} />
-        <View style={styles.block} wrap={false}>
-          <Eyebrow>실천</Eyebrow>
-          <SectionTitle>오늘부터 해볼 수 있는 것</SectionTitle>
+          <View wrap={false} minPresenceAhead={80}>
+            <Eyebrow>실천</Eyebrow>
+            <SectionTitle>오늘부터 해볼 수 있는 것</SectionTitle>
+          </View>
           <Actions dos={report.actions.do} avoids={report.actions.avoid} />
-        </View>
+        <PageNumber />
+      </Page>
 
-        <View style={styles.block} wrap={false}>
+      <Page size="A5" style={styles.page}>
+        <RunningHead title={productTitle} />
+        <View style={styles.block}>
           <Eyebrow>맺음</Eyebrow>
           <Text style={styles.closing}>{report.closing}</Text>
         </View>

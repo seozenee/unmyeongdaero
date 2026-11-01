@@ -30,6 +30,7 @@ interface ProductIntroProps {
   /** 같은 고민을 보던 사람이 함께 보는 다른 풀이 */
   related?: ReportProduct[];
   onStart: () => void;
+  onWatchIntro?: () => void;
   resuming?: boolean;
 }
 
@@ -131,7 +132,7 @@ function SectionHead({ no, label, title }: { no: string; label: string; title: s
  *
  * 값과 시작 버튼은 아래에 붙어 어디까지 읽든 손이 닿는다.
  */
-export function ProductIntro({ writingSample = null, report, soldCount, related = [], onStart, resuming = false }: ProductIntroProps) {
+export function ProductIntro({ writingSample = null, report, soldCount, related = [], onStart, onWatchIntro, resuming = false }: ProductIntroProps) {
   const guide = getGuide(report.guide);
   const pitch = getPitch(report.slug);
   const poster = getPoster(report.slug, report.guide);
@@ -234,6 +235,9 @@ export function ProductIntro({ writingSample = null, report, soldCount, related 
             <Icon name="south" className="animate-bounce text-[15px]" />
             아래로 밀어 보세요
           </span>
+          {onWatchIntro && <button type="button" onClick={onWatchIntro} className="flex items-center gap-1.5 self-start py-2 text-sm text-on-surface/80">
+            <Icon name="play_circle" className="text-[20px]" /> {guide.name} 이야기 보기
+          </button>}
         </div>
       </header>
 
@@ -256,7 +260,7 @@ export function ProductIntro({ writingSample = null, report, soldCount, related 
       </div>
 
       {/* ─ 맛보기 — 적어 둔 생일이 있으면 그 사람의 여덟 글자부터 깐다 ─ */}
-      <ProductTease report={report} />
+      <ProductTease report={report} onStart={onStart} />
 
       {pitch && (
         <>
@@ -594,7 +598,7 @@ export function ProductIntro({ writingSample = null, report, soldCount, related 
           onClick={onStart}
           className="cta-flow flex w-full items-center justify-center gap-1.5 rounded-2xl bg-secondary py-4 font-label-md text-label-md font-bold text-on-secondary shadow-[0_6px_28px_rgb(var(--accent)/0.5)] transition-transform active:scale-[0.98]"
         >
-          {resuming ? "이어서 보기" : `${josa(guide.name, "을/를")} 만나러 가기`}
+          {resuming ? "이어서 보기" : report.roles?.subject === "child" ? "아이 사주 먼저 보기" : "내 사주 먼저 보기"}
           <Icon name="arrow_forward" className="text-[18px]" />
         </button>
         <p className="mt-1.5 text-center font-label-sm text-label-sm text-outline">

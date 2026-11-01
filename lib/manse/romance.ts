@@ -109,8 +109,9 @@ const FLOWER: Record<string, Branch> = {
 
 /** 두 지지가 묶이는가 — 육합과 삼합만 본다 */
 function binds(a: Branch, b: Branch) {
+  if (a === b) return null;
   if (SIX_HARMONY.some(([x, y]) => (x === a && y === b) || (x === b && y === a))) return "육합";
-  if (THREE_HARMONY.some((set) => set.branches.includes(a) && set.branches.includes(b))) return "삼합";
+  if (THREE_HARMONY.some((set) => set.branches.includes(a) && set.branches.includes(b))) return "반합";
   return null;
 }
 
@@ -159,7 +160,7 @@ export function readRomance(
       reasons.push("짝을 뜻하는 기운이 그 해에 들어와요");
     }
     const bind = binds(branch, dayBranch);
-    if (bind) reasons.push("가장 가까운 사이의 자리가 그 해 글자와 묶여요");
+    if (bind) reasons.push(`일지 ${dayBranch}와 들어오는 ${branch}가 ${bind}으로 연결돼요`);
     if (flowerBranch && branch === flowerBranch) reasons.push("사람이 모이고 눈에 띄는 글자가 드는 해예요");
 
     if (reasons.length === 0) continue;

@@ -61,6 +61,7 @@ export default async function ReportReadPage({ params }: { params: { slug: strin
       initialStatus={readyReport ? "ready" : reading.status === "ready" ? "draft" : reading.status}
       initialReport={readyReport}
       initialError={reading.error}
+      hasNotifyPhone={Boolean(reading.notifyPhone)}
       panels={{
         pillars: parseFourPillars(modules),
         counts: parseElementCounts(modules),

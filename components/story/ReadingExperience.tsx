@@ -14,6 +14,7 @@ import type { BasisFact } from "@/lib/saju/basis";
 import { getGuide, type GuideId } from "@/lib/story/guides";
 import { isCompleteReport, storyReportSchema, type PartialStoryReport, type StoryReport } from "@/lib/story/report";
 import { josa } from "@/lib/text/josa";
+import { ReadingNotificationForm } from "./ReadingNotificationForm";
 
 interface ReadingExperienceProps {
   readingId: string;
@@ -35,6 +36,7 @@ interface ReadingExperienceProps {
   disclaimer?: string;
   sample: boolean;
   templateMode: boolean;
+  hasNotifyPhone?: boolean;
 }
 
 function useLoadingLines(guideName: string) {
@@ -228,6 +230,7 @@ export function ReadingExperience(props: ReadingExperienceProps) {
           </div>
         </div>
         {(props.sample || props.templateMode) && <DevNotice sample={props.sample} templateMode={props.templateMode} />}
+        <ReadingNotificationForm readingId={props.readingId} hasPhone={props.hasNotifyPhone} />
         <ReportDocument
           report={finalReport}
           guide={guide}
@@ -262,6 +265,7 @@ export function ReadingExperience(props: ReadingExperienceProps) {
       </section>
 
       {(props.sample || props.templateMode) && <DevNotice sample={props.sample} templateMode={props.templateMode} />}
+      <ReadingNotificationForm readingId={props.readingId} hasPhone={props.hasNotifyPhone} />
 
       {beats.length === 0 && !failure && (
         <div className="flex flex-col items-center gap-space-md rounded-xl bg-surface-container p-space-xl text-center motion-safe:animate-fade-in">

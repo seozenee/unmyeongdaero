@@ -22,7 +22,7 @@ export function startLive(id: string) {
     live.done = true;
     live.error = error;
     notify();
-    setTimeout(() => registry.delete(id), 60_000);
+    setTimeout(() => { if (registry.get(id) === live) registry.delete(id); }, 60_000);
   };
 
   return {
@@ -36,13 +36,14 @@ export function startLive(id: string) {
 }
 
 export function hasLive(id: string) {
-  return registry.has(id);
+  const live = registry.get(id);
+  return Boolean(live && !live.done);
 }
 
 /** 지금까지의 조각을 재생한 뒤 새 조각을 이어서 흘려보내는 스트림 */
 export function streamLive(id: string): ReadableStream<Uint8Array> | null {
   const live = registry.get(id);
-  if (!live) return null;
+  if (!live || (live.done && live.error)) return null;
   const encoder = new TextEncoder();
   let cursor = 0;
   let listener: (() => void) | null = null;

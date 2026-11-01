@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BirthForm } from "@/components/story/BirthForm";
+import { BirthForm, CINEMATIC_BIRTH_STEPS } from "@/components/story/BirthForm";
 import { useTypewriter } from "@/components/story/useTypewriter";
 import { STITCH_ASSETS } from "@/components/home/assets";
 import { ProductIntro } from "@/components/story/ProductIntro";
@@ -14,6 +14,7 @@ import { useAmbientSound } from "@/components/webtoon/useAmbientSound";
 import { WebtoonIntro } from "@/components/webtoon/WebtoonIntro";
 import { cn } from "@/lib/cn";
 import type { BirthProfile } from "@/lib/db/types";
+import { readLocalProfile } from "@/lib/me/local-profile";
 import type { WritingSample } from "@/lib/reports/writing-sample";
 import { normalizeReportIdentity } from "@/lib/reports/identity";
 import type { ReportProduct } from "@/lib/reports/catalog";
@@ -108,7 +109,7 @@ function Ask({ text }: { text: string }) {
 
 function SheetCard({ children }: { children: React.ReactNode }) {
   return (
-    <div className="no-scrollbar intake-sheet max-h-[52vh] overflow-y-auto bg-gradient-to-t from-black via-black/95 to-black/75 py-space-md motion-safe:animate-fade-up">
+    <div className="no-scrollbar intake-sheet max-h-[60dvh] overflow-y-auto overscroll-contain py-space-md motion-safe:animate-fade-up">
       {children}
     </div>
   );
@@ -156,6 +157,7 @@ export function StoryFunnel({
   // 알림톡 받을 번호. 적지 않아도 되고, 적으면 다 쓴 뒤 카톡으로 알려 준다.
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [birthStep, setBirthStep] = useState(0);
 
   const step: FunnelStep | undefined = steps[cursor];
   const name = subject?.name;
@@ -214,7 +216,19 @@ export function StoryFunnel({
 
   const answer = (text: string) => {
     setEcho(text);
-    advance();
+    // 입력을 마친 뒤에는 다음 질문으로 바로 간다. 감상용 컷의 대기 시간을 입력에 끼우지 않는다.
+    const nextQuestion = steps.findIndex((item, index) => index > cursor && ["birth", "context", "detail", "submit"].includes(item.kind));
+    if (nextQuestion >= 0) setCursor(nextQuestion);
+    else advance();
+  };
+
+  const startInput = () => {
+    if (cursor === 0) {
+      if (rememberProfile && (report.roles?.subject ?? "self") === "self") setSubject(readLocalProfile());
+      const firstBirth = steps.findIndex(item => item.kind === "birth");
+      if (firstBirth >= 0) setCursor(firstBirth);
+    }
+    setPhase("chat");
   };
 
   /**
@@ -226,7 +240,7 @@ export function StoryFunnel({
    * 대사와 컷은 건너뛰고 "답한 걸음"으로만 돌아간다. 한 번 누르면 한 번 고친다 —
    * 대사 세 줄을 거슬러 올라가게 하면 되돌리기가 또 하나의 일이 된다.
    */
-  const answerable = ["question", "birth", "context", "detail", "reply"] as const;
+  const answerable = ["question", "birth", "context", "detail"] as const;
   const previousAnswerStep = steps
     .slice(0, cursor)
     .map((item, index) => ({ item, index }))
@@ -318,7 +332,8 @@ export function StoryFunnel({
       <ProductIntro
         report={report}
         related={related}
-        onStart={() => setPhase(cursor > 0 ? "chat" : "intro")}
+        onStart={startInput}
+        onWatchIntro={() => setPhase("intro")}
         resuming={cursor > 0}
         writingSample={writingSample}
       />
@@ -331,22 +346,21 @@ export function StoryFunnel({
     return (
       <>
         {detailPage}
-        <WebtoonIntro report={report} onStart={() => setPhase("chat")} onClose={() => setPhase("closed")} />
+        <WebtoonIntro report={report} onStart={startInput} onClose={() => setPhase("closed")} />
       </>
     );
   }
 
   // ─ 대화 스테이지 ─
-  const notificationField = <details className="font-body-sm text-body-sm text-outline">
-    <summary className="cursor-pointer py-2">풀이 완성 알림 받기 · 선택</summary>
-    <label className="mt-space-sm flex flex-col gap-1.5">
-      <span>휴대전화 번호</span>
+  const notificationField = <div className="border-t border-white/15 pt-space-md text-sm text-white/70">
+    <label className="flex flex-col gap-2">
+      <span className="font-semibold text-white">카카오톡으로 받을 휴대전화 번호 <span className="font-normal text-white/50">· 선택</span></span>
       <input type="tel" inputMode="numeric" autoComplete="tel" value={phone} maxLength={13}
         placeholder="010-0000-0000" onChange={event => setPhone(event.target.value)}
         className="w-full rounded-lg border border-outline-variant/60 bg-surface-container-lowest px-space-sm py-2.5 text-on-surface outline-none focus:border-primary" />
-      <span className="leading-relaxed">결제 후 풀이가 완성되면 카카오톡으로 알려 드려요. 번호는 이 알림에만 쓰며, 입력하지 않아도 볼 수 있어요.</span>
+      <span className="text-xs leading-relaxed">번호를 남기면 풀이 완성 알림과 PDF 받는 링크를 카카오톡으로 보내 드려요. 이 알림에만 사용하며 광고는 보내지 않아요.</span>
     </label>
-  </details>;
+  </div>;
 
   const footer = (() => {
     if (step?.kind === "reply") {
@@ -358,6 +372,7 @@ export function StoryFunnel({
         <SheetCard>
           <BirthForm
             cinematic
+            onStepChange={setBirthStep}
             key={`${step.target}-${cursor}`}
             title={birthTitle(report, step.target)}
             initial={(step.target === "subject" ? subject : partner) ?? undefined}
@@ -395,25 +410,29 @@ export function StoryFunnel({
 
     if (step?.kind === "detail") {
       return (
-        <SheetCard>
+        <div className="flex flex-col gap-2">
+        <div className="intake-detail-fields overflow-y-auto overscroll-contain py-3">
           <div className="flex flex-col gap-space-sm">
             <textarea
               value={detail}
               maxLength={1000}
-              rows={4}
+              rows={2}
               placeholder={step.placeholder}
               onChange={(event) => setDetail(event.target.value)}
               className="w-full resize-none rounded-lg border border-outline-variant/60 bg-surface-container-lowest p-space-sm font-body-md text-body-md text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary/60"
             />
             <span className="font-label-sm text-label-sm text-outline">{detail.length}/1000 · 적지 않아도 괜찮아요</span>
             {notificationField}
+          </div>
+        </div>
+            <div className="shrink-0 bg-[#050403] pt-2">
             <StageAction tone="confirm" disabled={submitting} onClick={submit}>
               {submitting ? "내 사주를 펼치는 중…" : "내 사주 먼저 보기"}
               {!submitting && <Icon name="arrow_forward" className="text-[18px]" />}
             </StageAction>
             <p className="text-center font-label-sm text-label-sm text-outline">여기까지는 무료예요. 먼저 읽고 결정하세요.</p>
-          </div>
-        </SheetCard>
+            </div>
+        </div>
       );
     }
 
@@ -447,8 +466,9 @@ export function StoryFunnel({
   // 손님이 답해야 넘어가는 걸음만 센다. 대사와 컷은 저절로 흐르므로 걸음으로 치지 않는다.
   const answerKinds = ["question", "birth", "context", "detail"] as const;
   const isAnswerStep = (item: FunnelStep) => (answerKinds as readonly string[]).includes(item.kind);
-  const totalSteps = steps.filter(isAnswerStep).length;
-  const answeredSteps = steps.slice(0, cursor).filter(isAnswerStep).length;
+  const weight = (item: FunnelStep) => item.kind === "birth" ? CINEMATIC_BIRTH_STEPS : isAnswerStep(item) ? 1 : 0;
+  const totalSteps = steps.reduce((sum, item) => sum + weight(item), 0);
+  const answeredSteps = Math.min(totalSteps - 1, steps.slice(0, cursor).reduce((sum, item) => sum + weight(item), 0) + (step?.kind === "birth" ? birthStep : 0));
 
   const guideLine = step?.kind === "line" && step.speaker === "guide" ? fillName(step.text, name) : null;
   const narration = step?.kind === "line" && step.speaker === "narration" ? fillName(step.text, name) : null;
@@ -471,7 +491,7 @@ export function StoryFunnel({
         assetKey={scene.asset}
         sfx={scene.sfx}
         sound={sound}
-        onBack={goBack}
+        onBack={step?.kind === "birth" && birthStep > 0 ? undefined : goBack}
         onClose={() => setPhase("closed")}
         onTap={() => {
           // 찍히는 중이면 한 번에 다 보여 주고, 다 찍혔으면 다음으로 — 손가락 하나로 끝난다

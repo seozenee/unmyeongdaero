@@ -90,12 +90,9 @@ const styles = StyleSheet.create({
   timelineTitle: { ...type.bodyMd, fontWeight: 600, color: palette.ink },
   timelineNote: { ...type.bodySm, color: palette.inkMuted, marginTop: 2 },
   // ─ 실천 ─
-  actionColumns: { flexDirection: "row", gap: space.md },
-  actionColumn: { flex: 1, borderRadius: radius.lg, padding: space.md },
+  actionCard: { borderRadius: radius.lg, padding: space.md, marginBottom: space.sm },
   actionHead: { ...type.labelMd, fontWeight: 700, marginBottom: space.sm },
-  actionItem: { flexDirection: "row", marginBottom: 5 },
-  actionBullet: { ...type.bodySm, width: 10 },
-  actionText: { ...type.bodySm, color: palette.ink, flex: 1 },
+  actionText: { ...type.bodySm, color: palette.ink, marginBottom: space.sm },
 });
 
 export function Eyebrow({ children }: { children: string }) {
@@ -227,26 +224,24 @@ export function Timeline({ items }: { items: Array<{ period: string; title: stri
 
 export function Actions({ dos, avoids }: { dos: string[]; avoids: string[] }) {
   return (
-    <View style={styles.actionColumns}>
-      <View style={{ ...styles.actionColumn, backgroundColor: palette.accentSoft }}>
-        <Text style={{ ...styles.actionHead, color: palette.accent }}>이렇게 해 보세요</Text>
+    <>
+        <Text style={{ ...styles.actionHead, color: palette.accent }} minPresenceAhead={150}>이렇게 해 보세요</Text>
         {dos.map((text, index) => (
-          <View key={index} style={styles.actionItem}>
-            <Text style={{ ...styles.actionBullet, color: palette.accent }}>·</Text>
-            <Text style={styles.actionText}>{text}</Text>
+          <View key={index} style={{ ...styles.actionCard, backgroundColor: palette.accentSoft }} wrap={false}>
+          <Text style={styles.actionText}>
+            <Text style={{ fontWeight: 600, color: palette.accent }}>{String(index + 1).padStart(2, "0")}  </Text>{text}
+          </Text>
           </View>
         ))}
-      </View>
-      <View style={{ ...styles.actionColumn, backgroundColor: palette.warmSoft }}>
-        <Text style={{ ...styles.actionHead, color: palette.warm }}>이건 잠시 미뤄 두세요</Text>
+        <Text style={{ ...styles.actionHead, color: palette.warm, marginTop: space.md }} minPresenceAhead={150}>이건 잠시 미뤄 두세요</Text>
         {avoids.map((text, index) => (
-          <View key={index} style={styles.actionItem}>
-            <Text style={{ ...styles.actionBullet, color: palette.warm }}>·</Text>
-            <Text style={styles.actionText}>{text}</Text>
+          <View key={index} style={{ ...styles.actionCard, backgroundColor: palette.warmSoft }} wrap={false}>
+          <Text style={styles.actionText}>
+            <Text style={{ fontWeight: 600, color: palette.warm }}>{String(index + 1).padStart(2, "0")}  </Text>{text}
+          </Text>
           </View>
         ))}
-      </View>
-    </View>
+    </>
   );
 }
 

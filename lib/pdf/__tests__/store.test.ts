@@ -50,21 +50,21 @@ describe("PDF 보관", () => {
   });
 
   it("한 번 구운 풀이는 다시 굽지 않는다", async () => {
-    const stored = reading({ pdfToken: "tok", pdfPath: "u-1/r-1.pdf" } as Partial<Reading>);
+    const stored = reading({ pdfToken: "tok", pdfPath: "u-1/r-1.v2.pdf" } as Partial<Reading>);
     const result = await ensureReadingPdf(stored);
 
-    expect(result).toEqual({ token: "tok", path: "u-1/r-1.pdf" });
+    expect(result).toEqual({ token: "tok", path: "u-1/r-1.v2.pdf" });
     expect(render).not.toHaveBeenCalled();
     expect(upload).not.toHaveBeenCalled();
   });
 
   it("손에 든 사본이 낡았어도 저장된 행에 있으면 그대로 쓴다", async () => {
     // 완성 직후에 굽고 곧이어 알림이 또 부르는 길 — 두 번 구우면 카톡에 넣은 코드가 바뀐다
-    getReading.mockResolvedValue(reading({ pdfToken: "tok", pdfPath: "u-1/r-1.pdf" } as Partial<Reading>));
+    getReading.mockResolvedValue(reading({ pdfToken: "tok", pdfPath: "u-1/r-1.v2.pdf" } as Partial<Reading>));
 
     const result = await ensureReadingPdf(reading());
 
-    expect(result).toEqual({ token: "tok", path: "u-1/r-1.pdf" });
+    expect(result).toEqual({ token: "tok", path: "u-1/r-1.v2.pdf" });
     expect(render).not.toHaveBeenCalled();
     expect(upload).not.toHaveBeenCalled();
   });
@@ -74,12 +74,20 @@ describe("PDF 보관", () => {
 
     expect(render).toHaveBeenCalledTimes(1);
     expect(upload).toHaveBeenCalledTimes(1);
-    expect(upload.mock.calls[0]?.[0]).toBe("u-1/r-1.pdf");
-    expect(result?.path).toBe("u-1/r-1.pdf");
+    expect(upload.mock.calls[0]?.[0]).toBe("u-1/r-1.v2.pdf");
+    expect(result?.path).toBe("u-1/r-1.v2.pdf");
     expect(updateReading).toHaveBeenCalledWith(
       "r-1",
-      expect.objectContaining({ pdfPath: "u-1/r-1.pdf", pdfToken: result?.token }),
+      expect.objectContaining({ pdfPath: "u-1/r-1.v2.pdf", pdfToken: result?.token }),
     );
+  });
+
+  it("옛 조판 파일은 다시 만들되 이미 보낸 카카오톡 공유 코드는 유지한다", async () => {
+    const old = reading({ pdfToken: "existing-link", pdfPath: "u-1/r-1.pdf" });
+    getReading.mockResolvedValue(old);
+    const result = await ensureReadingPdf(old);
+    expect(render).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({ token: "existing-link", path: "u-1/r-1.v2.pdf" });
   });
 
   it("스토리지가 없는 환경에서는 굽지 않는다", async () => {

@@ -115,9 +115,9 @@ export function buildReadingTeaser(modules: SazuModules, name: string): ReadingT
   ].filter((l): l is { label: string; teaser: string } => Boolean(l));
 
   const headline = best
-    ? `${name}님, ${best.label}에 문이 열립니다`
+    ? `${name}님, ${best.label}의 흐름부터 짚어볼게요`
     : strength
-      ? `${name}님은 ${strength}의 그릇입니다`
+      ? `${name}님이 힘을 쓰는 방식부터 살펴볼게요`
       : `${name}님의 여덟 글자를 펼쳤습니다`;
 
   return {

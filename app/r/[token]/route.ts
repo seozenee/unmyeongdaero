@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getRepository } from "@/lib/db";
-import { signedPdfUrl } from "@/lib/pdf/store";
+import { ensureReadingPdf, signedPdfUrl } from "@/lib/pdf/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 /**
  * GET /r/:token — 카톡으로 보낸 PDF 버튼이 열리는 자리.
@@ -21,7 +22,8 @@ export async function GET(_request: Request, { params }: { params: { token: stri
   if (!user) redirect(`/login?next=${encodeURIComponent(`/r/${params.token}`)}`);
   if (user.id !== reading.userId) redirect("/library");
 
-  const url = await signedPdfUrl(reading);
+  const stored = await ensureReadingPdf(reading).catch(() => null);
+  const url = await signedPdfUrl(stored ? { ...reading, pdfPath: stored.path } : reading);
   // 파일이 없거나 서명에 실패하면 보고서 화면으로 보낸다 — 거기서 다시 내려받을 수 있다
   redirect(url ?? `/reports/${reading.reportSlug}/read`);
 }

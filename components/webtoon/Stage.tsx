@@ -37,6 +37,17 @@ interface StageProps {
 
 export function Stage({ guide, place, camera, figure, assetKey, still, sfx, children, footer, onBack, onTap, sound, onClose, progress }: StageProps) {
   const asset = getWebtoonAsset(guide.id, assetKey);
+  const [viewport, setViewport] = useState<{ height: number; top: number } | null>(null);
+
+  useEffect(() => {
+    const visible = window.visualViewport;
+    if (!visible) return;
+    const sync = () => setViewport({ height: visible.height, top: visible.offsetTop });
+    sync();
+    visible.addEventListener("resize", sync);
+    visible.addEventListener("scroll", sync);
+    return () => { visible.removeEventListener("resize", sync); visible.removeEventListener("scroll", sync); };
+  }, []);
 
   // 스테이지가 떠 있는 동안 뒤쪽 페이지 스크롤을 잠그고, 아래 내비게이션을 숨긴다.
   // (내비는 반투명이라 덮어 두기만 하면 스테이지 버튼 뒤로 비쳐 보인다)
@@ -51,12 +62,17 @@ export function Stage({ guide, place, camera, figure, assetKey, still, sfx, chil
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[60] mx-auto flex w-full max-w-md flex-col overflow-hidden bg-surface-container-lowest lg:shadow-[0_0_80px_rgba(0,0,0,0.55)] lg:ring-1 lg:ring-outline-variant/30">
+    <div style={viewport ? { height: viewport.height, top: viewport.top, "--stage-height": `${viewport.height}px` } as React.CSSProperties : undefined}
+      className="fixed inset-0 z-[60] mx-auto flex h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-surface-container-lowest lg:shadow-[0_0_80px_rgba(0,0,0,0.55)] lg:ring-1 lg:ring-outline-variant/30">
       {/* 장면 — 이전 컷 위로 겹쳐 넘어간다 */}
       <SceneLayer sceneKey={`${place}-${assetKey ?? camera}`} asset={asset} still={still} />
 
       {/* 상단 조작 */}
-      <div className="pt-safe relative flex items-start justify-between p-space-md">
+      <div className="pt-safe relative z-20 flex shrink-0 items-start justify-between p-space-md">
+        <div className="flex items-center gap-1">
+        {onBack && <button type="button" onClick={onBack} aria-label="이전으로" className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-container-lowest/55 text-on-surface backdrop-blur">
+          <Icon name="arrow_back" className="text-[20px]" />
+        </button>}
         {onClose ? (
           <button
             type="button"
@@ -69,6 +85,7 @@ export function Stage({ guide, place, camera, figure, assetKey, still, sfx, chil
         ) : (
           <span />
         )}
+        </div>
         {/* 걸음 — 몇 개 남았는지 보이지 않으면 중간에 그만둔다 */}
         {progress && progress.total > 1 && (
           <ol
@@ -104,7 +121,7 @@ export function Stage({ guide, place, camera, figure, assetKey, still, sfx, chil
 
       {/* 장면 위에 겹치는 내용 */}
       <div
-        className="no-scrollbar relative flex flex-1 flex-col justify-end gap-space-md overflow-y-auto px-margin pb-space-md"
+        className="no-scrollbar relative z-10 flex min-h-0 flex-1 flex-col justify-end gap-space-md overflow-y-auto px-margin pb-space-md"
         onClick={onTap}
       >
         {sfx && (
@@ -116,17 +133,7 @@ export function Stage({ guide, place, camera, figure, assetKey, still, sfx, chil
       </div>
 
       {/* 아래 고정 영역 */}
-      <div className="pb-safe relative flex items-stretch gap-space-sm px-margin pb-space-md">
-        {onBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            aria-label="이전으로"
-            className="flex w-11 shrink-0 items-center justify-center rounded-lg bg-surface-container-lowest/70 text-on-surface-variant ring-1 ring-outline-variant/50 backdrop-blur transition-colors hover:text-on-surface"
-          >
-            <Icon name="chevron_left" className="text-[22px]" />
-          </button>
-        )}
+      <div className="stage-footer pb-safe isolate relative z-0 flex shrink-0 items-stretch px-margin pb-space-md">
         <div className="min-w-0 flex-1">{footer}</div>
       </div>
     </div>

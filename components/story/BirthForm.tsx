@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { cn } from "@/lib/cn";
 import { Lunar } from "lunar-typescript";
@@ -10,6 +10,7 @@ import birthCities from "@/lib/saju/birth-cities.json";
 
 interface BirthFormProps {
   cinematic?: boolean;
+  onStepChange?: (step: number) => void;
   title: string;
   submitLabel?: string;
   initial?: Partial<BirthProfile>;
@@ -68,7 +69,7 @@ function CityPicker({ value, onChange }: { value: string; onChange: (city: strin
         className={FIELD}
       />
       {open && (
-        <ul className="absolute left-0 right-0 top-full z-20 mt-1 max-h-60 overflow-y-auto rounded-lg border border-outline-variant/60 bg-surface-container-high shadow-2xl">
+        <ul className="city-options absolute left-0 right-0 top-full z-20 mt-1 max-h-60 overflow-y-auto rounded-lg border border-outline-variant/60 bg-surface-container-high shadow-2xl">
           {matches.map((item) => (
             <li key={item.name}>
               <button
@@ -107,6 +108,8 @@ function CityPicker({ value, onChange }: { value: string; onChange: (city: strin
 
 const FIELD =
   "w-full rounded-lg border border-outline-variant/60 bg-surface-container-lowest px-space-sm py-2.5 font-body-md text-body-md text-on-surface outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/60";
+
+export const CINEMATIC_BIRTH_STEPS = 5;
 
 /**
  * "14:25" → { hour: 14, minute: 25 }. 모양이 아니면 null.
@@ -212,6 +215,7 @@ function Segmented<T extends string>({
  */
 export function BirthForm({
   cinematic = false,
+  onStepChange,
   title,
   submitLabel = "다 적었어요",
   initial,
@@ -221,6 +225,7 @@ export function BirthForm({
 }: BirthFormProps) {
   const id = useId();
   const [step, setStep] = useState(0);
+  useEffect(() => { onStepChange?.(step); }, [step, onStepChange]);
 
   const [name, setName] = useState(initial?.name ?? "");
   const [digits, setDigits] = useState(
@@ -246,8 +251,7 @@ export function BirthForm({
   const STEPS = [
     { key: "name", label: "이름" },
     { key: "birth", label: "생년월일" },
-    ...(cinematic ? [{ key: "gender", label: "성별" }] : []),
-    { key: "rest", label: "시간·성별" },
+    ...(cinematic ? [{ key: "gender", label: "성별" }, { key: "time", label: "태어난 시간" }, { key: "city", label: "태어난 곳" }] : [{ key: "rest", label: "시간·성별" }]),
   ];
   const lastStep = STEPS.length - 1;
 
@@ -267,6 +271,11 @@ export function BirthForm({
       if (!gender) return setError("성별을 골라 주세요.");
       setError(null);
       return setStep(3);
+    }
+    if (cinematic && step === 3) {
+      if (knowsTime && !parseClockTime(time)) return setError("태어난 시각을 입력해 주세요. 모르시면 ‘몰라요’를 눌러 주세요.");
+      setError(null);
+      return setStep(4);
     }
   };
 
@@ -305,9 +314,9 @@ export function BirthForm({
       className={cn("flex flex-col gap-space-md motion-safe:animate-fade-up", cinematic ? "intake-form" : "rounded-xl bg-surface-container p-space-lg shadow-lg")}
     >
       <div className="flex items-center justify-between">
-        <h3 className={cinematic ? "text-[1.6rem] font-extrabold leading-snug text-white" : "font-label-md text-label-md text-on-surface"}>{cinematic ? ["이름은…", "태어난 날은…", "성별은…", "태어난 때와 장소는…"][step] : title}</h3>
+        <h3 className={cinematic ? "text-[1.6rem] font-extrabold leading-snug text-white" : "font-label-md text-label-md text-on-surface"}>{cinematic ? ["이름은…", "태어난 날은…", "성별은…", "태어난 시간은…", "태어난 곳은…"][step] : title}</h3>
         {/* 어디쯤 왔는지 — 세 칸이면 끝이 보인다 */}
-        <span className="flex items-center gap-1" aria-label={`${step + 1} / ${STEPS.length} 단계`}>
+        {!(cinematic && onStepChange) && <span className="flex items-center gap-1" aria-label={`${step + 1} / ${STEPS.length} 단계`}>
           {STEPS.map((item, index) => (
             <span
               key={item.key}
@@ -317,7 +326,7 @@ export function BirthForm({
               )}
             />
           ))}
-        </span>
+        </span>}
       </div>
 
       {step === 0 && (
@@ -405,9 +414,9 @@ export function BirthForm({
         </button>)}
       </div>}
 
-      {step === lastStep && (
+      {(cinematic ? step >= 3 : step === lastStep) && (
         <div className="flex flex-col gap-space-md">
-          <div className="flex flex-col gap-1">
+          {(!cinematic || step === 3) && <div className="flex flex-col gap-1">
             <span className="font-label-sm text-label-sm text-on-surface-variant">태어난 시간</span>
             <div className="flex gap-space-xs">
               <input
@@ -435,9 +444,9 @@ export function BirthForm({
                 ? "태어난 곳에 맞춰 시간을 보정해 계산해요."
                 : "시간과 관련된 부분은 빼고, 알 수 있는 내용부터 읽어요."}
             </span>
-          </div>
+          </div>}
 
-          <div className={cn(!cinematic && "grid grid-cols-2 gap-space-sm")}>
+          {(!cinematic || step === 4) && <div className={cn(!cinematic && "grid grid-cols-2 gap-space-sm")}>
             {!cinematic && <div className="flex flex-col gap-1">
               <span className="font-label-sm text-label-sm text-on-surface-variant">성별</span>
               <Segmented
@@ -451,10 +460,10 @@ export function BirthForm({
               />
             </div>}
             <CityPicker value={city} onChange={setCity} />
-          </div>
+          </div>}
 
           {/* 적은 것을 한 번에 되짚어 준다 — 고치려면 지금이 마지막이다 */}
-          <dl className="flex flex-col gap-1 rounded-lg bg-surface-container-lowest p-space-md font-body-sm text-body-sm">
+          {!cinematic && <dl className="flex flex-col gap-1 rounded-lg bg-surface-container-lowest p-space-md font-body-sm text-body-sm">
             <div className="flex gap-space-sm">
               <dt className="w-16 shrink-0 text-outline">이름</dt>
               <dd className="text-on-surface">{name || "—"}</dd>
@@ -470,13 +479,13 @@ export function BirthForm({
               <dt className="w-16 shrink-0 text-outline">시간</dt>
               <dd className="text-on-surface">{knowsTime ? time || "시각을 입력해 주세요" : "모름"} · {gender === "female" ? "여성" : "남성"}</dd>
             </div>
-          </dl>
+          </dl>}
         </div>
       )}
 
       {error && <p className="font-body-sm text-body-sm text-error">{error}</p>}
 
-      <div className="flex gap-space-sm">
+      <div className={cn("flex gap-space-sm", cinematic && "intake-actions")}>
         {step > 0 ? (
           <button
             type="button"
@@ -500,12 +509,12 @@ export function BirthForm({
             </button>
           )
         )}
-        <button
+        {!(cinematic && step === 2) && <button
           type="submit"
           className="flex-[2] rounded-xl bg-on-surface py-3 font-label-md text-label-md text-surface transition-transform active:scale-[0.98]"
         >
           {step < lastStep ? "다음" : submitLabel}
-        </button>
+        </button>}
       </div>
     </form>
   );

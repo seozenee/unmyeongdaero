@@ -1,5 +1,6 @@
 import type { PreviewContext, PreviewReading } from "./preview";
 import { buildRecognitionHook } from "./conversion";
+import { plain } from "../story/sanitize";
 
 type Pair = readonly [string, string];
 type Voice = (polite: string, blunt: string) => string;
@@ -80,6 +81,9 @@ const PAST: Record<string, { title: string; scene: Pair; check: Pair }> = {
 
 export function writeInstantPreview(context: PreviewContext): PreviewReading {
   const v = say(context);
+  const speak = (text: string) => context.speech === "반말"
+    ? text.replaceAll("이에요", "이야").replaceAll("예요", "야").replaceAll("해요", "해").replaceAll("어요", "어").replaceAll("아요", "아").replaceAll("여요", "여")
+    : text;
   const drive = DRIVE[context.basis.prominent?.term ?? ""] ?? DRIVE.인성!;
   const innerTerm = context.basis.placements.find(p => p.position === "태어난 날의 아랫글자")?.term ?? "";
   const outerTerm = context.basis.placements.find(p => p.position === "태어난 달의 아랫글자")?.term ?? "";
@@ -108,6 +112,16 @@ export function writeInstantPreview(context: PreviewContext): PreviewReading {
     work.title = workContext[occupation]!.title;
     work.body[0] = `${v(...workContext[occupation]!.scene)} ${outer ? v(...outer) : ""}`;
   }
+  const aptitude = context.focus && !context.minor && !context.child
+    ? context.slug === "business" || context.category === "wealth" ? context.focus.business : context.focus.expression
+    : undefined;
+  if (aptitude) {
+    work.title = context.slug === "business" || context.category === "wealth" ? "사업을 한다면 어떤 방식이 맞을까" : "말과 표현에서 살아나는 강점";
+    work.lead = speak(aptitude.lead);
+    const knownContext = occupation && workContext[occupation] ? v(...workContext[occupation]!.scene) : "";
+    work.body = [[knownContext, speak(aptitude.reason)].filter(Boolean).join(" "), speak(aptitude.caution)];
+    work.evidenceIds = evidence(context.slug === "business" || context.category === "wealth" ? ["business", "wealth"] : ["expression", "outside"]);
+  }
   const money = block("돈에서 놓치기 쉬운 선택", ["버는 방법만큼, 약속과 지출의 기준이 중요해요.", "버는 방법만큼 약속과 지출의 기준이 중요해."], ["스스로 정한 목표를 지키는 성향과 결과를 빨리 확인하고 싶은 마음을 함께 봐요. 돈이 반드시 들어온다는 뜻이 아니라, 어떤 선택에서 서두르거나 오래 붙들기 쉬운지를 읽는 부분이에요.", "네 목표를 지키는 성향과 결과를 빨리 보고 싶은 마음을 같이 봐. 돈이 반드시 들어온다는 게 아니라, 어떤 선택에서 서두르거나 오래 붙드는지를 읽는 거야."], ["wealth", "strength"]);
   const health = block("일상에서 무리가 쌓이는 방식", ["병명을 정하기보다, 무리할 때의 생활부터 살펴봐요.", "병명을 정하는 게 아니라, 네가 무리할 때 생활부터 보는 거야."], ["쉬어도 해야 할 일이 계속 떠오르는지, 계획이 깨지면 식사나 잠부터 밀리는지처럼 실제 습관을 함께 봐야 해요. 사주만으로 아픈 곳을 정하지 않고, 부담을 줄일 생활의 순서를 찾아요.", "쉬어도 할 일이 떠오르는지, 계획이 깨지면 밥이나 잠부터 미루는지 실제 습관을 봐야 해. 사주만으로 아픈 곳을 정하는 게 아니라 부담을 줄일 순서를 찾는 거야."], ["balance", "character"]);
   const years = block("지금부터 살펴볼 시간", ["같은 성향도 시기에 따라 쓰는 방법이 달라져요.", "같은 성향도 때에 따라 쓰는 방법이 달라져."], ["현재의 계획과 앞으로의 달을 함께 놓고 살펴봐요. 새로 시도할 때와 이미 벌인 일을 정리할 때를 나누면, 무작정 기다리는 대신 준비할 일을 정할 수 있어요.", "네 계획과 앞으로의 달을 같이 놓고 봐. 새로 해 볼 때와 벌인 일을 정리할 때를 나누면 무작정 기다리는 대신 준비할 걸 정할 수 있어."], ["balance", "outside"]);
@@ -122,7 +136,7 @@ export function writeInstantPreview(context: PreviewContext): PreviewReading {
   return {
     headline: hook.question, intro: hook.scene,
     personality: { title: v("남들이 보는 나와, 가까운 사람이 아는 나", "남들이 보는 너와, 가까운 사람이 아는 너"), lead: v(...drive.lead),
-      body: [`${v(...drive.scene)} ${outer ? v(...outer) : ""}`, `${inner ? v(...inner) : ""} ${v(...drive.burden)} ${v(...drive.reason)}`, v(...drive.reason), v("이 성향이 실제로 어느 상황에서 드러나는지 떠올리며 읽어 보세요.", "이 성향이 실제로 어느 상황에서 나오는지 떠올리면서 읽어 봐.")], evidenceIds: evidence(["character", "inside", "outside"]) },
+      body: [`${v(...drive.scene)} ${outer ? v(...outer) : ""}`, `${inner ? v(...inner) : ""} ${v(...drive.burden)}`, v(...drive.reason)], evidenceIds: evidence(["character", "inside", "outside"]) },
     past: context.past.map(item => {
       const copy = PAST[item.theme] ?? PAST.정인!;
       const young = context.minor || context.child;
@@ -131,7 +145,8 @@ export function writeInstantPreview(context: PreviewContext): PreviewReading {
         : v(...copy.scene);
       const check = young && (item.theme === "정재" || item.theme === "편재")
         ? v("그해에 배우는 활동이나 연습하는 순서를 바꾼 일이 있었나요?", "그해에 배우는 활동이나 연습 순서를 바꾼 일이 있었어?") : v(...copy.check);
-      return { year: item.year, title: copy.title, body: [`${item.year}년, ${item.age}살 무렵. ${scene}`, v("지금의 성격을 그대로 과거에 붙이지 않고, 그해의 변화와 태어난 때의 성향을 함께 읽은 대목이에요.", "지금의 성격을 과거에 그대로 붙인 게 아니라, 그해 변화와 태어난 때의 성향을 같이 읽은 대목이야.")], check };
+      const reason = item.reasons[0] ? plain(item.reasons[0]) : plain(item.interpretation);
+      return { year: item.year, title: copy.title, body: [`${item.year}년, ${item.age}살 무렵. ${scene}`, `${v("그해 글자와 태어난 자리의 관계를 보면,", "그해 글자와 태어난 자리의 관계를 보면,")} ${reason.replace(/[.。]$/, "")}.`], check };
     }),
     areas, outlook: { title: "앞으로 살펴볼 시기", body: [v("지금 하려는 일을 언제 시작하고 언제 다시 살펴보면 좋을지 이어서 읽어요.", "지금 하려는 일을 언제 시작하고 언제 다시 살펴볼지 이어서 읽어."), v("구체적인 준비와 선택 기준은 전체 풀이에 담아요.", "구체적인 준비와 선택 기준은 전체 풀이에 담을게.")] },
     closing: v("내 성향이 어떤 선택으로 이어지는지, 전체 풀이에서 더 자세히 살펴볼 수 있어요.", "네 성향이 어떤 선택으로 이어지는지, 전체 풀이에서 더 자세히 볼 수 있어."),

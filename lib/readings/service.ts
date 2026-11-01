@@ -14,11 +14,13 @@ import { getReport, type ReportProduct } from "@/lib/reports/catalog";
 import { buildManseTopics } from "@/lib/manse";
 import { SazuApiError } from "@/lib/sazu/errors";
 import { buildReportSystemPrompt, buildReportUserPrompt } from "@/lib/story/prompts";
-import { isCompleteReport, storyReportSchema, type StoryReport } from "@/lib/story/report";
+import { isCompleteReport, type StoryReport } from "@/lib/story/report";
 import { auditReport, softenDeep } from "@/lib/story/sanitize";
 import { buildTemplateReport } from "@/lib/story/report-template";
 import { assertReportContent } from "@/lib/story/quality";
 import { generateOpenAiReport } from "@/lib/story/generate-openai";
+import { generationSchema, resolveGeneratedReport } from "@/lib/story/generation-schema";
+import { withCalculatedPeopleTiming } from "@/lib/story/report-timing";
 import { hasLive, startLive, streamLive } from "./live";
 import { notifyReading } from "./notify";
 import { readingDraftSchema, validateDraftForReport } from "./schema";
@@ -147,7 +149,7 @@ export async function getOwnedPurchasedReading(user: AppUser, readingId: string)
 
 // 검수를 포함한 생성 중 다른 인스턴스에서 같은 결제를 다시 생성하지 않도록 실행 한도보다 길게 둔다.
 const STALE_GENERATION_MS = 6 * 60 * 1000;
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 
 /**
  * 제미나이로 보고서를 쓴다.
@@ -160,10 +162,8 @@ async function generateWithOpenAi(
   report: ReportProduct,
   reading: Reading,
   sazu: StoredSazu,
-  onDelta: (delta: string) => void,
 ): Promise<StoryReport> {
   const result = await generateOpenAiReport(report, reading, sazu, today());
-  onDelta(JSON.stringify(result));
   return result;
 }
 
@@ -171,24 +171,21 @@ async function generateWithGemini(
   report: ReportProduct,
   reading: Reading,
   sazu: StoredSazu,
-  onDelta: (delta: string) => void,
 ): Promise<StoryReport> {
   const result = await callGemini({
     input: `${buildReportSystemPrompt(report)}\n\n---\n\n${buildReportUserPrompt(report, reading, sazu, today())}`,
-    schema: z.toJSONSchema(storyReportSchema) as Record<string, unknown>,
+    schema: z.toJSONSchema(generationSchema(report)) as Record<string, unknown>,
   });
 
   const text = geminiText(result);
   if (!text) throw new Error("[gemini] 빈 응답");
-  onDelta(text);
-  return softenDeep(storyReportSchema.parse(JSON.parse(text)));
+  return softenDeep(resolveGeneratedReport(JSON.parse(text), report));
 }
 
 async function generateWithClaude(
   report: ReportProduct,
   reading: Reading,
   sazu: StoredSazu,
-  onDelta: (delta: string) => void,
 ): Promise<StoryReport> {
   const stream = getAnthropic().beta.messages.stream({
     ...claudeBaseParams(),
@@ -206,27 +203,17 @@ async function generateWithClaude(
     // 아무것도 흐르지 않는다. 돈을 내고 빈 화면을 2분 30초 보는 것이다. medium 은 2초
     // 만에 글이 흐르기 시작한다. 같은 글을 같은 짜임으로 주면서, 넷 중 셋의 시간을
     // 돌려준다.
-    output_config: { effort: "medium", format: zodOutputFormat(storyReportSchema) },
+    output_config: { effort: "medium", format: zodOutputFormat(generationSchema(report)) },
     system: [{ type: "text", text: buildReportSystemPrompt(report), cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: buildReportUserPrompt(report, reading, sazu, today()) }],
   });
-  stream.on("text", onDelta);
 
   const message = await stream.finalMessage();
   if (message.stop_reason === "refusal") throw new Error("[claude] 요청이 거절되었습니다.");
   if (message.stop_reason === "max_tokens") throw new Error("[claude] 출력이 max_tokens 에서 잘렸습니다.");
   // 프롬프트로도 금지하지만 모델이 내부 점수("신강 79점")나 겁주는 표현을 흘릴 수 있어 코드로 한 번 더 막는다
-  const report_ = softenDeep(storyReportSchema.parse(JSON.parse(finalText(message.content))));
+  const report_ = softenDeep(resolveGeneratedReport(JSON.parse(finalText(message.content)), report));
   return report_;
-}
-
-/** AI 미설정 개발 모드: 보고서 JSON 을 조금씩 흘려 스트리밍 경험을 그대로 재현한다 */
-async function streamJsonSlowly(value: unknown, onDelta: (delta: string) => void) {
-  const json = JSON.stringify(value);
-  for (let index = 0; index < json.length; index += 24) {
-    onDelta(json.slice(index, index + 24));
-    await new Promise((resolve) => setTimeout(resolve, 16));
-  }
 }
 
 async function runGeneration(reading: Reading, report: ReportProduct, live: ReturnType<typeof startLive>) {
@@ -235,7 +222,7 @@ async function runGeneration(reading: Reading, report: ReportProduct, live: Retu
   void notifyReading(reading, report, "reading-started");
   try {
     let sazu: StoredSazu = reading.sazu ?? {};
-    if (report.topics.some((topic) => !sazu[topic]) || !sazu.manse) {
+    if (report.topics.some((topic) => !sazu[topic]) || !sazu.manse?.modules.readingFocus) {
       // 초안 때 저장해 둔 건 manse 한 토픽뿐이다. 나머지는 여기서 마저 계산한다.
       sazu = { ...sazu, ...buildManseTopics(report.topics, reading.subject, reading.partner) };
       await repo.updateReading(reading.id, { sazu });
@@ -243,16 +230,16 @@ async function runGeneration(reading: Reading, report: ReportProduct, live: Retu
 
     let result: StoryReport;
     if (modes.ai() === "openai") {
-      result = await generateWithOpenAi(report, reading, sazu, live.push);
+      result = await generateWithOpenAi(report, reading, sazu);
     } else if (modes.ai() === "gemini") {
-      result = await generateWithGemini(report, reading, sazu, live.push);
+      result = await generateWithGemini(report, reading, sazu);
     } else if (modes.ai() === "anthropic") {
-      result = await generateWithClaude(report, reading, sazu, live.push);
+      result = await generateWithClaude(report, reading, sazu);
     } else {
       result = buildTemplateReport(report, reading, sazu);
-      await streamJsonSlowly(result, live.push);
     }
 
+    result = withCalculatedPeopleTiming(result, report, sazu, reading.answers.detail ?? "", today());
     // 모든 제공자와 개발용 생성기에 같은 기준을 적용한다. JSON 검증만으로는 빈 보고서를 막지 못한다.
     assertReportContent(result, report);
     auditReport(result, report.slug);
@@ -263,6 +250,8 @@ async function runGeneration(reading: Reading, report: ReportProduct, live: Retu
       error: null,
       generatedAt,
     });
+    // 모델 내부 ID나 검수 전 문장은 브라우저에 흘리지 않는다. 저장된 완성본만 전달한다.
+    live.push(JSON.stringify(result));
     live.succeed();
 
     // PDF 를 굽고 카톡으로 알린다. 화면을 이미 닫은 사람도 결과를 받게 하는 것이 목적이므로,
@@ -271,7 +260,8 @@ async function runGeneration(reading: Reading, report: ReportProduct, live: Retu
     // 굽는 일을 알림 안에 두지 않고 여기서 먼저 한다. 알림은 번호를 남긴 사람에게만 가는데,
     // 번호를 남기지 않았다고 해서 보관본이 없어야 할 이유는 없다. 그 사람도 나중에
     // 내려받기를 누르면 조판이 끝나기를 기다려야 했다.
-    const finished = { ...reading, script: result, generatedAt };
+    // 생성 중에 등록한 알림 번호와 계산 자료도 완성 알림·PDF에 반영한다.
+    const finished = await repo.getReading(reading.id) ?? { ...reading, script: result, generatedAt };
     await ensureReadingPdf(finished).catch((error) =>
       console.error(`[reading ${reading.id}] PDF 보관 실패`, error),
     );

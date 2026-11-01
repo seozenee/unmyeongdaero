@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ChartBoard, dayPillarNickname } from "@/components/saju/ChartBoard";
-import { BirthForm } from "@/components/story/BirthForm";
 import { LockBadge } from "@/components/story/VeiledText";
 import { Icon } from "@/components/ui/Icon";
 import type { BirthProfile } from "@/lib/db/types";
@@ -24,34 +23,23 @@ import type { ReportProduct } from "@/lib/reports/catalog";
  * 가린 값은 서버에 남는다. 화면에서만 가리면 개발자 도구를 연 사람에게는 공짜로
  * 보인다 — 가린 척이 되는 것이다.
  */
-export function ProductTease({ report }: { report: ReportProduct }) {
+export function ProductTease({ report, onStart }: { report: ReportProduct; onStart: () => void }) {
   const [chart, setChart] = useState<HomeChart | null>(null);
-  const [asking, setAsking] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState(false);
   // 서버에서 받아 오기 전까지는 자리를 비워 둔다. 저장된 생일이 없는 사람에게
   // 판이 깜빡 나타났다 사라지면 화면이 흔들린다
   const [ready, setReady] = useState(false);
 
   const load = useCallback(async (birth: BirthProfile) => {
-    setBusy(true);
-    setFailed(false);
     try {
       const response = await fetch("/api/manse/chart", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(birth),
       });
-      if (!response.ok) {
-        setFailed(true);
-        return;
-      }
+      if (!response.ok) return;
       setChart((await response.json()) as HomeChart);
-      setAsking(false);
     } catch {
-      setFailed(true);
-    } finally {
-      setBusy(false);
+      // 저장된 프로필을 불러오지 못해도 같은 입력 버튼으로 시작할 수 있다.
     }
   }, []);
 
@@ -64,12 +52,11 @@ export function ProductTease({ report }: { report: ReportProduct }) {
   if (!ready) return null;
 
   if (!chart) {
-    if (!asking) {
       return (
         <section className="mt-space-xl">
           <button
             type="button"
-            onClick={() => setAsking(true)}
+            onClick={onStart}
             className="flex w-full items-center gap-space-md rounded-3xl border border-[rgb(var(--accent)/0.4)] bg-surface-container-low p-space-lg text-left transition-colors hover:bg-surface-container"
           >
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[rgb(var(--accent)/0.18)] text-[1.4rem] font-extrabold text-[rgb(var(--accent))]">
@@ -80,31 +67,13 @@ export function ProductTease({ report }: { report: ReportProduct }) {
                 내 여덟 글자부터 펼쳐 볼까요
               </span>
               <span className="font-body-sm text-body-sm leading-snug text-on-surface-variant">
-                생년월일만 적으면 바로 나와요. 돈은 들지 않아요.
+                이름부터 하나씩 알려 주세요. 먼저 읽는 건 무료예요.
               </span>
             </span>
             <Icon name="chevron_right" className="shrink-0 text-[20px] text-outline" />
           </button>
         </section>
       );
-    }
-
-    return (
-      <section className="mt-space-xl flex flex-col gap-space-sm">
-        {failed && (
-          <p className="rounded-xl bg-error-container/30 p-space-sm font-body-sm text-body-sm text-on-surface">
-            글자를 펼치지 못했어요. 적으신 날짜를 다시 확인해 주세요.
-          </p>
-        )}
-        <BirthForm
-          title="내 여덟 글자 펼치기"
-          submitLabel={busy ? "펼치는 중…" : "무료로 펼쳐 보기"}
-          onSubmit={load}
-          onSkip={() => setAsking(false)}
-          remember
-        />
-      </section>
-    );
   }
 
   const nickname = dayPillarNickname(chart);
@@ -124,10 +93,7 @@ export function ProductTease({ report }: { report: ReportProduct }) {
         </div>
         <button
           type="button"
-          onClick={() => {
-            setChart(null);
-            setAsking(true);
-          }}
+          onClick={onStart}
           className="shrink-0 rounded-full px-2.5 py-1 font-label-sm text-label-sm text-outline transition-colors hover:text-on-surface"
         >
           고치기

@@ -9,6 +9,8 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { renderReportPdf, reportPdfFilename } from "./render";
 
 const BUCKET = "reports";
+export const PDF_LAYOUT_VERSION = "v2";
+const currentLayout = (path: string | null | undefined) => Boolean(path?.endsWith(`.${PDF_LAYOUT_VERSION}.pdf`));
 
 /**
  * 구운 PDF 를 스토리지에 올리고, 카톡 버튼이 열 짧은 주소를 만든다.
@@ -20,7 +22,7 @@ const BUCKET = "reports";
  */
 export async function ensureReadingPdf(reading: Reading): Promise<{ token: string; path: string } | null> {
   if (!isCompleteReport(reading.script)) return null;
-  if (reading.pdfToken && reading.pdfPath) return { token: reading.pdfToken, path: reading.pdfPath };
+  if (reading.pdfToken && reading.pdfPath && currentLayout(reading.pdfPath)) return { token: reading.pdfToken, path: reading.pdfPath };
 
   const report = getReport(reading.reportSlug);
   if (!report || report.kind !== "report") return null;
@@ -29,7 +31,7 @@ export async function ensureReadingPdf(reading: Reading): Promise<{ token: strin
   // 부르는 길이 있어서다. 저장된 행을 한 번 더 보고 이미 구워져 있으면 그대로 쓴다 —
   // 그러지 않으면 같은 풀이를 두 번 굽고, 카톡에 넣은 코드가 두 번째 것으로 바뀐다.
   const current = await getRepository().getReading(reading.id);
-  if (current?.pdfToken && current.pdfPath) return { token: current.pdfToken, path: current.pdfPath };
+  if (current?.pdfToken && current.pdfPath && currentLayout(current.pdfPath)) return { token: current.pdfToken, path: current.pdfPath };
 
   // 로컬 개발(스토리지 없음)에서는 굽지 않는다. 알림도 어차피 모의 발송이다.
   if (modes.data() !== "supabase") {
@@ -45,13 +47,14 @@ export async function ensureReadingPdf(reading: Reading): Promise<{ token: strin
     issuedAt: reading.generatedAt ? new Date(reading.generatedAt) : undefined,
   });
 
-  const path = `${reading.userId}/${reading.id}.pdf`;
+  const path = `${reading.userId}/${reading.id}.${PDF_LAYOUT_VERSION}.pdf`;
   const { error } = await getSupabaseAdmin()
     .storage.from(BUCKET)
     .upload(path, pdf, { contentType: "application/pdf", upsert: true });
   if (error) throw new Error(`[pdf] 업로드 실패: ${error.message}`);
 
-  const token = randomBytes(24).toString("base64url");
+  // 이미 카카오톡으로 보낸 링크도 계속 열리도록 기존 공유 코드를 유지한다.
+  const token = current?.pdfToken ?? reading.pdfToken ?? randomBytes(24).toString("base64url");
   await getRepository().updateReading(reading.id, {
     pdfPath: path,
     pdfToken: token,

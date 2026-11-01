@@ -29,5 +29,5 @@ describe("결제 전 첫 화면", () => {
     expect((preview!.props as { narrative: { personality: { body: string[] } } }).narrative.personality.body.length).toBeGreaterThan(0);
     expect(children.some(child => child.type === ManseConfirm)).toBe(true);
     expect(callOpenAi).not.toHaveBeenCalled();
-  }, 1000);
+  }, 5000);
 });

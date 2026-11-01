@@ -74,4 +74,5 @@ export async function notifyReading(reading: Reading, report: ReportProduct, kin
   if (result.sent) {
     await getRepository().updateReading(reading.id, { notifiedKind: kind }).catch(() => undefined);
   }
+  return result;
 }

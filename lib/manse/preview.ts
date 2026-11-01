@@ -9,6 +9,7 @@ import { writeInstantPreview } from "./preview-copy";
 import { intakeContext } from "../story/intake";
 import { computePastYears } from "./past";
 import { buildReadingTeaser } from "./teaser";
+import type { ReadingFocus } from "./reading-focus";
 
 const blockSchema = z.object({
   title: z.string().min(1), lead: z.string().min(1),
@@ -40,6 +41,7 @@ export function buildPreviewContext(modules: SazuModules, profile: BirthProfile,
   const yong = obj(modules.yongsin);
   const wealth = obj(modules.wealth);
   const romance = obj(modules.romance);
+  const focus = modules.readingFocus as ReadingFocus | undefined;
   const facts: PreviewEvidence[] = [
     { id: "character", label: "타고난 기질과 힘의 쓰임", note: [text(character.바탕), text(character.힘)].filter(Boolean).join(" ") },
     { id: "inside", label: "가까운 사이에서의 반응", note: text(character.안에서) },
@@ -49,6 +51,8 @@ export function buildPreviewContext(modules: SazuModules, profile: BirthProfile,
     { id: "balance", label: "부담을 줄이는 방향", note: [text(yong.reasoning), text(yong.usage)].filter(Boolean).join(" ") },
     { id: "wealth", label: "일과 돈을 다루는 기준", note: text(obj(wealth.natalWealth).note) },
     { id: "romance", label: "가까워지는 방식", note: text(obj(romance.partnerStar).note) || text(character.안에서) },
+    { id: "business", label: "만들고 거래하는 자리의 조합", note: focus?.business.basis.join(" · ") ?? "" },
+    { id: "expression", label: "이해와 표현을 읽는 자리", note: focus?.expression.basis.join(" · ") ?? "" },
   ].filter(fact => fact.note).map(fact => ({ ...fact, note: plain(fact.note) }));
   const pillars = computeFourPillars({ year: profile.birthYear, month: profile.birthMonth, day: profile.birthDay,
     hour: profile.birthHour, minute: profile.birthMinute, isLunar: profile.isLunar, isLeapMonth: profile.isLeapMonth, city: profile.birthCity });
@@ -67,7 +71,7 @@ export function buildPreviewContext(modules: SazuModules, profile: BirthProfile,
     unknownHour: profile.birthHour === null, concern, lifeContext: intakeContext(answers), facts, past, basis: buildManseExplanation(modules),
     months: teaser.months.slice(0, 6).map(month => ({ period: month.label, tone: month.tone, note: plain(month.note) })),
     character: { inside: text(character.안에서), outside: text(character.밖에서) },
-    topics: product.chapters,
+    topics: product.chapters, focus,
   };
 }
 export type PreviewContext = ReturnType<typeof buildPreviewContext>;

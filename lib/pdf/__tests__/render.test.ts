@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { buildManseTopics } from "@/lib/manse";
 import { renderReportPdf, reportPdfFilename } from "@/lib/pdf/render";
@@ -10,7 +10,11 @@ const product = getReport("life")!;
 describe("보고서 PDF", () => {
   it("실제 명식과 보고서로 PDF 한 벌이 나온다", async () => {
     const sazu = buildManseTopics(product.topics, SAMPLE_SUBJECT, null);
-    const buffer = await renderReportPdf({ product, report: SAMPLE_REPORT, subject: SAMPLE_SUBJECT, sazu });
+    // 고객이 보고한 조판 문제는 비공개 로컬 입력으로도 재현한다. 해당 데이터는 저장소에 넣지 않는다.
+    const source = process.env.PDF_PREVIEW_SOURCE ? JSON.parse(readFileSync(process.env.PDF_PREVIEW_SOURCE, "utf8")) : null;
+    const buffer = await renderReportPdf(source ? { product: getReport(source.report_slug)!, report: source.script,
+      subject: source.subject, sazu: source.sazu, issuedAt: new Date(source.generated_at) }
+      : { product, report: SAMPLE_REPORT, subject: SAMPLE_SUBJECT, sazu });
 
     expect(buffer.subarray(0, 5).toString()).toBe("%PDF-");
     // 표지 + 명식·결론 + 본문 + 시기·실천, 본문이 넘치면 더 늘어난다

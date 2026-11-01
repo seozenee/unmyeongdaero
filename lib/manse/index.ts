@@ -15,6 +15,7 @@ import { computeFourPillars, type PillarsResult } from "./pillars";
 import { readCharacter } from "./character";
 import { readHealth } from "./health";
 import { readRomance } from "./romance";
+import { buildReadingFocus } from "./reading-focus";
 import { readWealth } from "./wealth";
 import { computePastYears } from "./past";
 import { buildLifeTimeline } from "./life";
@@ -154,7 +155,7 @@ export function computeManse(profile: BirthProfile, now = new Date()) {
   const romance = readRomance(
     pillars,
     profile.isFemale,
-    years.map((item) => ({ year: item.year, age: item.year - profile.birthYear + 1, ganji: item.full })),
+    years.map((item) => ({ year: item.year, age: item.year - profile.birthYear + 1, ganji: item.full })).filter(item => item.age >= 20),
   );
 
   const life = buildLifeTimeline({
@@ -258,6 +259,7 @@ export function computeManse(profile: BirthProfile, now = new Date()) {
       wealth,
       healthBalance: health,
       romance,
+      readingFocus: buildReadingFocus({ pillars, strength: strength.strength, isFemale: profile.isFemale, birthYear: profile.birthYear, years, months: luck.weolun.upcomingWeoluns }),
       seun: luck.seun,
       weolun: luck.weolun,
       dailyInteraction: {

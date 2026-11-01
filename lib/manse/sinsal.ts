@@ -67,6 +67,11 @@ const CHEONEUL: Record<Stem, readonly Branch[]> = {
   신: ["인", "오"],
 };
 
+/** 원국과 들어오는 운 모두 같은 귀인 표를 사용한다. */
+export function cheoneulBranches(dayStem: Stem): readonly Branch[] {
+  return CHEONEUL[dayStem];
+}
+
 /** 문창귀인 — 일간이 생하는 오행의 왕지 */
 const MUNCHANG: Record<Stem, Branch> = {
   갑: "사", 을: "오", 병: "신", 정: "유", 무: "신",
