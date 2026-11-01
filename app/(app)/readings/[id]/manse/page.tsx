@@ -8,17 +8,19 @@ import { ReadingWebtoon } from "@/components/manse/ReadingWebtoon";
 import { buildManseTopics } from "@/lib/manse";
 import { getGuide } from "@/lib/story/guides";
 import { buildReadingTeaser } from "@/lib/manse/teaser";
-import { teaserFacts, writeTeaserScenes } from "@/lib/manse/teaser-ai";
+import { buildPreviewContext } from "@/lib/manse/preview";
+import { loadPreviewReading } from "@/lib/manse/preview-ai";
 import { Icon } from "@/components/ui/Icon";
 import { getCurrentUser, loginUrl } from "@/lib/auth/session";
 import { getRepository } from "@/lib/db";
 import { GLOSSARY } from "@/lib/manse/glossary";
 import { loadReport } from "@/lib/reports/store";
-import { findCurrentDecadeIndex, internationalAge, parseDecadeFortune, parseElementCounts, parseFourPillars } from "@/lib/saju/modules";
+import { findCurrentDecadeIndex, internationalAge, parseDecadeFortune, parseElementCounts, parseFourPillars, resolveCurrentAge } from "@/lib/saju/modules";
 import { mergedModules } from "@/lib/sazu/readings";
 import { describeBirth } from "@/lib/story/format";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 export const metadata: Metadata = { title: "만세력 확인", robots: { index: false } };
 
 type Json = unknown;
@@ -32,7 +34,7 @@ const str = (value: Json) => (typeof value === "string" && value.trim() ? value.
 /**
  * 결제 전에 계산된 만세력만 보여 주는 화면.
  *
- * 여기에는 해석이 없다. 사주가 이렇게 나왔다는 사실만 보여 주고, 그 뜻은 결제 뒤에 읽는다.
+ * 계산된 원국과 개인 풀이 미리보기를 함께 보여 준다.
  * 사는 사람 입장에서는 "내 정보가 제대로 들어갔는지" 확인하는 자리이기도 하다 —
  * 생년월일을 잘못 넣고 결제까지 가 버리는 일을 막는다.
  */
@@ -57,7 +59,9 @@ export default async function MansePage({
   // 이미 산 사람도 여기 머물 수 있다. 전에는 결과 화면으로 돌려보냈는데, 그러면 다시
   // 사려는 사람이 명식 확인에서 막혔다(lib/payments/service.ts 에 같은 이야기를 적어 두었다).
 
-  const modules = mergedModules(reading.sazu ?? {});
+  // 원국과 미리보기는 같은 기준일의 계산을 쓴다. 저장된 초안이 오래되어도 과거·현재가 뒤섞이지 않는다.
+  const now = new Date();
+  const modules = mergedModules(buildManseTopics(["today"], reading.subject, reading.partner, now));
   const pillars = parseFourPillars(modules);
   const counts = parseElementCounts(modules);
   const decadeData = parseDecadeFortune(modules);
@@ -96,36 +100,9 @@ export default async function MansePage({
     .filter((name): name is string => Boolean(name));
   if (sinsal.length > 0) facts.push({ label: "신살", value: sinsal.join(", "), hint: GLOSSARY.신살 });
 
-  // 돈을 받기 전에 읽힐 거리를 명식에서 뽑는다. 전부 계산 결과이고, 우리가 세지 않는
-  // 숫자(매력 점수 같은 것)는 만들지 않는다.
-  // 결제 전 화면에는 "문이 열리는 달"이 들어간다. 그런데 초안에는 manse 한 토픽만
-  // 저장돼 있어 월운이 없다 — 가장 끌어당겨야 할 자리가 늘 비어 있었다.
-  //
-  // 월운은 생년월일만 있으면 바로 셈할 수 있는 값이다(AI 도, 저장소도 거치지 않는다).
-  // 없으면 여기서 그 자리에서 만들어 쓴다.
-  const teaserModules = reading.sazu?.today
-    ? modules
-    : mergedModules({ ...(reading.sazu ?? {}), ...buildManseTopics(["today"], reading.subject, reading.partner) });
-  const teaser = buildReadingTeaser(teaserModules, reading.subject.name);
-
-  /**
-   * 맞혀 보이는 장면은 화면을 그리기 전에 미리 받아 둔다.
-   *
-   * 한동안 화면을 먼저 띄우고 글은 뒤에서 받아 바꿔 끼웠다. 그러면 손님이 먼저 보는
-   * 것은 빈 칸이고, 글은 다 읽고 내려간 뒤에 들어찬다 — 가장 먼저 읽혀야 할 자리가
-   * 가장 늦게 도착하는 셈이다.
-   *
-   * 여기서 기다린다. 그동안 손님은 loading.tsx 의 대기 화면을 본다. 2~7초 뒤에 화면이
-   * 뜰 때는 이미 다 적혀 있다.
-   *
-   * 못 받으면 이 칸은 비운다. 아래 「문이 열리는 때」와 잠긴 칸은 그대로 있다 —
-   * 지어낸 말로 채우느니 비워 두는 편이 낫다.
-   */
-  // 아이 사주를 보는 사람은 아이가 아니라 부모다. 당사자에게 말하듯 쓰면 읽다가 어긋난다.
-  const childProduct = (report.roles?.subject ?? "self") === "child";
-  const scenes = await writeTeaserScenes(teaserFacts(teaserModules, reading.subject.name, report.category), {
-    voice: childProduct ? "parent-of-child" : "self",
-  });
+  const teaser = buildReadingTeaser(modules, reading.subject.name);
+  const context = buildPreviewContext(modules, reading.subject, report, now, reading.answers.detail ?? "");
+  const narrative = await loadPreviewReading(context);
   const guide = getGuide(report.guide);
 
   // 계산 기준을 사람이 읽을 문장으로 옮긴다. 진태양시 보정처럼 "왜 이 글자가 나왔는지"를
@@ -162,9 +139,10 @@ export default async function MansePage({
         </p>
       )}
 
-      <ReadingWebtoon teaser={teaser} name={reading.subject.name} guide={guide} poster={getPoster(report.slug, report.guide)} scenes={scenes} chapters={report.chapters} />
-
-      <ManseSheet
+      <ReadingWebtoon teaser={teaser} name={reading.subject.name} guide={guide}
+        poster={getPoster(report.slug, report.guide)} narrative={narrative} context={context}
+        chapters={report.chapters} productTitle={report.title} chart={
+<ManseSheet
         name={reading.subject.name}
         birthLine={`${describeBirth(reading.subject)} · 만 ${age}세`}
         entered={[
@@ -202,7 +180,9 @@ export default async function MansePage({
           decadeData
             ? {
                 items: decadeData.items,
-                currentIndex: findCurrentDecadeIndex(decadeData.items, age),
+                currentIndex: findCurrentDecadeIndex(decadeData.items, resolveCurrentAge(modules,
+                  { year: reading.subject.birthYear, month: reading.subject.birthMonth, day: reading.subject.birthDay },
+                  { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() })),
                 direction: decadeData.direction ?? null,
               }
             : null
@@ -210,6 +190,7 @@ export default async function MansePage({
         facts={facts}
         basis={basis}
       />
+        } />
 
       <ManseConfirm
         readingId={reading.id}

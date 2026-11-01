@@ -23,12 +23,12 @@ export default function ManseLoading() {
 
       <div className="flex flex-col items-center gap-space-xs text-center">
         <p className="font-headline-lg-mobile text-headline-lg-mobile tracking-tight text-on-surface">
-          여덟 글자를 펼치고 있어요
+          지나온 시간부터 짚고 있어요
         </p>
         <p className="font-body-md text-body-md text-on-surface-variant">
           태어난 때의 하늘을 다시 세우고,
           <br />
-          거기서 읽히는 것을 한 줄씩 적는 중이에요.
+          지나온 시간과 지금의 모습을 함께 읽고 있어요.
         </p>
       </div>
 
@@ -42,7 +42,7 @@ export default function ManseLoading() {
         ))}
       </div>
 
-      <p className="font-label-sm text-label-sm text-outline">잠깐이면 돼요 · 아직 결제 전이에요</p>
+      <p className="font-label-sm text-label-sm text-outline">개인 풀이를 정리하는 중이에요 · 아직 결제 전이에요</p>
     </div>
   );
 }

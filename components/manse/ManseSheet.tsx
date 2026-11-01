@@ -44,9 +44,9 @@ export function ManseSheet({ name, birthLine, entered, editHref, pillars, counts
       <Reveal>
         <header className="flex flex-col gap-space-xs">
           <span className="font-label-sm text-label-sm tracking-[0.2em] text-primary">만세력</span>
-          <h1 className="font-headline-lg-mobile text-headline-lg-mobile tracking-tight text-on-surface">
+          <h2 className="font-headline-lg-mobile text-headline-lg-mobile tracking-tight text-on-surface">
             {name}님의 여덟 글자
-          </h1>
+          </h2>
           <p className="font-body-sm text-body-sm text-on-surface-variant">{birthLine}</p>
         </header>
       </Reveal>

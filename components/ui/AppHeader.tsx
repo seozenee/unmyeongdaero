@@ -15,12 +15,13 @@ export async function AppHeader() {
           들어와 있으므로 알려 줄 것이 없고, 두 줄이 되면서 이름이 작아 보였다.
           이름은 한 줄로 크게, 브랜드 색으로 둔다.
         */}
-        <Link href="/" className="flex items-center gap-space-sm">
+        {/* 홈은 문서를 새로 받는다. 클라이언트 이동 시 이전 배포의 RSC 상품명이 재사용될 수 있다. */}
+        <a href="/" className="flex items-center gap-space-sm" aria-label="운명대로 홈">
           <Logo />
           <span className="font-headline-md text-headline-md leading-none tracking-tight text-primary">
             운명대로
           </span>
-        </Link>
+        </a>
         <div className="flex items-center gap-space-sm">
           {/*
             여기 종 모양 버튼이 있었다. 누르면 아무 일도 일어나지 않았다 — 눌러 본

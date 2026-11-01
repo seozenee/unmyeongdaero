@@ -31,8 +31,9 @@ export function BottomNav() {
       <div className="mx-auto flex h-16 max-w-md items-center justify-around px-gutter">
         {NAV_ITEMS.map((item) => {
           const active = isActive(pathname, item.href);
+          const Destination = item.href === "/" ? "a" : Link;
           return (
-            <Link
+            <Destination
               key={item.href}
               href={item.href}
               aria-current={active ? "page" : undefined}
@@ -43,7 +44,7 @@ export function BottomNav() {
             >
               <Icon name={item.icon} className="text-[24px]" />
               <span className="font-label-sm text-label-sm">{item.label}</span>
-            </Link>
+            </Destination>
           );
         })}
       </div>

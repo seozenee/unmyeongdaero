@@ -2,6 +2,7 @@ import type { SazuModules } from "../saju/modules";
 import { ELEMENT_SCENE, MISSING_SCENE, STRENGTH_SCENE } from "./scenes";
 import { FIVE_ELEMENTS, toFiveElement, ELEMENT_LABEL } from "../saju/ganji";
 import { parseElementCounts } from "../saju/modules";
+import { plain } from "../story/sanitize";
 import { currentDecadeFrom } from "./current-decade";
 
 /**
@@ -68,7 +69,7 @@ function monthsFrom(modules: SazuModules): TeaserMonth[] {
     .map((m) => ({
       label: str(m.monthLabel) ?? "",
       ganji: str(m.ganji) ?? "",
-      note: str(m.interpretation) ?? str(at(m, "twelveFortune.phase")) ?? "",
+      note: plain(str(m.interpretation) ?? str(at(m, "twelveFortune.phase")) ?? ""),
       tone: toneOf(m.tone),
     }))
     .filter((m) => m.label);

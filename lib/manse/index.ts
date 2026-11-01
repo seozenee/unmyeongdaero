@@ -16,6 +16,7 @@ import { readCharacter } from "./character";
 import { readHealth } from "./health";
 import { readRomance } from "./romance";
 import { readWealth } from "./wealth";
+import { computePastYears } from "./past";
 import { buildLifeTimeline } from "./life";
 import { computeCrossRelations, computeNatalRelations } from "./relations";
 import { computeSinsal } from "./sinsal";
@@ -253,6 +254,7 @@ export function computeManse(profile: BirthProfile, now = new Date()) {
       // 원국만 던져 주면 "성실하시네요" 로 돌아간다.
       character: readCharacter(pillars, strength.strength),
       lifeTimeline: life,
+      retrospective: computePastYears(pillars, profile.birthYear, now.getFullYear()),
       wealth,
       healthBalance: health,
       romance,

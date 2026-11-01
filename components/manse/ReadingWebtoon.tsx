@@ -10,6 +10,7 @@ import type { WebtoonAsset } from "@/components/webtoon/assets";
 import { cn } from "@/lib/cn";
 import type { ReadingTeaser as Teaser } from "@/lib/manse/teaser";
 import type { Guide } from "@/lib/story/guides";
+import type { PreviewContext, PreviewEvidence, PreviewReading } from "@/lib/manse/preview";
 
 /** 스크롤해 들어올 때 한 번 떠오른다 */
 function Panel({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -78,7 +79,7 @@ function ChapterMark({ no, title }: { no: number; title: string }) {
       <span className="font-label-sm text-label-sm tracking-[0.3em] text-secondary">
         CHAPTER {String(no).padStart(2, "0")}
       </span>
-      <p className="text-[1.4rem] font-bold leading-snug tracking-tight text-on-surface">{title}</p>
+      <h2 className="text-[1.4rem] font-bold leading-snug tracking-tight text-on-surface">{title}</h2>
     </div>
   );
 }
@@ -95,173 +96,111 @@ function Says({ guide, children }: { guide: Guide; children: React.ReactNode }) 
   );
 }
 
-/**
- * 돈을 받기 전에 읽히는 웹툰.
- *
- * 전에는 표와 목록이었다. 맞는 말이 적혀 있어도 읽는 사람 입장에서는 "분석 결과"라,
- * 읽는 게 아니라 확인하게 된다. 확인은 설득하지 않는다.
- *
- * 여기서는 안내자가 말을 건다. 그림 한 칸에 말 한 마디씩, 내려가면서 읽힌다.
- * 하는 말은 전부 계산에서 나온 것이다 — 신강약과 오행 분포가 일상에서 어떤 장면으로
- * 나오는지를 옮긴 것뿐이라, 맞히는 것처럼 보이는 이유는 점이 아니라 분류다.
- *
- * 매력 점수나 상위 몇 퍼센트처럼 우리가 세지 않는 숫자는 쓰지 않는다. 파는 것과
- * 속이는 것은 거기서 갈린다.
- */
-export function ReadingWebtoon({
-  teaser,
-  name,
-  guide,
-  poster,
-  scenes,
-  chapters,
-}: {
-  teaser: Teaser;
-  name: string;
-  guide: Guide;
-  poster: WebtoonAsset | null;
-  /**
-   * 맞혀 보이는 장면. 서버가 화면을 그리기 전에 AI 로 받아 둔 글이다.
-   *
-   * 한동안 표에서 골라 썼다. 신강약 셋 × 넘치는 기운 다섯 × 비는 기운 다섯 = 일흔다섯
-   * 가지뿐이라, 같은 조합인 사람은 토씨 하나까지 같은 글을 봤다. 친구끼리 비교하면 바로
-   * 들킨다 — 맞혀 보이는 자리에서 들키면 그 뒤는 아무 소용이 없다.
-   *
-   * 못 받았으면 null 이고, 그때는 이 칸을 통째로 비운다. 지어낸 말로 채우느니 비워
-   * 두는 편이 낫다.
-   */
-  scenes: string[] | null;
-  /** 잠긴 장의 제목들. 몇 장이 더 있는지 눈으로 보여 주는 데 쓴다 */
-  chapters: readonly string[];
+function Evidence({ ids, facts }: { ids: string[]; facts: PreviewEvidence[] }) {
+  const selected = ids.flatMap(id => facts.filter(fact => fact.id === id));
+  return (
+    <details className="mt-space-md rounded-xl border border-outline-variant/40 bg-surface-container-low px-space-md py-space-sm">
+      <summary className="cursor-pointer font-label-sm text-label-sm text-secondary">이렇게 읽은 근거</summary>
+      <dl className="mt-space-sm flex flex-col gap-space-sm">
+        {selected.map(fact => <div key={fact.id}>
+          <dt className="font-label-sm text-label-sm text-on-surface">{fact.label}</dt>
+          <dd className="mt-1 font-body-sm text-body-sm leading-relaxed text-on-surface-variant">{fact.note}</dd>
+        </div>)}
+      </dl>
+    </details>
+  );
+}
+
+function ReadingBlock({ block, facts }: { block: PreviewReading["personality"]; facts: PreviewEvidence[] }) {
+  return <article className="px-margin py-space-lg">
+    <h3 className="text-[1.4rem] font-bold leading-snug tracking-tight text-on-surface">{block.title}</h3>
+    <p className="mt-space-md text-[1.1rem] font-semibold leading-relaxed text-secondary">{block.lead}</p>
+    <div className="mt-space-md flex flex-col gap-space-md">
+      {block.body.map((paragraph, index) => <p key={index} className="font-body-md text-body-md leading-[1.9] text-on-surface-variant">{paragraph}</p>)}
+    </div>
+    <Evidence ids={block.evidenceIds} facts={facts} />
+  </article>;
+}
+
+/** 원국 → 성격 → 과거 회고 → 분야별 해석 → 앞으로의 준비 순서로 읽는 결제 전 풀이. */
+export function ReadingWebtoon({ teaser, name, guide, poster, narrative, context, chapters, productTitle, chart }: {
+  teaser: Teaser; name: string; guide: Guide; poster: WebtoonAsset | null;
+  narrative: PreviewReading; context: PreviewContext; chapters: readonly string[];
+  productTitle: string; chart: React.ReactNode;
 }) {
+  const areaChapter = narrative.past.length > 0 ? 3 : 2;
   return (
     <section className="-mx-margin flex flex-col">
-      {/* 첫 칸 — 그림이 화면을 채우고 안내자가 말을 건다 */}
       <Panel>
         <div className="relative aspect-[4/5] w-full overflow-hidden">
           {poster && <WebtoonMedia asset={poster} className="absolute inset-0" />}
-          <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black via-black/60 to-transparent" />
-          <div className="absolute inset-x-margin bottom-space-lg flex flex-col gap-space-sm">
-            <span className="font-label-sm text-label-sm tracking-widest text-white/70">방금 계산했어요</span>
-            <h2 className="text-[1.9rem] font-bold leading-tight tracking-tight text-white">{teaser.headline}</h2>
+          <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-black via-black/65 to-transparent" />
+          <div className="absolute inset-x-margin bottom-space-xl flex flex-col gap-space-md">
+            <span className="font-label-sm text-label-sm tracking-widest text-white/70">{productTitle} · {name}님의 풀이</span>
+            <h1 className="text-[2rem] font-bold leading-[1.3] tracking-tight text-white">{narrative.headline}</h1>
+            <p className="font-body-sm text-body-sm leading-relaxed text-white/70">타고난 모습부터 지나온 시간, 앞으로의 선택까지</p>
           </div>
         </div>
       </Panel>
 
-      {/* 맞혀 보이는 칸들 */}
-      {scenes && scenes.length > 0 && (
-        <div className="flex flex-col gap-space-md bg-surface px-margin py-space-xl">
-          <Panel>
-            <Says guide={guide}>{name}님, 여덟 글자를 펼쳐 놓고 보니 짚이는 게 있어요.</Says>
-          </Panel>
+      <Panel className="px-margin py-space-xl"><Says guide={guide}>{narrative.intro}</Says></Panel>
+      <ChapterMark no={1} title="타고난 모습부터 살펴볼게요" />
+      <div className="px-margin py-space-md">{chart}</div>
+      <Panel><ReadingBlock block={narrative.personality} facts={context.facts} /></Panel>
 
-          {scenes.map((scene, index) => (
-            <Panel key={scene} className={index === 0 ? "pt-space-sm" : undefined}>
-              <div className="flex flex-col gap-space-xs rounded-2xl bg-surface-container p-space-lg">
-                <span className="font-body-md text-body-md leading-relaxed text-on-surface">{scene}</span>
-              </div>
-            </Panel>
-          ))}
-
-          <Panel>
-            <Says guide={guide}>맞죠? 저는 {name}님을 만난 적이 없어요. 생년월일만 봤습니다.</Says>
-          </Panel>
+      {narrative.past.length > 0 && <>
+        <ChapterMark no={2} title="지나온 시간에 남은 흔적" />
+        <p className="px-margin pt-space-md font-body-sm text-body-sm leading-relaxed text-outline">지난 해의 운을 따로 계산해 읽었어요. 당시의 경험과 나란히 놓고 살펴보세요.</p>
+        <div className="flex flex-col gap-space-lg px-margin py-space-lg">
+          {narrative.past.map(item => {
+            const source = context.past.find(past => past.year === item.year)!;
+            return <Panel key={item.year}>
+              <article className="rounded-2xl border border-secondary/20 bg-surface-container-low p-space-lg">
+                <p className="font-label-sm text-label-sm tracking-widest text-secondary">{item.year}년 · {source.age}살 무렵</p>
+                <h3 className="mt-space-sm text-[1.35rem] font-bold leading-snug tracking-tight text-on-surface">{item.title}</h3>
+                <div className="mt-space-md flex flex-col gap-space-md">
+                  {item.body.map((paragraph, index) => <p key={index} className="font-body-md text-body-md leading-[1.9] text-on-surface-variant">{paragraph}</p>)}
+                </div>
+                <p className="mt-space-lg border-l-2 border-secondary/60 pl-space-md font-body-sm text-body-sm leading-relaxed text-on-surface">{item.check}</p>
+                <details className="mt-space-md font-body-sm text-body-sm text-outline">
+                  <summary className="cursor-pointer">{item.year}년 해석의 근거</summary>
+                  <p className="mt-space-sm leading-relaxed">{source.interpretation}</p>
+                  {source.reasons.slice(0, 2).map((reason, index) => <p key={index} className="mt-space-xs leading-relaxed">{reason}</p>)}
+                </details>
+              </article>
+            </Panel>;
+          })}
         </div>
-      )}
+      </>}
 
-      {/* 열리는 때 */}
-      {teaser.best && (
-        <Panel>
-          <div className="relative overflow-hidden bg-surface-container-low px-margin py-space-xl">
-            <span className="font-label-sm text-label-sm tracking-widest text-outline">문이 열리는 때</span>
-            <p className="mt-space-xs text-[1.75rem] font-bold leading-tight tracking-tight text-on-surface">
-              {teaser.best.label}
-            </p>
-            <p className="mt-space-xs font-body-md text-body-md leading-relaxed text-on-surface-variant">
-              {teaser.best.note}
-            </p>
-          </div>
-        </Panel>
-      )}
+      <ChapterMark no={areaChapter} title="같은 모습이 다른 곳에서도 나타나요" />
+      {narrative.areas.map(block => <Panel key={block.title}><ReadingBlock block={block} facts={context.facts} /></Panel>)}
 
-      {teaser.risk && (
-        <Panel>
-          <div className="flex flex-col gap-space-xs bg-surface px-margin py-space-xl">
-            <span className="flex items-center gap-1.5 font-label-sm text-label-sm tracking-widest text-secondary">
-              <Icon name="warning" className="text-[16px]" />
-              쉬어 갈 때
-            </span>
-            <p className="text-[1.5rem] font-bold leading-tight tracking-tight text-on-surface">{teaser.risk.label}</p>
-            <p className="font-body-md text-body-md leading-relaxed text-on-surface-variant">{teaser.risk.note}</p>
-          </div>
-        </Panel>
-      )}
+      <ChapterMark no={areaChapter + 1} title="앞으로 여섯 달, 준비할 방향" />
+      <div className="flex flex-col gap-space-md px-margin py-space-lg">
+        {narrative.outlook.body.map((paragraph, index) => <p key={index} className="font-body-md text-body-md leading-[1.9] text-on-surface-variant">{paragraph}</p>)}
+        <div className="grid grid-cols-1 gap-space-sm sm:grid-cols-2">
+          {[{ month: teaser.best, title: "작게 시도해 볼 때" }, { month: teaser.risk, title: "부담을 먼저 살필 때" }].map(({ month, title }) => month ?
+            <div key={title} className="rounded-xl bg-surface-container p-space-md">
+              <span className="font-label-sm text-label-sm text-outline">{title}</span>
+              <p className="mt-space-xs font-bold text-on-surface">{month.label}</p>
+              <p className="mt-space-xs font-body-sm text-body-sm leading-relaxed text-on-surface-variant">{month.note}</p>
+            </div> : null)}
+        </div>
+      </div>
 
-      {/*
-        여기서부터가 파는 자리다.
-        지금까지 읽은 것이 전부처럼 느껴지면 아무도 열지 않는다. 읽은 것이 "극히 일부"
-        였다는 걸 먼저 말하고, 남은 장이 몇이고 무엇인지 눈으로 보여 준다.
-      */}
-      <Punch lead="방금 읽으신 건" hit="여덟 글자의 극히 일부예요" />
-
-      {poster && (
-        <Panel>
-          <div className="relative aspect-[3/2] w-full overflow-hidden">
-            <WebtoonMedia asset={poster} className="absolute inset-0" />
-            <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-surface/60" />
-          </div>
-        </Panel>
-      )}
-
-      <Punch lead={`${name}님, 좋은 말만 하지는 않을 거예요.`} hit="그래도 들어 보시겠어요?" />
-
-      {/* 잠긴 장 — 무엇이 들었는지는 밝히고 내용만 가린다 */}
-      <div className="flex flex-col gap-space-md pb-space-xl">
-        {chapters.slice(0, 5).map((title, index) => (
-          <Panel key={title}>
-            <ChapterMark no={index + 1} title={title} />
-            <div className="mt-space-sm px-margin">
-              <div className="relative overflow-hidden rounded-2xl bg-surface-container p-space-lg">
-                {/* 글이 있긴 한데 읽히지는 않는 모양 — 비어 있는 것과 가린 것은 다르다 */}
-                <div className="flex flex-col gap-2" aria-hidden>
-                  <span className="h-3 w-full rounded-full bg-on-surface/10" />
-                  <span className="h-3 w-11/12 rounded-full bg-on-surface/10" />
-                  <span className="h-3 w-4/5 rounded-full bg-on-surface/10" />
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center bg-surface-container/40 backdrop-blur-[2px]">
-                  <Icon name="lock" className="text-[22px] text-outline" />
-                </div>
-              </div>
-            </div>
-          </Panel>
-        ))}
-
-        {chapters.length > 5 && (
-          <Panel>
-            <p className="px-margin text-center font-body-md text-body-md text-on-surface-variant">
-              이 밖에 {chapters.length - 5}장이 더 있어요.
-            </p>
-          </Panel>
-        )}
-
-        {teaser.locked.length > 0 && (
-          <Panel>
-            <div className="mt-space-sm flex flex-col gap-space-sm px-margin">
-              <p className="font-label-md text-label-md text-on-surface">열면 이런 것들이 나와요</p>
-              {teaser.locked.map((item) => (
-                <div key={item.label} className="flex items-start gap-space-sm rounded-xl bg-surface-container p-space-md">
-                  <Icon name="check" className="mt-0.5 shrink-0 text-[17px] text-secondary" />
-                  <span className="flex min-w-0 flex-col gap-0.5">
-                    <span className="font-label-md text-label-md text-on-surface">{item.label}</span>
-                    <span className="font-body-sm text-body-sm text-on-surface-variant">{item.teaser}</span>
-                  </span>
-                </div>
-              ))}
-            </div>
-          </Panel>
-        )}
-
-        <Punch lead="여기까지는 돈이 들지 않았어요." hit="나머지는 열어야 보입니다" />
+      <Panel className="px-margin py-space-lg"><Says guide={guide}>{narrative.closing}</Says></Panel>
+      <Punch lead="지금까지는 먼저 펼쳐 본 이야기예요." hit="전체 흐름은 한 권으로 이어집니다" />
+      <div className="px-margin pb-space-lg">
+        <h2 className="text-[1.35rem] font-bold text-on-surface">전체 보고서에서 이어 읽을 내용</h2>
+        <ol className="mt-space-md divide-y divide-outline-variant/30 rounded-2xl border border-outline-variant/30 bg-surface-container-low px-space-md">
+          {chapters.map((title, index) => <li key={title} className="flex items-center gap-space-sm py-space-md">
+            <span className="font-label-sm text-label-sm text-secondary">{String(index + 1).padStart(2, "0")}</span>
+            <span className="flex-1 font-body-md text-body-md text-on-surface">{title}</span>
+            <Icon name="lock" className="text-[17px] text-outline" />
+          </li>)}
+        </ol>
+        <p className="mt-space-md font-body-sm text-body-sm leading-relaxed text-outline">입력한 정보가 맞는지 확인한 뒤, 원하시면 전체 풀이를 이어 읽으세요.</p>
       </div>
     </section>
   );
