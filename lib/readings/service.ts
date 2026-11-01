@@ -5,7 +5,6 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 import { claudeBaseParams, finalText, getAnthropic } from "@/lib/ai/anthropic";
 import { callGemini, geminiText } from "@/lib/ai/gemini";
-import { callOpenAi, openAiText } from "@/lib/ai/openai";
 import type { AppUser } from "@/lib/auth/session";
 import { getRepository, type BirthProfile, type Reading, type StoredSazu } from "@/lib/db";
 import { modes } from "@/lib/env";
@@ -18,6 +17,8 @@ import { buildReportSystemPrompt, buildReportUserPrompt } from "@/lib/story/prom
 import { isCompleteReport, storyReportSchema, type StoryReport } from "@/lib/story/report";
 import { auditReport, softenDeep } from "@/lib/story/sanitize";
 import { buildTemplateReport } from "@/lib/story/report-template";
+import { assertReportContent } from "@/lib/story/quality";
+import { generateOpenAiReport } from "@/lib/story/generate-openai";
 import { hasLive, startLive, streamLive } from "./live";
 import { notifyReading } from "./notify";
 import { readingDraftSchema, validateDraftForReport } from "./schema";
@@ -144,7 +145,8 @@ export async function getOwnedPurchasedReading(user: AppUser, readingId: string)
 
 // ─── 생성 ────────────────────────────────────────────────────────────────────
 
-const STALE_GENERATION_MS = 3 * 60 * 1000;
+// 검수를 포함한 생성 중 다른 인스턴스에서 같은 결제를 다시 생성하지 않도록 실행 한도보다 길게 둔다.
+const STALE_GENERATION_MS = 6 * 60 * 1000;
 const today = () => new Date().toISOString().slice(0, 10);
 
 /**
@@ -160,16 +162,9 @@ async function generateWithOpenAi(
   sazu: StoredSazu,
   onDelta: (delta: string) => void,
 ): Promise<StoryReport> {
-  const result = await callOpenAi({
-    input: `${buildReportSystemPrompt(report)}\n\n---\n\n${buildReportUserPrompt(report, reading, sazu, today())}`,
-    schema: z.toJSONSchema(storyReportSchema) as Record<string, unknown>,
-  });
-
-  const text = openAiText(result);
-  if (!text) throw new Error("[openai] 빈 응답");
-  // 스트리밍을 쓰지 않으므로 한 번에 흘려 보낸다. 화면은 같은 경로로 받는다.
-  onDelta(text);
-  return softenDeep(storyReportSchema.parse(JSON.parse(text)));
+  const result = await generateOpenAiReport(report, reading, sazu, today());
+  onDelta(JSON.stringify(result));
+  return result;
 }
 
 async function generateWithGemini(
@@ -222,7 +217,6 @@ async function generateWithClaude(
   if (message.stop_reason === "max_tokens") throw new Error("[claude] 출력이 max_tokens 에서 잘렸습니다.");
   // 프롬프트로도 금지하지만 모델이 내부 점수("신강 79점")나 겁주는 표현을 흘릴 수 있어 코드로 한 번 더 막는다
   const report_ = softenDeep(storyReportSchema.parse(JSON.parse(finalText(message.content))));
-  auditReport(report_, report.slug);
   return report_;
 }
 
@@ -259,6 +253,9 @@ async function runGeneration(reading: Reading, report: ReportProduct, live: Retu
       await streamJsonSlowly(result, live.push);
     }
 
+    // 모든 제공자와 개발용 생성기에 같은 기준을 적용한다. JSON 검증만으로는 빈 보고서를 막지 못한다.
+    assertReportContent(result, report);
+    auditReport(result, report.slug);
     const generatedAt = new Date().toISOString();
     await repo.updateReading(reading.id, {
       script: result,

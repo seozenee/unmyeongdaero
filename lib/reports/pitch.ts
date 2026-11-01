@@ -21,6 +21,20 @@ export interface ProductPitch {
 }
 
 export const PITCH: Record<string, ProductPitch> = {
+  factbomb: {
+    hanja: "直",
+    claims: [
+      "네가 안 맞는 길에 목숨 걸고 있는지 가려 줘요.",
+      "지금 붙들고 있는 것 중 놓아야 할 것을 이름 붙여 말해요.",
+      "언제 움직이고 언제 참아야 하는지 연도로 찍어 줘요.",
+    ],
+    promise: "기분 좋으라고 하는 말은 한 줄도 없어요. 대신 틀린 말도 없어요.",
+    gets: [
+      { title: "네가 어떤 사람인지", body: "남들이 보는 너와 혼자일 때의 너를 나눠서 말해요." },
+      { title: "맞는 길과 안 맞는 길", body: "남 밑에서 버는 쪽인지 네 간판을 걸 쪽인지 가려요." },
+      { title: "놓아야 할 것", body: "오래 붙들고 있어서 손해가 되는 자리를 짚어요." },
+    ],
+  },
   "reunion-deep": {
     hanja: "緣",
     claims: [

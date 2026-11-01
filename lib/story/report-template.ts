@@ -1334,6 +1334,8 @@ const BUILDERS: Record<string, Builder[]> = {
   "child-admission": [natal, studyStyle, admissionYears, decadeMap, yearMonths, admissionChoice, parentTalk],
   "child-dream": [natal, talentDirection, careerDirection, decadeMap, talentFit, parentTalk],
   "child-talent": [natal, talentDirection, decadeMap, parentTalk],
+  // 장 다섯이 서로 다른 자리를 본다 — 성격 · 일 · 놓을 것 · 돈과 사람 · 때
+  factbomb: [natal, bizShape, cautionSection, wealthStructure, timing],
   "destiny-full": [
     natal, natalRelations, elementsAndYongsin, decadeMap, timing,
     yearCore, wealthStructure, loveSeat, healthBalance, lateYears, actionSection,
@@ -1382,8 +1384,12 @@ function actionsFor(ctx: Context) {
   } else if (report.category === "wealth") {
     doList.push("재성이 들어오는 시기 전에 고정 지출을 한 번 정리해 두세요.");
     avoid.push("가까운 사람과 돈을 섞는 약속을 즉흥적으로 하기.");
+  } else if (report.category === "work") {
+    doList.push("이번 주에 계속 맡고 싶은 일과 줄이고 싶은 일을 하나씩 적고, 다음 자리를 볼 때 역할·보상·시간 세 가지를 비교해 보세요.");
+    avoid.push("지칠 때 바로 퇴사 결론 내리기. 다음 수입까지 필요한 생활비와 실제 제안 조건부터 확인하세요.", "역할이 불분명한 제안을 말로만 받아들이기. 맡을 범위와 보상 조건을 문서로 확인하세요.");
   } else {
-    doList.push("힘이 실리는 달을 달력에 표시하고, 중요한 시작은 그때로 모으세요.");
+    doList.push("이번 주 일정에서 꼭 지킬 일 하나와 줄일 일 하나를 고르고, 주말에 실제로 여유가 생겼는지 확인해 보세요.");
+    avoid.push("답답하다는 이유만으로 큰 결정을 한꺼번에 바꾸기. 먼저 일주일 동안 시험할 작은 변화 하나를 고르세요.", "다른 사람의 속도에 맞춰 새 약속을 늘리기. 이미 잡힌 일정에서 낼 수 있는 시간을 먼저 확인하세요.");
   }
   if (me.yongsin.gi) avoid.push(`${ELEMENT_VIRTUE[me.yongsin.gi].excess}이 앞설 때 큰 결정을 내리기.`);
   me.cautions.slice(0, 2).forEach((item) => avoid.push(`"${item.trait}" — 이 결이 올라오는 순간을 알아차리지 못하고 흘려보내기.`));
@@ -1456,7 +1462,14 @@ export function buildTemplateReport(report: ReportProduct, reading: Reading, saz
   const timeline = ensureMin(timelineFor(me), 3, () => ({ period: "앞으로 석 달", tone: "neutral" as const, title: "흐름을 지켜볼 때", note: "큰 결정보다 일상의 리듬을 지키는 편이 좋아요." }));
   const actions = actionsFor(ctx);
   actions.do = ensureMin(actions.do, 3, () => "중요한 결정은 하루 묵힌 뒤 다시 읽어 보세요.");
-  actions.avoid = ensureMin(actions.avoid, 3, () => "남과 비교하며 조급해지기.");
+  for (const fallback of [
+    "운의 시기만 보고 중요한 결정을 내리기. 실제 비용과 상대의 의사를 함께 확인하세요.",
+    "해석이 실제 경험과 달라도 억지로 끼워 맞추기. 직접 겪고 확인한 사실을 기준으로 선택하세요.",
+    "여러 조언을 한꺼번에 실천하기. 오늘 가능한 하나부터 해 보고 다음 행동을 정하세요.",
+  ]) {
+    if (actions.avoid.length >= 3) break;
+    if (!actions.avoid.includes(fallback)) actions.avoid.push(fallback);
+  }
 
   const name = reading.subject.name;
   const partnerName = reading.partner?.name;

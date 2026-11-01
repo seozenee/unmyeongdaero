@@ -1,29 +1,6 @@
 import type { SazuModules } from "../saju/modules";
-import { parseElementCounts } from "../saju/modules";
 
-/**
- * 계산값을 "알아듣는 틀"로 옮긴다.
- *
- * 사주 값만 넘기면 모델은 결국 두루뭉술하게 쓴다. "집중력이 좋아요", "감수성이
- * 풍부해요" — 누구에게나 조금씩 맞는 말이라 아무것도 맞히지 못한다.
- *
- * 그래서 사이에 틀을 하나 둔다. 아이 재능이면 렌줄리의 세 고리(평균 이상의 능력 ·
- * 과제 집착력 · 창의성)처럼, 그 분야에서 이미 쓰이는 눈금을 가져와 계산값을 거기에
- * 얹는다. 눈금이 있으면 "과제 집착력이 높은 쪽"까지 좁혀지고, 거기서 나오는 행동은
- * 훨씬 구체적으로 적을 수 있다.
- *
- *   과제 집착력이 높다 → 완벽주의로 비틀린다 → 한 문제가 막히면 다음 장으로 못 넘어가고,
- *   글씨가 마음에 안 들면 종이가 찢어질 때까지 지운다
- *
- * 분명히 해 둘 것: 우리는 렌줄리 검사를 하지 않는다. 그 틀의 눈금과 말을 빌려, 계산값이
- * 가리키는 쪽을 적는 것이다. 그래서 점수를 매기지 않고 "높은 쪽 / 보통 / 낮은 쪽"까지만
- * 말한다. 없는 정밀도를 꾸미지 않는다.
- *
- * 아래 looksLike 는 손님에게 그대로 나가는 글이 아니다. 모델에게 "이 수준이면 이런
- * 모습으로 나온다"를 알려 주는 본보기다. 최종 문장은 모델이 나머지 계산값까지 함께
- * 보고 새로 쓴다.
- */
-
+/** 계산 분포를 글쓰기 참고 틀로 옮긴다. 실제 성격·능력의 측정값이 아니다. */
 export type Level = "높은 쪽" | "보통" | "낮은 쪽";
 
 export interface LensDimension {
@@ -34,6 +11,7 @@ export interface LensDimension {
 }
 
 export interface Lens {
+  해석범위: string;
   틀: string;
   차원: LensDimension[];
 }
@@ -241,6 +219,9 @@ export function buildLens(modules: SazuModules, category: string): Lens | null {
   const 십성합 = Object.values(십성).reduce((sum, value) => sum + value, 0);
   const 오행합 = Object.values(오행).reduce((sum, value) => sum + value, 0);
 
+  if (십성합 === 0 || 오행합 === 0) return null;
+  const 해석범위 = "명리 계산 분포를 정리한 참고 틀이다. 수준은 계산상 상대 분포이며, 실제 능력·지능·집중력·성격을 측정한 결과가 아니다. 예시 행동은 관찰로 확인하고 다르면 사용자 경험을 우선한다.";
+
   const read = (group: Group, element: Element): Level =>
     levelOf(share(십성[group], 십성합), share(오행[element], 오행합));
 
@@ -252,7 +233,8 @@ export function buildLens(modules: SazuModules, category: string): Lens | null {
 
   if (category === "child" || category === "study") {
     return {
-      틀: "렌줄리의 세 고리 — 재능은 능력 하나로 나오지 않고, 능력·과제 집착력·창의성 셋이 겹치는 자리에서 나온다",
+      해석범위,
+      틀: "학습을 관찰할 세 관점 — 이해하는 방식·끝맺는 방식·표현하는 방식을 실제 활동에서 비교한다",
       차원: [
         dimension("배우는힘", read("인성", "수"), why("인성", "수")),
         dimension("과제집착력", read("관성", "토"), why("관성", "토")),
@@ -263,6 +245,7 @@ export function buildLens(modules: SazuModules, category: string): Lens | null {
 
   if (category === "romance" || category === "reunion" || category === "chemistry") {
     return {
+      해석범위,
       틀: "가까워지는 방식 — 먼저 다가가는 힘과 붙들고 있는 힘은 따로 논다",
       차원: [
         dimension("다가가는힘", read("식상", "화"), why("식상", "화")),
@@ -273,6 +256,7 @@ export function buildLens(modules: SazuModules, category: string): Lens | null {
 
   if (category === "wealth" || category === "work") {
     return {
+      해석범위,
       틀: "일과 돈을 대하는 결 — 버는 힘, 끌고 가는 힘, 쓰는 결은 서로 다른 자리에서 나온다",
       차원: [
         dimension("쓰는결", read("재성", "화"), why("재성", "화")),
@@ -286,6 +270,7 @@ export function buildLens(modules: SazuModules, category: string): Lens | null {
   // 틀이 없으면 모델은 "성실하시네요" 같은 말로 돌아간다.
   if (category === "destiny") {
     return {
+      해석범위,
       틀: "삶을 끌고 가는 세 힘 — 밀고 가는 힘·버티는 힘·받아들이는 힘은 서로 다른 때에 쓰인다",
       차원: [
         dimension("밀고가는힘", read("비겁", "목"), why("비겁", "목")),
@@ -298,6 +283,7 @@ export function buildLens(modules: SazuModules, category: string): Lens | null {
   // 신년. 한 해는 벌리는 때와 거두는 때가 따로 온다 — 어느 쪽이 센 사람인지부터 적는다.
   if (category === "year") {
     return {
+      해석범위,
       틀: "한 해를 쓰는 결 — 벌리는 힘과 거두는 힘은 한 해 안에서 따로 움직인다",
       차원: [
         dimension("벌리는힘", read("식상", "화"), why("식상", "화")),

@@ -246,6 +246,31 @@ export const REPORTS = [
     cover: "thumbLife",
   },
   {
+    // 듣기 좋은 말을 빼 달라는 손님이 있다. 그 사람에게 "~하시는 편이에요" 는
+    // 돌려 말하는 것으로 들린다. 같은 계산을 다른 말투로 내는 상품이다.
+    slug: "factbomb",
+    kind: "report",
+    category: "destiny",
+    categoryLabel: "팩폭",
+    title: "팩폭사주",
+    tagline: "듣기 좋은 말은 빼고, 맞는 말만",
+    description:
+      "돌려 말하지 않아요. 타고난 것과 안 맞는 길을 분명히 가르고, 지금 붙들고 있는 것 중 놓아야 할 것을 이름 붙여 말해 드려요. 반말로 씁니다.",
+    price: 12900,
+    guide: "gangho",
+    topics: ["life", "money", "decade"],
+    partner: "none",
+    chapters: [
+      "네가 어떤 사람인지부터",
+      "남 밑에서 살 사람인가, 네 간판을 걸 사람인가",
+      "네가 지금 붙들고 있는 것 중 놓아야 할 것",
+      "돈과 사람에서 네가 반복하는 실수",
+      "언제 움직이고 언제 참아야 하는가",
+    ],
+    cover: "thumbLife",
+    disclaimer: "말투가 셉니다. 위로가 필요한 날에는 다른 풀이를 권해요.",
+  },
+  {
     slug: "health",
     kind: "report",
     category: "destiny",

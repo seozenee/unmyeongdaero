@@ -82,7 +82,12 @@ describe("토픽 전용 계산", () => {
     const y2032 = life.해마다.find((item) => item.year === 2032)!;
     expect(y2032.label).toBe("2032년(스물한 살)");
 
-    expect(life.열해[1]!.label).toBe("열일곱부터 스물여섯까지(2029~2038년)");
+    for (const span of life.열해) {
+      const years = span.label.match(/\((\d+)~(\d+)년\)/)!;
+      expect(Number(years[1]) - 2012 + 1).toBe(span.startAge);
+      expect(Number(years[2]) - 2012 + 1).toBe(span.endAge);
+    }
+    expect(life.열해[1]!.label).toBe("열일곱부터 스물여섯까지(2028~2037년)");
   });
 
   it("짝 쪽 별은 남녀가 다르다", () => {

@@ -125,7 +125,8 @@ export function computeDecadeFortune(input: DecadeInput): DecadeResult {
     return {
       startAge: startAge + i * 10,
       full: stem + branch,
-      startYear: birth.year + startAge + i * 10,
+      // startAge는 서비스에서 표시하는 세는 나이: 태어난 해가 한 살이다.
+      startYear: birth.year + startAge + i * 10 - 1,
     };
   });
 

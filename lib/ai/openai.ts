@@ -40,6 +40,8 @@ export interface OpenAiResult {
 
 export async function callOpenAi(input: {
   input: string;
+  /** 사용자 자료와 구분되는 상위 작성 지침 */
+  instructions?: string;
   schema: Record<string, unknown>;
   signal?: AbortSignal;
 }): Promise<OpenAiResult> {
@@ -53,6 +55,7 @@ export async function callOpenAi(input: {
     },
     body: JSON.stringify({
       model: OPENAI_MODEL,
+      instructions: input.instructions,
       input: input.input,
       text: { format: { type: "json_schema", name: "story_report", schema: input.schema } },
     }),

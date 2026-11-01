@@ -2,6 +2,7 @@ import type { SazuModules } from "../saju/modules";
 import { ELEMENT_SCENE, MISSING_SCENE, STRENGTH_SCENE } from "./scenes";
 import { FIVE_ELEMENTS, toFiveElement, ELEMENT_LABEL } from "../saju/ganji";
 import { parseElementCounts } from "../saju/modules";
+import { currentDecadeFrom } from "./current-decade";
 
 /**
  * 결제 전에 보여 줄 거리를 명식에서 뽑는다.
@@ -90,8 +91,7 @@ export function buildReadingTeaser(modules: SazuModules, name: string): ReadingT
   ].filter((s): s is string => Boolean(s));
 
   // 지금 지나는 열 해
-  const decadeList = list(at(modules, "decadeFortune.list")) as Record<string, unknown>[];
-  const currentDecade = decadeList.length > 0 ? decadeList[Math.max(0, decadeList.length - 1)] : null;
+  const currentDecade = currentDecadeFrom(modules);
 
   const daySipseong = str(at(modules, "fourPillars.day.earthSippiSeong"));
   const yong = str(at(modules, "yongsin.yongsin.ko"));

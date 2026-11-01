@@ -95,10 +95,12 @@ export function internationalAge(birth: SimpleDate, reference: SimpleDate) {
 }
 
 /**
- * 대운 비교용 현재 나이. sazu 는 input.isInternationalAge 기본값 true 로 대운 startAge 를 만 나이로 준다.
- * 응답에 seun.currentSeun.internationalAge 가 있으면 그 값을, 없으면 기준일로 계산한다.
+ * 대운 비교용 현재 나이. 자체 엔진은 lifeTimeline과 대운 모두 세는 나이를 쓴다.
+ * 이전 sazu 저장본은 만 나이를 쓰므로 자체 엔진의 나이가 없을 때 기존 기준으로 읽는다.
  */
 export function resolveCurrentAge(modules: SazuModules, birth: SimpleDate, reference: SimpleDate) {
+  const life = z.object({ 나이: z.number().finite() }).passthrough().safeParse(modules.lifeTimeline);
+  if (life.success) return life.data.나이;
   const parsed = z
     .object({ currentSeun: z.object({ internationalAge: z.number() }).passthrough() })
     .passthrough()

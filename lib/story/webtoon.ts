@@ -159,6 +159,46 @@ const SCRIPTS: Record<GuideId, Omit<WebtoonShot, "id" | "assetKey">[]> = {
       action: "맞은편에 앉는다",
     },
   ],
+  gangho: [
+    {
+      place: "far",
+      camera: "wide",
+      figure: "none",
+      lines: ["간판도 없는 골목 끝, 불만 하나 켜져 있다."],
+      action: "불빛 쪽으로 간다",
+    },
+    {
+      place: "path",
+      camera: "push",
+      figure: "none",
+      lines: ["“듣기 좋은 말은 안 해 준다더라.”", "“그래서 다들 한 번 가고는 안 온다고.”"],
+      action: "그래도 발을 옮긴다",
+    },
+    {
+      place: "gate",
+      camera: "push",
+      figure: "none",
+      sfx: "드르륵",
+      lines: ["문이 먼저 열렸다.", "“…계세요?”"],
+      action: "안으로 들어선다",
+    },
+    {
+      place: "house",
+      camera: "tilt",
+      figure: "silhouette",
+      lines: ["누군가 이미 종이를 펴 놓고 있었다.", "“제 얘기를 아직 안 했는데요.”"],
+      action: "맞은편을 본다",
+    },
+    {
+      place: "room",
+      camera: "wide",
+      figure: "reveal",
+      sfx: "탁",
+      balloon: "앉아. 듣기 좋은 말 들으러 온 거면 지금 나가고.",
+      lines: ["“…”", "“돌직구 강호.”"],
+      action: "자리에 앉는다",
+    },
+  ],
 };
 
 export function buildIntroShots(report: ReportProduct): WebtoonShot[] {

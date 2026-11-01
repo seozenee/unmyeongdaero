@@ -87,6 +87,16 @@ describe("modules 파서 · 경계", () => {
     expect(resolveCurrentAge({}, { year: 1998, month: 5, day: 19 }, { year: 2026, month: 9, day: 11 })).toBe(28);
   });
 
+  it("자체 엔진의 대운은 저장된 세는 나이로 비교한다", () => {
+    const age = resolveCurrentAge(
+      { lifeTimeline: { 나이: 37 }, seun: { currentSeun: { internationalAge: 36 } } },
+      { year: 1990, month: 3, day: 14 },
+      { year: 2026, month: 11, day: 1 },
+    );
+    expect(age).toBe(37);
+    expect(findCurrentDecadeIndex([{ startAge: 27, full: "병인" }, { startAge: 37, full: "정묘" }], age)).toBe(1);
+  });
+
   it("현재 대운 인덱스 — 첫 대운 전이면 -1", () => {
     const items = parseDecadeFortune(SAMPLE_MODULES)!.items;
     expect(findCurrentDecadeIndex(items, 28)).toBe(2);

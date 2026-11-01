@@ -6,6 +6,7 @@ import { parseElementCounts } from "../saju/modules";
 import { ELEMENT_LABEL, FIVE_ELEMENTS } from "../saju/ganji";
 import { buildLens } from "./lens";
 import { findJargon } from "../story/sanitize";
+import { currentDecadeFrom } from "./current-decade";
 
 /**
  * 결제 전 화면의 "맞혀 보이는" 문장을 AI 가 쓴다.
@@ -92,8 +93,7 @@ export function teaserFacts(modules: SazuModules, name: string, category?: strin
     틀로본결: category ? buildLens(modules, category) : null,
 
     지금지나는열해: (() => {
-      const decades = list(at(modules, "decadeFortune.list")) as Record<string, unknown>[];
-      const current = decades.at(-1);
+      const current = currentDecadeFrom(modules);
       return current ? { 몇세부터: current.startAge ?? null, 결: str(at(current, "twelveFortune.phase")) } : null;
     })(),
   };
@@ -108,49 +108,20 @@ export function teaserFacts(modules: SazuModules, name: string, category?: strin
  */
 type Voice = "self" | "parent-of-child";
 
-const CONCRETE = `**특성을 말하지 말고, 그 특성이 만드는 장면을 보여 준다.**
-
-이게 전부다. "완벽주의예요", "집착이 강해요", "감수성이 풍부해요" 같은 말은
-아무것도 맞히지 않는다. 누구에게나 조금씩 해당되기 때문이다.
-
-반드시 이 사슬로 내려간다.
-  타고난 결 → 그게 일상에서 어떻게 비틀리는가 → 눈으로 본 장면 하나
-
-  (나쁨) "과제 집착력이 높고 완벽주의 성향이 있어요."
-  (좋음) "문제집을 풀다 한 문제가 막히면 다음 장으로 못 넘어가고 그 자리에 붙들려
-          있거나, 글씨가 마음에 안 든다고 종이가 찢어질 때까지 지우고 있는 걸
-          보신 적 있으시죠?"
-
-장면에는 눈에 보이는 것이 있어야 한다 — 종이, 지우개, 시계, 문 앞, 휴대폰 화면,
-식탁, 현관. 추상명사("성향", "경향", "에너지")로 끝나는 문장은 실패다.`;
-
-const VOICE: Record<Voice, string> = {
-  self: `읽는 사람이 곧 그 사람이다. "~하신 적 있으시죠?", "~했을 거예요",
-"~하지 않으셨어요?" 로 맺는다.`,
-  "parent-of-child": `읽는 사람은 **부모**이고, 글의 주인공은 **아이**다.
-아이에게 말하지 말고, 부모가 옆에서 본 장면으로 쓴다.
-"~하는 걸 보신 적 있으시죠?", "~해서 속상하셨을 거예요", "~하지 않던가요?" 로 맺는다.
-(나쁨: "아이는 혼자 있는 시간이 필요하세요"
- 좋음: "학교 다녀와서 가방도 안 벗고 방에 들어가 한참 안 나오는 걸 보신 적 있으시죠?")`,
-};
-
 const buildSystem = (voice: Voice) => `너는 한국 명리를 오래 본 사람이다. 지금 하는 일은 하나뿐이다.
 
-계산된 값을 보고, **살면서 실제로 겪었을 장면** 세 개를 쓴다.
-읽는 사람이 "어? 이거 완전 우리 애(나)인데?" 하고 멈칫해야 한다.
+계산된 값을 참고해, 생활에서 확인할 예시와 시도해 볼 행동 세 개를 쓴다.
+해석과 실제 경험을 구별하고 읽는 사람이 자기 상황에 대입할 수 있어야 한다.
 
-${VOICE[voice]}
+읽는 사람은 ${voice === "parent-of-child" ? "부모이고, 해석 대상은 아이" : "해석 대상 본인"}다.
+성격 이름만 나열하지 말고, 계산에 대한 해석 → 확인할 생활 장면 → 작게 해 볼 행동을 한 문장 흐름으로 잇는다.
+장면은 "예를 들어", "만약 ~라면"처럼 예시임을 드러낸다. "겪으셨죠", "~했을 거예요"처럼 과거를 아는 척하지 않는다.
+예: "정한 일을 마무리하려는 쪽으로 읽혀요. 한 문제에서 오래 멈추는 일이 있다면, 표시해 두고 다음 문제를 푸는 방법을 한번 비교해 보세요."
+장면 셋은 서로 다른 근거에서 고른다. 사용자나 아이의 능력을 평가하거나 부족하다고 단정하지 않는다.
 
-${CONCRETE}
-
-입력에 「틀로본결」이 있으면 그걸 먼저 본다. 그 분야에서 쓰는 눈금으로 이 사람이
-어느 쪽에 서 있는지 적어 둔 것이고, 「이런모습으로」에는 그 수준이면 실제로 나오는
-모습이 들어 있다. 그 모습을 **그대로 베끼지 말고**, 이 사람의 나머지 값과 겹쳐 더
-구체적인 장면 하나로 바꿔 쓴다.
-
-  (틀)   과제집착력 = 높은 쪽 → "한 문제가 막히면 다음 장으로 못 넘어간다"
-  (쓰기) "문제집 풀다 한 문제에서 막히면 그 페이지에 연필 자국만 늘어 가고,
-          다음 장은 깨끗한 채로 한 시간이 지나 있는 걸 보신 적 있으시죠?"
+입력에 「틀로본결」이 있으면 계산값을 말로 옮긴 참고 자료로만 본다.
+심리·능력검사 결과가 아니므로 지능·집중력·창의성 수준을 측정한 것처럼 쓰지 않는다.
+「이런모습으로」의 문장은 확인된 사실이 아닌 예시다. 그대로 베끼지 않는다.
 
 쓰기 전에 할 일:
 입력에 들어 있는 것 중 **서로 다른 세 가지**를 먼저 고른다. 묶이고 부딪히는 자리,

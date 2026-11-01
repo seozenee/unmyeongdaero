@@ -8,6 +8,7 @@ import { SAZU_SAMPLE_PROFILES } from "../../sazu/sample-profiles";
 import { storyReportSchema } from "../report";
 import { findEmptyTalk, findJargon } from "../sanitize";
 import { buildTemplateReport } from "../report-template";
+import { assertReportContent } from "../quality";
 
 const FIXTURES = path.join(__dirname, "../../sazu/__fixtures__");
 
@@ -70,6 +71,7 @@ describe("buildTemplateReport · 실제 sazu 샌드박스 응답", () => {
       dump[report.slug] = result;
 
       expect(() => storyReportSchema.parse(result)).not.toThrow();
+      expect(() => assertReportContent(result, report)).not.toThrow();
       expect(result.sections.map((section) => section.title)).toEqual([...report.chapters]);
       for (const section of result.sections) {
         expect(section.body.length).toBeGreaterThanOrEqual(2);
@@ -103,6 +105,7 @@ describe("buildTemplateReport · 우리 만세력 엔진", () => {
       const result = buildTemplateReport(report, readingFor(report.slug, report.partner !== "none"), sazu, today);
 
       expect(() => storyReportSchema.parse(result)).not.toThrow();
+      expect(() => assertReportContent(result, report)).not.toThrow();
       expect(result.sections.map((section) => section.title)).toEqual([...report.chapters]);
 
       const text = JSON.stringify(result);
@@ -135,5 +138,21 @@ describe("buildTemplateReport · 우리 만세력 엔진", () => {
     expect(text).not.toMatch(/[화토수](으로|이에요|이라고|과 )/);
     // 받침 있는 오행(목·금) 뒤에 받침 없는 조사
     expect(text).not.toMatch(/[목금](로 |예요|와 )/);
+  });
+});
+
+// 스키마에 맞는 빈 보고서도 저장 경계에서는 막아야 한다.
+describe("유료 보고서 저장 전 검증", () => {
+  it("정상 보고서는 통과시키고 목차·근거·실행 내용 누락을 막는다", () => {
+    const product = getReport("career")!;
+    const sazu = buildManseTopics(product.topics, subject, null, new Date("2026-11-01"));
+    const report = buildTemplateReport(product, readingFor(product.slug, false), sazu);
+    expect(() => assertReportContent(report, product)).not.toThrow();
+    const missingEvidence = structuredClone(report);
+    missingEvidence.sections[0]!.evidence = [];
+    expect(() => storyReportSchema.parse(missingEvidence)).not.toThrow();
+    expect(() => assertReportContent(missingEvidence, product)).toThrow("근거 1 누락");
+    expect(() => assertReportContent({ ...report, sections: report.sections.slice(1) }, product)).toThrow("목차");
+    expect(() => assertReportContent({ ...report, actions: { ...report.actions, do: ["", "반복", "반복"] } }, product)).toThrow("실행 항목");
   });
 });
