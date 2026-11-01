@@ -6,6 +6,7 @@ import { plain } from "../story/sanitize";
 import { computeFourPillars } from "./pillars";
 import { buildManseExplanation } from "./explanation";
 import { writeInstantPreview } from "./preview-copy";
+import { intakeContext } from "../story/intake";
 import { computePastYears } from "./past";
 import { buildReadingTeaser } from "./teaser";
 
@@ -30,7 +31,7 @@ const obj = (value: unknown): Record<string, unknown> => value && typeof value =
 const text = (value: unknown) => typeof value === "string" ? value : "";
 const arr = (value: unknown): unknown[] => Array.isArray(value) ? value : [];
 
-export function buildPreviewContext(modules: SazuModules, profile: BirthProfile, product: ReportProduct, now = new Date(), concern = "") {
+export function buildPreviewContext(modules: SazuModules, profile: BirthProfile, product: ReportProduct, now = new Date(), concern = "", answers: Record<string, string> = {}) {
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
   const year = Number(today.slice(0, 4));
   const age = year - profile.birthYear + 1;
@@ -63,7 +64,7 @@ export function buildPreviewContext(modules: SazuModules, profile: BirthProfile,
   const teaser = buildReadingTeaser(modules, profile.name);
   return { today, name: profile.name, age, slug: product.slug, strength: text(obj(modules.sinStrength).strength), child: product.roles?.subject === "child", minor: age < 20,
     speech: product.guide === "gangho" ? "반말" : "존대", category: product.category, product: product.title,
-    unknownHour: profile.birthHour === null, concern, facts, past, basis: buildManseExplanation(modules),
+    unknownHour: profile.birthHour === null, concern, lifeContext: intakeContext(answers), facts, past, basis: buildManseExplanation(modules),
     months: teaser.months.slice(0, 6).map(month => ({ period: month.label, tone: month.tone, note: plain(month.note) })),
     character: { inside: text(character.안에서), outside: text(character.밖에서) },
     topics: product.chapters,

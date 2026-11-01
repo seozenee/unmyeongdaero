@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { formatKRW } from "@/lib/format";
+import { cn } from "@/lib/cn";
 
 interface ManseConfirmProps {
   readingId: string;
@@ -13,6 +14,7 @@ interface ManseConfirmProps {
   price: number;
   originalPrice: number | null;
   chapterCount: number;
+  revealAfterId?: string;
 }
 
 /**
@@ -29,13 +31,30 @@ export function ManseConfirm({
   price,
   originalPrice,
   chapterCount,
+  revealAfterId,
 }: ManseConfirmProps) {
   const router = useRouter();
   const [moving, setMoving] = useState(false);
+  const [visible, setVisible] = useState(!revealAfterId);
+
+  useEffect(() => {
+    if (!revealAfterId) return;
+    const reveal = () => {
+      const target = document.getElementById(revealAfterId);
+      if (!target || target.getBoundingClientRect().top <= window.innerHeight * 0.85) setVisible(true);
+    };
+    reveal();
+    window.addEventListener("scroll", reveal, { passive: true });
+    window.addEventListener("resize", reveal);
+    return () => {
+      window.removeEventListener("scroll", reveal);
+      window.removeEventListener("resize", reveal);
+    };
+  }, [revealAfterId]);
 
   return (
     // 하단 내비게이션(h-16) 위에 얹는다. bottom-0 으로 두면 내비 뒤로 들어가 버튼이 가려진다.
-    <div id="reading-purchase" className="scroll-mt-20 sticky bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] z-20 -mx-margin mt-space-md bg-gradient-to-t from-surface via-surface to-transparent px-margin pb-space-sm pt-space-lg">
+    <div id="reading-purchase" aria-hidden={!visible} className={cn("scroll-mt-20 sticky bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] z-20 -mx-margin mt-space-md bg-gradient-to-t from-surface via-surface to-transparent px-margin pb-space-sm pt-space-lg transition-[opacity,transform] duration-500 motion-reduce:transition-none", visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0")}>
       <div className="flex flex-col gap-space-sm rounded-xl bg-surface-container-lowest/95 p-space-md shadow-2xl ring-1 ring-outline-variant/40 backdrop-blur-xl motion-safe:animate-fade-up">
         {/* 상품과 금액을 한 줄에 — 아래 칸이 두꺼우면 정작 확인해야 할 명식이 가려진다 */}
         <div className="flex items-baseline gap-space-sm">
@@ -55,7 +74,7 @@ export function ManseConfirm({
 
         <button
           type="button"
-          disabled={moving}
+          disabled={moving || !visible}
           onClick={() => {
             setMoving(true);
             router.push(`/checkout/${slug}?reading=${readingId}`);

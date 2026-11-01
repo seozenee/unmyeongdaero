@@ -9,6 +9,7 @@ import { writeLocalProfile } from "@/lib/me/local-profile";
 import birthCities from "@/lib/saju/birth-cities.json";
 
 interface BirthFormProps {
+  cinematic?: boolean;
   title: string;
   submitLabel?: string;
   initial?: Partial<BirthProfile>;
@@ -210,6 +211,7 @@ function Segmented<T extends string>({
  *  · 달력에 없는 날은 그 자리에서 막는다. 결제 뒤에 알려 주는 건 늦다.
  */
 export function BirthForm({
+  cinematic = false,
   title,
   submitLabel = "다 적었어요",
   initial,
@@ -232,9 +234,9 @@ export function BirthForm({
   const [time, setTime] = useState(
     initial?.birthHour != null
       ? `${String(initial.birthHour).padStart(2, "0")}:${String(initial.birthMinute ?? 0).padStart(2, "0")}`
-      : "12:00",
+      : cinematic ? "" : "12:00",
   );
-  const [gender, setGender] = useState<"female" | "male">(initial?.isFemale === false ? "male" : "female");
+  const [gender, setGender] = useState<"female" | "male" | "">(initial?.isFemale == null ? (cinematic ? "" : "female") : initial.isFemale ? "female" : "male");
   const [city, setCity] = useState(initial?.birthCity ?? "서울");
   const [error, setError] = useState<string | null>(null);
 
@@ -244,8 +246,10 @@ export function BirthForm({
   const STEPS = [
     { key: "name", label: "이름" },
     { key: "birth", label: "생년월일" },
+    ...(cinematic ? [{ key: "gender", label: "성별" }] : []),
     { key: "rest", label: "시간·성별" },
-  ] as const;
+  ];
+  const lastStep = STEPS.length - 1;
 
   const next = () => {
     if (step === 0) {
@@ -259,12 +263,17 @@ export function BirthForm({
       setError(null);
       return setStep(2);
     }
+    if (cinematic && step === 2) {
+      if (!gender) return setError("성별을 골라 주세요.");
+      setError(null);
+      return setStep(3);
+    }
   };
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (step < 2) return next();
-    if (!name.trim() || !date) {
+    if (step < lastStep) return next();
+    if (!name.trim() || !date || !gender) {
       setError("빠진 곳이 있어요. 앞으로 돌아가 확인해 주세요.");
       return;
     }
@@ -293,10 +302,10 @@ export function BirthForm({
   return (
     <form
       onSubmit={submit}
-      className="flex flex-col gap-space-md rounded-xl bg-surface-container p-space-lg shadow-lg motion-safe:animate-fade-up"
+      className={cn("flex flex-col gap-space-md motion-safe:animate-fade-up", cinematic ? "intake-form" : "rounded-xl bg-surface-container p-space-lg shadow-lg")}
     >
       <div className="flex items-center justify-between">
-        <h3 className="font-label-md text-label-md text-on-surface">{title}</h3>
+        <h3 className={cinematic ? "text-[1.6rem] font-extrabold leading-snug text-white" : "font-label-md text-label-md text-on-surface"}>{cinematic ? ["이름은…", "태어난 날은…", "성별은…", "태어난 때와 장소는…"][step] : title}</h3>
         {/* 어디쯤 왔는지 — 세 칸이면 끝이 보인다 */}
         <span className="flex items-center gap-1" aria-label={`${step + 1} / ${STEPS.length} 단계`}>
           {STEPS.map((item, index) => (
@@ -387,7 +396,16 @@ export function BirthForm({
         </div>
       )}
 
-      {step === 2 && (
+      {cinematic && step === 2 && <div className="grid grid-cols-2 gap-space-sm">
+        {([{ value: "female", label: "여성이에요" }, { value: "male", label: "남성이에요" }] as const).map(option => <button
+          key={option.value} type="button" aria-pressed={gender === option.value}
+          onClick={() => { setGender(option.value); setError(null); setStep(3); }}
+          className="intake-choice rounded-xl border border-white/20 bg-white/5 px-space-md py-space-lg font-body-md text-body-md text-white hover:border-primary/70 hover:bg-primary/10">
+          {option.label}
+        </button>)}
+      </div>}
+
+      {step === lastStep && (
         <div className="flex flex-col gap-space-md">
           <div className="flex flex-col gap-1">
             <span className="font-label-sm text-label-sm text-on-surface-variant">태어난 시간</span>
@@ -398,12 +416,12 @@ export function BirthForm({
                 className={cn(FIELD, "flex-1", !knowsTime && "opacity-40")}
                 value={time}
                 disabled={!knowsTime}
-                onChange={(event) => setTime(event.target.value)}
+                onChange={(event) => { setTime(event.target.value); setError(null); }}
               />
               <button
                 type="button"
                 aria-pressed={!knowsTime}
-                onClick={() => setKnowsTime((value) => !value)}
+                onClick={() => { setKnowsTime((value) => !value); setError(null); }}
                 className={cn(
                   "shrink-0 rounded-lg px-space-md font-label-md text-label-md transition-colors",
                   knowsTime ? "bg-surface-container-lowest text-on-surface-variant" : "bg-surface-container-highest text-on-surface",
@@ -414,13 +432,13 @@ export function BirthForm({
             </div>
             <span className="font-body-sm text-body-sm text-outline">
               {knowsTime
-                ? "태어난 지역의 실제 태양 시각으로 바로잡아 계산해요."
-                : "시간을 몰라도 괜찮아요. 시주를 뺀 세 기둥으로 읽어 드려요."}
+                ? "태어난 곳에 맞춰 시간을 보정해 계산해요."
+                : "시간과 관련된 부분은 빼고, 알 수 있는 내용부터 읽어요."}
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-space-sm">
-            <div className="flex flex-col gap-1">
+          <div className={cn(!cinematic && "grid grid-cols-2 gap-space-sm")}>
+            {!cinematic && <div className="flex flex-col gap-1">
               <span className="font-label-sm text-label-sm text-on-surface-variant">성별</span>
               <Segmented
                 label="성별"
@@ -431,7 +449,7 @@ export function BirthForm({
                   { value: "male", label: "남성" },
                 ]}
               />
-            </div>
+            </div>}
             <CityPicker value={city} onChange={setCity} />
           </div>
 
@@ -450,7 +468,7 @@ export function BirthForm({
             </div>
             <div className="flex gap-space-sm">
               <dt className="w-16 shrink-0 text-outline">시간</dt>
-              <dd className="text-on-surface">{knowsTime ? time : "모름"}</dd>
+              <dd className="text-on-surface">{knowsTime ? time || "시각을 입력해 주세요" : "모름"} · {gender === "female" ? "여성" : "남성"}</dd>
             </div>
           </dl>
         </div>
@@ -486,7 +504,7 @@ export function BirthForm({
           type="submit"
           className="flex-[2] rounded-xl bg-on-surface py-3 font-label-md text-label-md text-surface transition-transform active:scale-[0.98]"
         >
-          {step < 2 ? "다음" : submitLabel}
+          {step < lastStep ? "다음" : submitLabel}
         </button>
       </div>
     </form>

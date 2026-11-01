@@ -100,7 +100,7 @@ export default async function MansePage({
   if (sinsal.length > 0) facts.push({ label: "신살", value: sinsal.join(", "), hint: GLOSSARY.신살 });
 
   const teaser = buildReadingTeaser(modules, reading.subject.name);
-  const context = buildPreviewContext(modules, reading.subject, report, now, reading.answers.detail ?? "");
+  const context = buildPreviewContext(modules, reading.subject, report, now, reading.answers.detail ?? "", reading.answers);
   const narrative = buildInstantPreview(context);
   const guide = getGuide(report.guide);
 
@@ -192,6 +192,7 @@ export default async function MansePage({
         } />
 
       <ManseConfirm
+        revealAfterId="reading-first-reveal"
         readingId={reading.id}
         slug={report.slug}
         title={report.title}

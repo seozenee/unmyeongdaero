@@ -28,7 +28,9 @@ export function lockedTopicsFor(context: PreviewContext): LockedTopic[] {
   if (context.category === "work") return [TOPICS.work!, TOPICS.money!, TOPICS.time!];
   if (context.slug === "health") return [TOPICS.health!, TOPICS.work!, TOPICS.time!];
   if (context.category === "year") return [TOPICS.time!, TOPICS.work!, TOPICS.relationship!];
-  return [TOPICS.relationship!, TOPICS.money!, TOPICS.time!];
+  const relation = context.lifeContext.relationshipStatus === "재회 원해요" ? TOPICS.reunion!
+    : context.lifeContext.relationshipStatus === "결혼했어요" ? TOPICS.everyday! : TOPICS.relationship!;
+  return [relation, TOPICS.money!, TOPICS.time!];
 }
 
 /** 실제 판매 목차의 내용을 쉽게 읽을 세 항목으로 펼친다. */

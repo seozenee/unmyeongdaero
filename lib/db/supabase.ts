@@ -2,6 +2,7 @@ import "server-only";
 
 import type { PostgrestError } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { getReport } from "@/lib/reports/catalog";
 import {
   UUID_PATTERN,
   type ConsultMessage,
@@ -100,8 +101,7 @@ export function createSupabaseRepository(): Repository {
 
   return {
     async createReading(input) {
-      const row = required(
-        await db()
+      const insert = () => db()
           .from("readings")
           .insert({
             user_id: input.userId,
@@ -113,9 +113,23 @@ export function createSupabaseRepository(): Repository {
             notify_consent_at: input.notifyPhone ? new Date().toISOString() : null,
           })
           .select()
-          .single(),
-        "createReading",
-      );
+          .single();
+      let result = await insert();
+      // 코드 상품은 화면에 보이는데 DB 시드가 빠진 배포에서도 입력을 잃지 않는다.
+      // 이 상품 외래 키 누락에만 한 번 복구한다. 사용자 키 오류나 다른 실패는 그대로 보낸다.
+      if (result.error?.code === "23503" && result.error.message.includes("readings_report_slug_fkey")) {
+        const product = getReport(input.reportSlug);
+        if (product) {
+          unwrap(await db().from("reports").upsert({
+            slug: product.slug, kind: product.kind, category: product.category,
+            title: product.title, tagline: product.tagline, price: product.price,
+            original_price: product.originalPrice ?? null, discount_label: product.discountLabel ?? null,
+            description: product.description, is_active: true,
+          }, { onConflict: "slug", ignoreDuplicates: true }), "registerMissingReport");
+          result = await insert();
+        }
+      }
+      const row = required(result, "createReading");
       return toReading(row);
     },
 

@@ -9,6 +9,7 @@ import { mergedModules } from "@/lib/sazu/readings";
 import { getGuide, type Guide } from "./guides";
 import { buildManseExplanation } from "@/lib/manse/explanation";
 import { READING_WRITING_STYLE } from "./writing-style";
+import { intakeContext } from "./intake";
 import type { StoryPanel } from "./report";
 
 // ─── 공통 원칙 (모든 리포트·상담에 동일 → 프롬프트 캐시 대상) ─────────────────
@@ -109,7 +110,7 @@ ${SHARED_PRINCIPLES}
 ${READING_WRITING_STYLE}
 
 ## 쓰기 전에 정리할 것 (출력하지 않는다)
-1. <asked>가 있으면 핵심 질문과 실제 제약을 찾는다. 없으면 상품의 주제에서 가장 중요한 선택을 잡는다. 직업·연애 상태·경제 사정은 짐작하지 않는다.
+1. <life_context>는 사용자가 직접 선택한 관계·일·학습 상황이다. 해당 장의 생활 예시와 선택 기준에 반영하되, 사주로 알아낸 사실처럼 말하지 않는다. 비어 있는 항목은 짐작하지 않는다. <asked>가 있으면 핵심 질문과 실제 제약을 찾는다. 없으면 상품의 주제에서 가장 중요한 선택을 잡는다. 직업·연애 상태·경제 사정은 짐작하지 않는다.
 2. 장마다 관련된 근거를 고른다. 성격은 character와 강약·분포·관계를 함께, 돈은 wealth를, 관계는 romance와 두 사람의 비교를, 시기는 lifeTimeline·seun·weolun을 우선한다. 전문 모듈이 없으면 다른 모듈로 해당 분야를 안다고 꾸미지 않는다.
 3. 과거는 retrospective에 실제 계산된 지난 해부터 고른다. 중요한 해 1~2개를 짚고, 그 시기 압박이나 변화가 어떤 생활 장면으로 드러났을지를 해석한다. 확인하지 않은 사건을 확정하지 않되, 조언으로 건너뛰지 말고 지나온 경험의 결을 먼저 구체적으로 읽는다.
 4. 타고난 경향과 현재 시기의 해석을 분리한다. 평생의 특성을 올해 사건으로, 한 해의 해석을 평생의 결론으로 확대하지 않는다.
@@ -242,11 +243,11 @@ function lensBlock(report: ReportProduct, sazu: StoredSazu) {
 }
 
 export function buildReportUserPrompt(report: ReportProduct, reading: Pick<Reading, "subject" | "partner" | "answers">, sazu: StoredSazu, today: string) {
-  // 고르는 질문은 없앴다. 손님에게 받는 말은 자유 서술 한 칸뿐이다.
   const story = reading.answers.detail?.trim();
+  const lifeContext = intakeContext(reading.answers);
 
   return `<customer role="${ROLE_LABEL[report.roles?.subject ?? "self"]}">${describeProfile(reading.subject)}</customer>
-${reading.partner ? `<partner role="${ROLE_LABEL[report.roles?.partner ?? "lover"]}">${describeProfile(reading.partner)}</partner>\n` : ""}${
+${reading.partner ? `<partner role="${ROLE_LABEL[report.roles?.partner ?? "lover"]}">${describeProfile(reading.partner)}</partner>\n` : ""}<life_context source="사용자가 직접 알려 준 현재 상황">${JSON.stringify(lifeContext).replace(/</g, "\\u003c")}</life_context>\n${
     story ? `<asked>\n${JSON.stringify(story).replace(/</g, "\\u003c")}\n</asked>\n` : ""
   }${lensBlock(report, sazu)}<today>${today}</today>
 <available_panels>${availablePanels(sazu).join(", ") || "없음"}</available_panels>

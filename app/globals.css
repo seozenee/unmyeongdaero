@@ -2,6 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 결제 전 웹툰: 영상·한 줄 문장·봉인된 리포트가 번갈아 이어진다. */
+.reading-story { background: #050403; }
+.story-opening { isolation: isolate; }
+.story-orbit { position:absolute; inset:7% 10% auto; aspect-ratio:1; z-index:1; pointer-events:none; opacity:.28; }
+.story-orbit i { position:absolute; inset:0; border:1px solid #dcaf70; border-radius:50%; animation:story-orbit 38s linear infinite; }
+.story-orbit i:nth-child(2) { inset:6%; border-style:dashed; animation-direction:reverse; }
+.story-orbit i:nth-child(3) { inset:-4%; border:3px dotted #ad4b37; }
+.story-orbit::after { content:""; position:absolute; inset:0; border-radius:50%; box-shadow:0 0 45px #c8381926,inset 0 0 30px #ee693820; }
+.story-opening > div:last-child { z-index:2; }
+.story-punch { position:relative; padding-top:3.75rem; padding-bottom:3.75rem; }
+.story-highlight { max-width:20rem; text-wrap:balance; text-shadow:0 0 28px #e6472126; }
+.story-reveal.is-shown .story-highlight { animation:story-line-in .9s cubic-bezier(.2,.7,.2,1) both; }
+.story-punch::before { content:""; position:absolute; width:1px; height:28px; top:0; background:linear-gradient(transparent,#bc8058); }
+.story-chapter { padding-bottom:1rem; }
+.story-chapter-seal { display:grid; place-items:center; width:68px; height:68px; margin-bottom:1rem; border:1px solid #a86e4670; outline:1px dashed #a86e4640; outline-offset:6px; border-radius:50%; color:#cf9d73; font-family:'Song Myung',serif; font-size:1.6rem; background:radial-gradient(circle,#6e25132e,transparent 70%); }
+.story-chapter h2 { text-align:center; text-wrap:balance; }
+.story-scene { isolation:isolate; margin-top:2.5rem; margin-bottom:2.5rem; }
+.story-scene::before { content:""; pointer-events:none; position:absolute; inset:0; z-index:1; box-shadow:inset 0 40px 40px -35px #050403,inset 0 -45px 40px -25px #050403; }
+.story-scene > p { z-index:2; text-shadow:0 2px 12px #000; }
+.story-eye { aspect-ratio:16/8; }
+.story-eye img,.story-eye video { object-position:50% 25%; }
+.story-eye[data-visible="true"] > div:first-child { animation:story-eye-push 5s ease-out both; }
+.story-sfx { pointer-events:none; position:absolute; right:8%; top:14%; z-index:3; color:#fff1dd; font-family:'Gasoek One',sans-serif; font-size:4.25rem; font-style:italic; transform:rotate(-12deg); opacity:0; text-shadow:3px 3px 0 #a72316,-2px -2px 0 #3a0b08; }
+.story-impact-ring { pointer-events:none; position:absolute; inset:22%; border:2px solid #ecb474; border-radius:50%; opacity:0; z-index:2; }
+.story-impact[data-visible="true"] .story-sfx { animation:story-hit .8s ease-out both; }
+.story-impact[data-visible="true"] .story-impact-ring { animation:story-wave 1s ease-out both; }
+.story-locked { isolation:isolate; border-radius:18px 4px 18px 4px; padding:2rem 1.4rem; background:radial-gradient(ellipse at 50% 0,#822c1e27,transparent 65%),linear-gradient(135deg,#17100c,#080706); border-color:#97714b65; box-shadow:inset 0 0 0 5px #0004,0 12px 40px #0005; }
+.story-locked::before { content:""; pointer-events:none; position:absolute; z-index:-1; inset:-50%; background:linear-gradient(110deg,transparent 38%,#dbad7330 49%,transparent 59%); transform:translateX(-70%) rotate(8deg); }
+.story-locked[data-visible="true"]::before { animation:story-card-glint 2s ease-out both; }
+.story-locked h3 { position:relative; max-width:85%; font-family:'Song Myung',serif; font-size:1.8rem; line-height:1.35; }
+.story-locked > div { border-top:1px solid #ad74552e; border-bottom:1px solid #ad74552e; border-radius:0; padding-top:2.6rem; padding-bottom:2.6rem; }
+.story-card-seal { position:absolute; right:1rem; top:1.4rem; width:2.5rem; height:2.5rem; display:grid; place-items:center; border:1px solid #993d31a0; color:#b75f4c; font-family:'Song Myung',serif; font-size:1.3rem; transform:rotate(8deg); }
+.story-toc-item { position:relative; margin:1rem 0; padding:1.5rem 1rem 1.5rem 1.25rem; background:linear-gradient(110deg,#9461361a,transparent 70%); border:1px solid #8b6c4133; border-left:3px solid #98684390; }
+.story-toc-item > span:first-child { font-family:'Song Myung',serif; font-size:1.6rem; line-height:1.1; margin-right:.3rem; color:#ad825b; }
+.intake-sheet { padding-top:1.25rem; padding-bottom:.25rem; }
+.intake-form { color:white; }
+.intake-form input:not([type="checkbox"]) { border-radius:0; border-width:0 0 1px; background:transparent; border-color:#ffffff45; padding:1rem .25rem; font-size:1.15rem; }
+.intake-form input:focus { --tw-ring-shadow:0 0 #0000; border-color:#ca9c75; }
+.intake-form label > span:first-child { color:#ffffffa6; }
+.intake-form input::placeholder { color:#ffffff45; }
+.intake-form button[role="radio"] { border:1px solid #ffffff1a; border-radius:.6rem; }
+.intake-choice { box-shadow:inset 0 1px 0 #ffffff0a; }
+.intake-choice:hover { box-shadow:0 0 22px #cd533518; }
+@keyframes story-orbit { to { transform:rotate(360deg); } }
+@keyframes story-line-in { from { opacity:0; transform:translateY(18px); filter:blur(5px); } to { opacity:1; transform:translateY(0); filter:blur(0); } }
+@keyframes story-eye-push { from { transform:scale(1); } to { transform:scale(1.06); } }
+@keyframes story-hit { 0% { opacity:0; transform:scale(1.8) rotate(-12deg); } 20% { opacity:1; transform:scale(.95) rotate(-12deg); } 35%,100% { opacity:1; transform:scale(1) rotate(-12deg); } }
+@keyframes story-wave { from { opacity:.65; transform:scale(.4); } to { opacity:0; transform:scale(2.5); } }
+@keyframes story-card-glint { from { transform:translateX(-70%) rotate(8deg); } to { transform:translateX(70%) rotate(8deg); } }
+@media (prefers-reduced-motion:reduce) {
+  .reading-story *,.reading-story *::before,.reading-story *::after { animation:none !important; transition:none !important; }
+  .story-sfx { opacity:1; }
+}
+
 /* design/code.html <style> 이식 — 색상은 하드코딩 대신 토큰 유틸리티로 적용 */
 @layer base {
   html,

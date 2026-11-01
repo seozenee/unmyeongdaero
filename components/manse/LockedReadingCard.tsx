@@ -1,9 +1,14 @@
+"use client";
+
 import { Icon } from "@/components/ui/Icon";
+import { useInView } from "@/components/home/useInView";
 import type { LockedTopic } from "@/lib/reports/preview-topics";
 
 /** 값이 채워진 예언처럼 보이지 않게, 실제 숫자 없는 모자이크 자리만 그린다. */
 export function LockedReadingCard({ topic, no }: { topic: LockedTopic; no: number }) {
-  return <article className="relative overflow-hidden rounded-3xl border border-secondary/25 bg-gradient-to-b from-secondary/10 to-surface-container-low p-space-lg">
+  const { ref, inView } = useInView<HTMLElement>();
+  return <article ref={ref} data-visible={inView} className="story-locked relative overflow-hidden rounded-3xl border border-secondary/25 bg-gradient-to-b from-secondary/10 to-surface-container-low p-space-lg">
+    <span aria-hidden="true" className="story-card-seal">{topic.format === "money" ? "財" : topic.format === "date" ? "時" : "命"}</span>
     <p className="font-label-sm text-label-sm tracking-widest text-secondary">전체 풀이 미리보기 · {String(no).padStart(2, "0")}</p>
     <h3 className="mt-space-md text-[1.5rem] font-bold leading-snug text-on-surface">{topic.title}</h3>
     <p className="mt-space-sm font-body-sm text-body-sm leading-relaxed text-on-surface-variant">{topic.subtitle}</p>
