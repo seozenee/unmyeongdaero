@@ -41,10 +41,14 @@ function normalizeSiteUrl(value: string | undefined) {
 
 export const env = {
   siteUrl: normalizeSiteUrl(read("NEXT_PUBLIC_SITE_URL")),
+  /** 풀이를 쓰는 쪽을 직접 고를 때 — openai · anthropic · gemini */
+  aiProvider: read("AI_PROVIDER"),
   anthropicApiKey: read("ANTHROPIC_API_KEY"),
   anthropicModel: read("ANTHROPIC_MODEL"),
   geminiApiKey: read("GEMINI_API_KEY"),
   geminiModel: read("GEMINI_MODEL"),
+  openaiApiKey: read("OPENAI_API_KEY"),
+  openaiModel: read("OPENAI_MODEL"),
   supabaseUrl: read("SUPABASE_URL"),
   supabaseAnonKey: read("SUPABASE_ANON_KEY"),
   supabaseServiceRoleKey: read("SUPABASE_SERVICE_ROLE_KEY"),
@@ -77,7 +81,7 @@ const tossReady = Boolean(env.tossClientKey && env.tossSecretKey);
 
 export type DataMode = "supabase" | "local";
 export type PaymentMode = "toss" | "mock";
-export type AiMode = "gemini" | "anthropic" | "template";
+export type AiMode = "openai" | "gemini" | "anthropic" | "template";
 
 export class ServiceNotConfiguredError extends Error {
   constructor(service: string, variables: string[]) {
@@ -108,11 +112,20 @@ export const modes = {
    * 키를 둘 다 넣어 두고 클로드 쪽을 비우면 제미나이로 넘어간다.
    */
   ai: (): AiMode =>
-    env.anthropicApiKey
-      ? "anthropic"
-      : env.geminiApiKey
+    // AI_PROVIDER 로 골라 쓸 수 있다. 비워 두면 키가 있는 쪽을 순서대로 집는다.
+    env.aiProvider === "openai" && env.openaiApiKey
+      ? "openai"
+      : env.aiProvider === "gemini" && env.geminiApiKey
         ? "gemini"
-        : pick(false, "anthropic", "template", "Anthropic", ["ANTHROPIC_API_KEY"]),
+        : env.aiProvider === "anthropic" && env.anthropicApiKey
+          ? "anthropic"
+          : env.openaiApiKey
+            ? "openai"
+            : env.anthropicApiKey
+              ? "anthropic"
+              : env.geminiApiKey
+                ? "gemini"
+                : pick(false, "anthropic", "template", "Anthropic", ["ANTHROPIC_API_KEY"]),
 };
 
 /** sazu Free 키는 5개 샘플 프로필만 계산하는 샌드박스로 동작한다 */

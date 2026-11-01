@@ -5,6 +5,7 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 import { claudeBaseParams, finalText, getAnthropic } from "@/lib/ai/anthropic";
 import { callGemini, geminiText } from "@/lib/ai/gemini";
+import { callOpenAi, openAiText } from "@/lib/ai/openai";
 import type { AppUser } from "@/lib/auth/session";
 import { getRepository, type BirthProfile, type Reading, type StoredSazu } from "@/lib/db";
 import { modes } from "@/lib/env";
@@ -153,6 +154,24 @@ const today = () => new Date().toISOString().slice(0, 10);
  * 화면은 글자가 차오르는 연출을 그대로 쓰되 실제로는 완성본이 한 번에 들어간다 —
  * 중간에 끊긴 JSON 을 파싱하려다 깨지는 것보다 낫다.
  */
+async function generateWithOpenAi(
+  report: ReportProduct,
+  reading: Reading,
+  sazu: StoredSazu,
+  onDelta: (delta: string) => void,
+): Promise<StoryReport> {
+  const result = await callOpenAi({
+    input: `${buildReportSystemPrompt(report)}\n\n---\n\n${buildReportUserPrompt(report, reading, sazu, today())}`,
+    schema: z.toJSONSchema(storyReportSchema) as Record<string, unknown>,
+  });
+
+  const text = openAiText(result);
+  if (!text) throw new Error("[openai] 빈 응답");
+  // 스트리밍을 쓰지 않으므로 한 번에 흘려 보낸다. 화면은 같은 경로로 받는다.
+  onDelta(text);
+  return softenDeep(storyReportSchema.parse(JSON.parse(text)));
+}
+
 async function generateWithGemini(
   report: ReportProduct,
   reading: Reading,
@@ -229,7 +248,9 @@ async function runGeneration(reading: Reading, report: ReportProduct, live: Retu
     }
 
     let result: StoryReport;
-    if (modes.ai() === "gemini") {
+    if (modes.ai() === "openai") {
+      result = await generateWithOpenAi(report, reading, sazu, live.push);
+    } else if (modes.ai() === "gemini") {
       result = await generateWithGemini(report, reading, sazu, live.push);
     } else if (modes.ai() === "anthropic") {
       result = await generateWithClaude(report, reading, sazu, live.push);
