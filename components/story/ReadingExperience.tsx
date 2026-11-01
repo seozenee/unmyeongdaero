@@ -37,6 +37,13 @@ interface ReadingExperienceProps {
   sample: boolean;
   templateMode: boolean;
   hasNotifyPhone?: boolean;
+  calendarRepair?: boolean;
+}
+
+function CalendarRepairNotice({ done }: { done: boolean }) {
+  return <p role="status" className="rounded-xl border border-secondary/30 bg-secondary/5 p-space-md text-sm leading-relaxed text-on-surface-variant">
+    {done ? "한국 음력 기준으로 날짜와 대운을 보완한 풀이입니다. 추가 결제는 없습니다." : "음력 생일의 대운 계산을 바로잡았습니다. 기존 열람권으로 풀이를 다시 준비하고 있어요. 추가 결제는 없습니다."}
+  </p>;
 }
 
 function useLoadingLines(guideName: string) {
@@ -230,6 +237,7 @@ export function ReadingExperience(props: ReadingExperienceProps) {
           </div>
         </div>
         {(props.sample || props.templateMode) && <DevNotice sample={props.sample} templateMode={props.templateMode} />}
+        {props.calendarRepair && <CalendarRepairNotice done />}
         <ReadingNotificationForm readingId={props.readingId} hasPhone={props.hasNotifyPhone} />
         <ReportDocument
           report={finalReport}
@@ -265,6 +273,7 @@ export function ReadingExperience(props: ReadingExperienceProps) {
       </section>
 
       {(props.sample || props.templateMode) && <DevNotice sample={props.sample} templateMode={props.templateMode} />}
+      {props.calendarRepair && <CalendarRepairNotice done={Boolean(finalReport)} />}
       <ReadingNotificationForm readingId={props.readingId} hasPhone={props.hasNotifyPhone} />
 
       {beats.length === 0 && !failure && (

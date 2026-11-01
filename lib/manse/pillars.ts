@@ -1,14 +1,15 @@
 // 생년월일시 → 사주 네 기둥.
 //
-// 천문·달력 계산(절기 시각, 음↔양력 변환, 60갑자)은 검증된 lunar-typescript 에 맡기고,
-// 한국 명리 관행에 맞추는 부분만 여기서 처리한다.
+// 한국 음력 날짜는 한국 역법 표로 양력 변환하고, 절기 시각·60갑자는 lunar-typescript 로 계산한다.
+// 중국 음력과 한국 음력의 날짜·윤달이 다른 해를 같은 변환기로 처리하지 않는다.
 //
 // 맞춰야 하는 것이 셋 있다.
 //  1) 절기 시각: 라이브러리는 중국시(UTC+8) 기준으로 절기를 비교한다.
 //     한국시로 태어난 사람은 1시간을 빼서 넘겨야 연주·월주 경계가 맞는다.
 //  2) 진태양시: 시계 시각이 아니라 태양 위치로 시주를 정한다(서울 기준 약 -32분).
 //  3) 야자시: 23시부터 다음 날로 넘긴다(한국 만세력 다수 관행).
-import { Lunar, Solar } from "lunar-typescript";
+import { Solar } from "lunar-typescript";
+import { KOREAN_CALENDAR_VERSION, koreanLunarToSolar } from "./calendar";
 import { cityInfo, isKnownCity } from "./cities";
 import { koreanClock } from "./korea-time";
 
@@ -89,15 +90,15 @@ function toSolarDateTime(input: BirthInput) {
     return { year: input.year, month: input.month, day: input.day, hour, minute };
   }
 
-  // lunar-typescript 는 윤달을 음수 월로 표기한다
-  const month = input.isLeapMonth ? -input.month : input.month;
-  const solar = Lunar.fromYmdHms(input.year, month, input.day, hour, minute, 0).getSolar();
-  return { year: solar.getYear(), month: solar.getMonth(), day: solar.getDay(), hour, minute };
+  const solar = koreanLunarToSolar(input.year, input.month, input.day, input.isLeapMonth ?? false);
+  if (!solar) throw new Error("[manse] 한국 음력에 없는 날짜 또는 윤달입니다.");
+  return { ...solar, hour, minute };
 }
 
 export interface PillarsResult extends FourPillars {
   /** 계산에 쓰인 값들 — 화면과 프롬프트에서 근거로 보여 준다 */
   basis: {
+    calendarVersion: string;
     solarDate: string;
     clockTime: string | null;
     trueSolarTime: string | null;
@@ -160,6 +161,7 @@ export function computeFourPillars(input: BirthInput): PillarsResult {
     day,
     hour,
     basis: {
+      calendarVersion: KOREAN_CALENDAR_VERSION,
       solarDate: `${solar.year}-${pad(solar.month)}-${pad(solar.day)}`,
       clockTime: input.hour === null ? null : `${pad(solar.hour)}:${pad(solar.minute)}`,
       trueSolarTime: input.hour === null ? null : `${pad(trueTime.hour)}:${pad(trueTime.minute)}`,

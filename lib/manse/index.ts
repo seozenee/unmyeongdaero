@@ -101,14 +101,15 @@ export function computeManse(profile: BirthProfile, now = new Date()) {
   });
 
   const dayStem = pillars.day.stem as Stem;
+  const [birthYear, birthMonth, birthDay] = pillars.basis.solarDate.split("-").map(Number) as [number, number, number];
   const strength = judgeStrength(pillars);
   const elements = countElements(pillars);
   const decade = computeDecadeFortune({
     pillars,
     birth: {
-      year: profile.birthYear,
-      month: profile.birthMonth,
-      day: profile.birthDay,
+      year: birthYear,
+      month: birthMonth,
+      day: birthDay,
       hour: profile.birthHour,
       minute: profile.birthMinute,
     },
@@ -118,7 +119,7 @@ export function computeManse(profile: BirthProfile, now = new Date()) {
   const gyeokguk = computeGyeokguk(pillars);
   const yongsin = computeYongsin(pillars, strength.strength);
   const natal = computeNatalRelations(pillars);
-  const luck = computeLuck(pillars, profile.birthYear, now);
+  const luck = computeLuck(pillars, birthYear, now);
 
   /*
     나이가 박힌 연표.
@@ -132,7 +133,7 @@ export function computeManse(profile: BirthProfile, now = new Date()) {
   */
   const years = Array.from({ length: 12 }, (_, offset) => {
     const year = now.getFullYear() + offset;
-    return { year, full: computeSeun(pillars, profile.birthYear, year).ganji };
+    return { year, full: computeSeun(pillars, birthYear, year).ganji };
   });
   /*
     토픽 전용 계산.
@@ -143,7 +144,7 @@ export function computeManse(profile: BirthProfile, now = new Date()) {
 
     늘 세어 둔다. 비용은 표를 몇 번 더 읽는 정도이고, 어느 토픽에 실을지는 아래에서 고른다.
   */
-  const nowAge = now.getFullYear() - profile.birthYear + 1;
+  const nowAge = now.getFullYear() - birthYear + 1;
   const currentDecade = decade.items.filter((item) => item.startAge <= nowAge).at(-1) ?? decade.items[0];
   const incoming = [
     { label: "열 해 흐름", ganji: currentDecade?.full ?? "" },
@@ -155,14 +156,14 @@ export function computeManse(profile: BirthProfile, now = new Date()) {
   const romance = readRomance(
     pillars,
     profile.isFemale,
-    years.map((item) => ({ year: item.year, age: item.year - profile.birthYear + 1, ganji: item.full })).filter(item => item.age >= 20),
+    years.map((item) => ({ year: item.year, age: item.year - birthYear + 1, ganji: item.full })).filter(item => item.age >= 20),
   );
 
   const life = buildLifeTimeline({
     pillars,
     decades: decade.items,
     years,
-    birthYear: profile.birthYear,
+    birthYear,
     yongsin: yongsin.yongsin?.ko ?? null,
     gisin: yongsin.gisin?.ko ?? null,
     strength: strength.strength,
@@ -255,11 +256,11 @@ export function computeManse(profile: BirthProfile, now = new Date()) {
       // 원국만 던져 주면 "성실하시네요" 로 돌아간다.
       character: readCharacter(pillars, strength.strength),
       lifeTimeline: life,
-      retrospective: computePastYears(pillars, profile.birthYear, now.getFullYear()),
+      retrospective: computePastYears(pillars, birthYear, now.getFullYear()),
       wealth,
       healthBalance: health,
       romance,
-      readingFocus: buildReadingFocus({ pillars, strength: strength.strength, isFemale: profile.isFemale, birthYear: profile.birthYear, years, months: luck.weolun.upcomingWeoluns }),
+      readingFocus: buildReadingFocus({ pillars, strength: strength.strength, isFemale: profile.isFemale, birthYear, years, months: luck.weolun.upcomingWeoluns }),
       seun: luck.seun,
       weolun: luck.weolun,
       dailyInteraction: {

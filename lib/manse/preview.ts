@@ -35,7 +35,10 @@ const arr = (value: unknown): unknown[] => Array.isArray(value) ? value : [];
 export function buildPreviewContext(modules: SazuModules, profile: BirthProfile, product: ReportProduct, now = new Date(), concern = "", answers: Record<string, string> = {}) {
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
   const year = Number(today.slice(0, 4));
-  const age = year - profile.birthYear + 1;
+  const pillars = computeFourPillars({ year: profile.birthYear, month: profile.birthMonth, day: profile.birthDay,
+    hour: profile.birthHour, minute: profile.birthMinute, isLunar: profile.isLunar, isLeapMonth: profile.isLeapMonth, city: profile.birthCity });
+  const birthYear = Number(pillars.basis.solarDate.slice(0, 4));
+  const age = year - birthYear + 1;
   const character = obj(modules.character);
   const relation = obj(modules.wongukInteraction);
   const yong = obj(modules.yongsin);
@@ -54,10 +57,8 @@ export function buildPreviewContext(modules: SazuModules, profile: BirthProfile,
     { id: "business", label: "만들고 거래하는 자리의 조합", note: focus?.business.basis.join(" · ") ?? "" },
     { id: "expression", label: "이해와 표현을 읽는 자리", note: focus?.expression.basis.join(" · ") ?? "" },
   ].filter(fact => fact.note).map(fact => ({ ...fact, note: plain(fact.note) }));
-  const pillars = computeFourPillars({ year: profile.birthYear, month: profile.birthMonth, day: profile.birthDay,
-    hour: profile.birthHour, minute: profile.birthMinute, isLunar: profile.isLunar, isLeapMonth: profile.isLeapMonth, city: profile.birthCity });
   // 실제 지난 해를 계산한다. 앞으로의 세운을 과거라고 바꿔 쓰지 않는다.
-  const candidates = computePastYears(pillars, profile.birthYear, year).map(fortune => ({
+  const candidates = computePastYears(pillars, birthYear, year).map(fortune => ({
     year: fortune.year, age: fortune.age, tone: fortune.tone,
     theme: fortune.sipseongRelation.gan, phase: fortune.twelveFortune.name,
     interpretation: plain(fortune.interpretation),

@@ -3,7 +3,7 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { cn } from "@/lib/cn";
-import { Lunar } from "lunar-typescript";
+import { koreanLunarToSolar } from "@/lib/manse/calendar";
 import type { BirthProfile } from "@/lib/db/types";
 import { writeLocalProfile } from "@/lib/me/local-profile";
 import birthCities from "@/lib/saju/birth-cities.json";
@@ -153,16 +153,8 @@ function parseBirthDate(digits: string, isLunar: boolean, isLeap: boolean) {
 
   if (!isLunar) return day <= daysInMonth(year, month) ? { year, month, day } : null;
 
-  // 윤달은 음수 월로 적는다
-  try {
-    const lunar = Lunar.fromYmdHms(year, isLeap ? -month : month, day, 12, 0, 0);
-    const solar = lunar.getSolar();
-    // 없는 날을 넣으면 라이브러리가 조용히 다른 날로 굴러간다 — 되돌려 보고 같은지 확인한다
-    if (lunar.getDay() !== day || Math.abs(lunar.getMonth()) !== month) return null;
-    return { year, month, day, solar: `${solar.getYear()}.${solar.getMonth()}.${solar.getDay()}` };
-  } catch {
-    return null;
-  }
+  const solar = koreanLunarToSolar(year, month, day, isLeap);
+  return solar ? { year, month, day, solar: `${solar.year}.${solar.month}.${solar.day}` } : null;
 }
 
 /** 적어 둔 여덟 자를 사람이 읽는 말로 */
@@ -263,7 +255,7 @@ export function BirthForm({
     }
     if (step === 1) {
       if (!dateTyped) return setError("생년월일 여덟 자리를 적어 주세요. (예: 19950312)");
-      if (!date) return setError("달력에 없는 날이에요. 다시 확인해 주세요.");
+      if (!date) return setError(calendar === "lunar" ? "음력 날짜나 윤달 여부가 맞지 않아요. 다시 확인해 주세요." : "달력에 없는 날이에요. 다시 확인해 주세요.");
       setError(null);
       return setStep(2);
     }
@@ -391,6 +383,8 @@ export function BirthForm({
                 ? calendar === "lunar" && "solar" in date && date.solar
                   ? `음력 ${date.year}.${date.month}.${date.day}${leap ? " (윤달)" : ""} = 양력 ${date.solar}`
                   : `${date.year}년 ${date.month}월 ${date.day}일 (양력)`
+                : dateTyped
+                  ? calendar === "lunar" ? "한국 음력 기준으로 날짜와 윤달 여부를 확인해 주세요." : "달력에 없는 날짜예요. 다시 확인해 주세요."
                 : digits
                   ? `${describeDigits(digits)}… 여덟 자리를 채워 주세요`
                   : "숫자만 눌러 주세요. 1995년 3월 12일이면 19950312"}

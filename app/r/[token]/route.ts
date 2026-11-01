@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getRepository } from "@/lib/db";
 import { ensureReadingPdf, signedPdfUrl } from "@/lib/pdf/store";
+import { needsCalendarRepair } from "@/lib/readings/calculation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,6 +22,7 @@ export async function GET(_request: Request, { params }: { params: { token: stri
   const user = await getCurrentUser();
   if (!user) redirect(`/login?next=${encodeURIComponent(`/r/${params.token}`)}`);
   if (user.id !== reading.userId) redirect("/library");
+  if (needsCalendarRepair(reading)) redirect(`/reports/${reading.reportSlug}/read`);
 
   const stored = await ensureReadingPdf(reading).catch(() => null);
   const url = await signedPdfUrl(stored ? { ...reading, pdfPath: stored.path } : reading);

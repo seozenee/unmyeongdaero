@@ -64,8 +64,9 @@ export default async function MansePage({
   const pillars = parseFourPillars(modules);
   const counts = parseElementCounts(modules);
   const decadeData = parseDecadeFortune(modules);
+  const solarBirth = str(at(modules, "basis.solarDate"))?.split("-").map(Number);
   const age = internationalAge(
-    { year: reading.subject.birthYear, month: reading.subject.birthMonth, day: reading.subject.birthDay },
+    { year: solarBirth?.[0] ?? reading.subject.birthYear, month: solarBirth?.[1] ?? reading.subject.birthMonth, day: solarBirth?.[2] ?? reading.subject.birthDay },
     (() => {
       const now = new Date();
       return { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() };

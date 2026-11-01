@@ -24,6 +24,7 @@ import { withCalculatedPeopleTiming } from "@/lib/story/report-timing";
 import { hasLive, startLive, streamLive } from "./live";
 import { notifyReading } from "./notify";
 import { readingDraftSchema, validateDraftForReport } from "./schema";
+import { needsCalendarRepair } from "./calculation";
 
 /**
  * 실패를 손님에게 어떻게 말할지 정한다.
@@ -222,7 +223,7 @@ async function runGeneration(reading: Reading, report: ReportProduct, live: Retu
   void notifyReading(reading, report, "reading-started");
   try {
     let sazu: StoredSazu = reading.sazu ?? {};
-    if (report.topics.some((topic) => !sazu[topic]) || !sazu.manse?.modules.readingFocus) {
+    if (reading.subject.isLunar || reading.partner?.isLunar || report.topics.some((topic) => !sazu[topic]) || !sazu.manse?.modules.readingFocus) {
       // 초안 때 저장해 둔 건 manse 한 토픽뿐이다. 나머지는 여기서 마저 계산한다.
       sazu = { ...sazu, ...buildManseTopics(report.topics, reading.subject, reading.partner) };
       await repo.updateReading(reading.id, { sazu });
@@ -249,6 +250,8 @@ async function runGeneration(reading: Reading, report: ReportProduct, live: Retu
       status: "ready",
       error: null,
       generatedAt,
+      pdfPath: null,
+      pdfCreatedAt: null,
     });
     // 모델 내부 ID나 검수 전 문장은 브라우저에 흘리지 않는다. 저장된 완성본만 전달한다.
     live.push(JSON.stringify(result));
@@ -286,7 +289,7 @@ export type GenerationStart =
 
 export async function startOrAttachGeneration(user: AppUser, readingId: string): Promise<GenerationStart> {
   const { reading, report } = await getOwnedPurchasedReading(user, readingId);
-  if (reading.status === "ready" && isCompleteReport(reading.script)) return { kind: "ready", report: reading.script };
+  if (reading.status === "ready" && isCompleteReport(reading.script) && !needsCalendarRepair(reading)) return { kind: "ready", report: reading.script };
 
   const attached = streamLive(reading.id);
   if (attached) return { kind: "stream", stream: attached };
