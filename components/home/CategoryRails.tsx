@@ -37,8 +37,9 @@ export const RAILS: ReadonlyArray<{
     id: "destiny",
     heading: "내 인생, 지금 어디쯤일까",
     caption: "타고난 결과 큰 흐름",
-    slugs: ["destiny-full", "life", "yearly", "health"],
+    slugs: ["factbomb", "destiny-full", "life", "yearly", "health"],
     hooks: {
+      factbomb: "자꾸 같은 데서 막히는 이유, 돌려 말하지 않을게",
       "destiny-full": "타고난 결부터 말년까지, 끊지 않고 한 번에",
       life: "지금이 올라가는 중인가, 내려가는 중인가",
       yearly: "내년 열두 달 중 어느 달이 내 달인가",

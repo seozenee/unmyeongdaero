@@ -212,5 +212,51 @@
       "image": "/webtoon/doham/poster-child-dream.webp",
       "video": "/webtoon/doham/poster-child-dream.mp4"
     }
+  },
+  "gangho": {
+    "poster-factbomb": {
+      "image": "/webtoon/gangho/poster-factbomb.webp",
+      "video": "/webtoon/gangho/poster-factbomb.mp4"
+    },
+    "intro-1": {
+      "image": "/webtoon/gangho/intro-1.webp",
+      "video": "/webtoon/gangho/intro-1.mp4"
+    },
+    "intro-0": {
+      "image": "/webtoon/gangho/intro-0.webp",
+      "video": "/webtoon/gangho/intro-0.mp4"
+    },
+    "intro-2": {
+      "image": "/webtoon/gangho/intro-2.webp",
+      "video": "/webtoon/gangho/intro-2.mp4"
+    },
+    "intro-3": {
+      "image": "/webtoon/gangho/intro-3.webp",
+      "video": "/webtoon/gangho/intro-3.mp4"
+    },
+    "intro-4": {
+      "image": "/webtoon/gangho/intro-4.webp",
+      "video": "/webtoon/gangho/intro-4.mp4"
+    },
+    "intro-5": {
+      "image": "/webtoon/gangho/intro-5.webp",
+      "video": "/webtoon/gangho/intro-5.mp4"
+    },
+    "panel-brush": {
+      "image": "/webtoon/gangho/panel-brush.webp",
+      "video": "/webtoon/gangho/panel-brush.mp4"
+    },
+    "panel-second": {
+      "image": "/webtoon/gangho/panel-second.webp",
+      "video": "/webtoon/gangho/panel-second.mp4"
+    },
+    "panel-unfold": {
+      "image": "/webtoon/gangho/panel-unfold.webp",
+      "video": "/webtoon/gangho/panel-unfold.mp4"
+    },
+    "report-cover": {
+      "image": "/webtoon/gangho/report-cover.webp",
+      "video": "/webtoon/gangho/report-cover.mp4"
+    }
   }
 }

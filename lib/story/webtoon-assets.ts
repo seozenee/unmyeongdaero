@@ -1,7 +1,7 @@
 // fal.ai 웹툰 에셋 기획서 — scripts/generate-webtoon-assets.mts 가 읽는다.
 // (Node 타입 제거 실행을 위해 다른 TS 모듈을 import 하지 않는다)
 
-export type WebtoonGuide = "seoha" | "yunseul" | "doham";
+export type WebtoonGuide = "seoha" | "yunseul" | "doham" | "gangho";
 
 export const IMAGE_MODEL = "fal-ai/nano-banana";
 export const EDIT_MODEL = "fal-ai/nano-banana/edit";
@@ -19,6 +19,8 @@ export const CHARACTERS: Record<WebtoonGuide, string> = {
     "Yunseul, a bright Korean woman in her mid twenties who reads compatibility with red seal ink. Shoulder-length black hair tied with a vermilion daenggi ribbon, lively warm eyes, soft smile. Wears a cream jeogori with a vermilion skirt and a small red seal-stamp pendant, holds a calligraphy brush.",
   doham:
     "Doham, a calm Korean man in his early thirties, a scholar of destiny. Wears a black gat (traditional horsehair hat) and thin round glasses, neat short black hair, kind serious eyes. Wears a deep navy dopo robe with antique gold trim and carries an old thread-bound book.",
+  gangho:
+    "Gangho, a charismatic Korean man in his late thirties, a blunt but trustworthy saju reader. Short swept-back black hair with one narrow silver streak at the right temple, straight dark eyebrows, sharp attentive dark eyes, clean-shaven angular face. Wears a charcoal-black modern hanbok robe with a deep vermilion inner collar and a small antique brass wrist cuff. No hat, no glasses, no weapons. A composed, unsmiling expression with a slightly raised eyebrow, never cruel or threatening.",
 };
 
 export interface ShotSpec {
@@ -34,12 +36,14 @@ const SCENE: Record<WebtoonGuide, string> = {
   seoha: "a secluded hanok study at the end of a moonlit alley, huge pale full moon with violet halo, drifting mist, fireflies",
   yunseul: "a small traditional ink workshop glowing with red paper lanterns, stacks of hanji paper, red seal stamps, warm vermilion light at dusk",
   doham: "an endless old library of thread-bound books, a single hanging lantern with golden light, floating dust motes",
+  gangho: "an unmarked hanok consultation room at the end of a narrow night alley, charcoal plaster walls, a round window lit by vermilion light, a low black wooden desk, one brass lamp and thin drifting incense",
 };
 
 function shotsFor(guide: WebtoonGuide): ShotSpec[] {
   const scene = SCENE[guide];
   const name = guide === "seoha" ? "Seoha" : guide === "yunseul" ? "Yunseul" : "Doham";
   return [
+    ...(guide === "gangho" ? GANGHO_SCENES : [
     { key: "intro-0", character: false, aspect: "3:4", prompt: `Establishing wide shot of ${scene}. Quiet, mysterious, inviting.`, motion: "slow cinematic push-in, mist and particles drifting, light gently shimmering, calm atmosphere" },
     { key: "intro-1", character: false, aspect: "3:4", prompt: `Low angle view along a stone path leading to the entrance of ${scene}. A warm light waits at the end.`, motion: "camera slowly dollies forward along the path, leaves and particles swaying" },
     { key: "intro-2", character: false, aspect: "3:4", prompt: `Close-up of a visitor's hand about to knock on an old wooden door with glowing paper panels, part of ${scene}.`, motion: "the hand knocks twice on the door, warm light flickers behind the paper panels" },
@@ -50,9 +54,10 @@ function shotsFor(guide: WebtoonGuide): ShotSpec[] {
     { key: "panel-second", character: false, aspect: "16:9", prompt: `Two old saju chart papers laid side by side on a dark wooden desk with red seal stamps and a candle, inside ${scene}.`, motion: "candle flame flickers, paper edges flutter slightly, dust floats" },
     { key: "panel-unfold", character: true, aspect: "16:9", prompt: `${name} unrolls a long scroll of destiny charts across the desk, glowing characters rising from it like fireflies, inside ${scene}.`, motion: "the scroll unrolls, glowing characters float upward, light sweeps across" },
     { key: "report-cover", character: true, aspect: "3:4", prompt: `${name} holds out a bound report book tied with a ribbon toward the viewer, elegant editorial composition, inside ${scene}.`, motion: "the character gently offers the book, the ribbon sways, particles drift in the light" },
+    ] satisfies ShotSpec[]),
     ...PRODUCT_COVERS.filter((cover) => cover.guide === guide).map(({ key, prompt, motion, portrait, character }) => ({
       key,
-      // 안내자가 주인공인 포스터(상담)만 캐릭터 시트를 기준으로 삼는다.
+      // 안내자가 주인공인 포스터(상담·팩폭)는 캐릭터 시트를 기준으로 삼는다.
       // 나머지는 손님의 이야기를 그리므로 기준 이미지 없이 글로만 그린다.
       character: Boolean(character),
       aspect: (portrait ? "3:4" : "16:9") as "3:4" | "16:9",
@@ -61,6 +66,20 @@ function shotsFor(guide: WebtoonGuide): ShotSpec[] {
     })),
   ];
 }
+
+/** 팩폭사주는 문이 먼저 열리고, 강호가 종이를 탁 놓는 자체 장면으로 이어진다. */
+const GANGHO_SCENES: ShotSpec[] = [
+  { key: "intro-0", character: false, aspect: "3:4", prompt: "An unmarked hanok at the end of a narrow empty Korean night alley. One vermilion lamp burns beside its dark wooden door, wet stones reflecting the light. No people, no signs. Central composition for a vertical screen.", motion: "slow push toward the single vermilion lamp, mist drifts low over wet stones, the lamp sways gently" },
+  { key: "intro-1", character: false, aspect: "3:4", prompt: "Ground-level view walking along wet stone paving toward an unmarked hanok doorway. A thin blade of warm vermilion light cuts across the dark alley from the door. Empty foreground, centered entrance.", motion: "the camera moves slowly forward along the stone path, the narrow light on the ground grows brighter" },
+  { key: "intro-2", character: false, aspect: "3:4", prompt: "Close view of an old dark wooden sliding door already slightly open, warm vermilion light and a thin thread of incense escaping through the gap. No hands, no person. The door opening is centered.", motion: "the sliding door opens a little farther by itself, warm light spreads through the widening gap, incense curls outward" },
+  { key: "intro-3", character: true, aspect: "3:4", prompt: `Gangho seen in three-quarter back view, seated at a low black desk already laying out a long sheet of paper. ${SCENE.gangho}. His distinctive swept-back hair and silver temple streak remain visible. Leave the bottom third quiet.`, motion: "Gangho slowly smooths the paper on the desk, incense drifts, his brass cuff catches the lamp light" },
+  { key: "intro-4", character: true, aspect: "3:4", prompt: `Gangho facing the viewer across the low desk, leaning slightly forward with one palm flat on an unfolded paper chart. A composed direct gaze and one slightly raised eyebrow, no smile. ${SCENE.gangho}. Character centered in the upper two thirds.`, motion: "Gangho firmly places his palm on the chart once and lifts his eyes to meet the viewer, a small ripple of ink light travels across the paper" },
+  { key: "intro-5", character: true, aspect: "3:4", prompt: `Close-up frontal portrait of Gangho making steady eye contact, clear face centered in the upper half, distinctive silver streak at his right temple and vermilion collar visible. ${SCENE.gangho} blurred behind. Calm confidence, a slight raised eyebrow, no smile.`, motion: "a subtle breath and a single natural blink, a small knowing lift of one eyebrow, vermilion lamp light gently shifts across his face" },
+  { key: "panel-brush", character: true, aspect: "16:9", prompt: `A close-up of Gangho's hand and distinctive brass wrist cuff as a calligraphy brush decisively underlines one abstract ink mark on a paper chart. ${SCENE.gangho} out of focus behind. No readable writing.`, motion: "the brush draws one clean underline, a thin vermilion glow follows the ink and settles, the hand remains anatomically natural" },
+  { key: "panel-second", character: false, aspect: "16:9", prompt: "Two paper charts side by side on a black wooden desk: on the left an ink path circles back on itself, on the right a clear vermilion line leads out of the circle. A brass lamp illuminates the papers. No letters, no words, no labels.", motion: "a point of light follows the repeating ink circle, then a vermilion path gradually lights up on the second paper, paper edges move slightly" },
+  { key: "panel-unfold", character: true, aspect: "16:9", prompt: `Gangho unfolding a long paper chart across a low black desk, one hand indicating a clear fork in an abstract ink path. ${SCENE.gangho}. Deliberate and grounded, no magical floating letters.`, motion: "Gangho slowly unrolls the chart and stops at the fork, a narrow line of light traces one path, the paper settles" },
+  { key: "report-cover", character: true, aspect: "3:4", prompt: `Gangho offering a closed charcoal-black thread-bound report with a vermilion cord toward the viewer across the desk. His face is clearly visible above the book, calm and direct. ${SCENE.gangho}. No writing on the book cover.`, motion: "Gangho slides the bound report toward the viewer in one deliberate motion, the vermilion cord settles, the brass lamp flickers softly" },
+];
 
 /**
  * 상품 포스터.
@@ -77,8 +96,7 @@ function shotsFor(guide: WebtoonGuide): ShotSpec[] {
  * 대학 문을 들어서는 장면이고, 사업사주는 처음 가게 문을 여는 장면이다. 영상도 그 한
  * 장면이 움직이는 5초다 — 아이가 문을 지나 걸어 들어가고, 간판 등불이 켜진다.
  *
- * 안내자가 주인공인 포스터는 상담 하나뿐이다. 그 상품이 파는 것이 사람을 만나는
- * 일이라서다.
+ * 상담과 팩폭은 안내자의 인물이 상품 경험의 중심이라 캐릭터를 앞세운다.
  *
  * 세계관(달빛·먹·한옥)은 지키되 채도와 대비만 끌어올린다. 상품마다 다른 강조색을
  * 써서 카드가 나란히 놓였을 때 서로 구분되게 한다.
@@ -99,6 +117,15 @@ interface PosterSpec {
 }
 
 const POSTERS: ReadonlyArray<PosterSpec> = [
+  {
+    key: "poster-factbomb",
+    guide: "gangho",
+    character: true,
+    accent: "vermilion red and charcoal black with antique gold highlights",
+    subject:
+      "Gangho the blunt saju reader leaning forward across a dark desk, meeting the viewer's eyes with composed confidence and a slightly raised eyebrow. His swept-back black hair with one silver temple streak, charcoal robe and vermilion collar are unmistakable. One palm rests firmly beside an unfolded chart with a single decisive vermilion ink line. A huge round red-lit hanok window frames his upper body. No aggression, no weapons, no written symbols.",
+    motion: "Gangho slowly lifts his eyes toward the viewer and subtly raises one eyebrow, vermilion lamp light sweeps across the chart, the robe collar moves with a quiet breath, slow cinematic push-in",
+  },
   // ─ 재회·연애 (서하) ─
   {
     key: "poster-reunion-deep",
@@ -312,4 +339,5 @@ export const SHOTS: Record<WebtoonGuide, ShotSpec[]> = {
   seoha: shotsFor("seoha"),
   yunseul: shotsFor("yunseul"),
   doham: shotsFor("doham"),
+  gangho: shotsFor("gangho"),
 };

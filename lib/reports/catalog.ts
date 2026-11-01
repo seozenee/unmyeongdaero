@@ -42,7 +42,7 @@ export interface ReportProduct {
   /** 자유 서술 질문 */
   detail?: { prompt: string; placeholder: string };
   /** components/home/assets 의 장면 이미지 키 */
-  cover: "highlightReunion" | "thumbReunion" | "thumbLove" | "thumbCompatibility" | "thumbLife" | "thumbStudy" | "thumbChild" | "thumbWork" | "thumbAdmission" | "thumbDream" | "thumbTalent";
+  cover: "highlightReunion" | "thumbReunion" | "thumbLove" | "thumbCompatibility" | "thumbLife" | "thumbFactbomb" | "thumbStudy" | "thumbChild" | "thumbWork" | "thumbAdmission" | "thumbDream" | "thumbTalent";
   /** 화면·AI 풀이에 반드시 붙일 고지 */
   disclaimer?: string;
 }
@@ -267,7 +267,7 @@ export const REPORTS = [
       "돈과 사람에서 네가 반복하는 실수",
       "언제 움직이고 언제 참아야 하는가",
     ],
-    cover: "thumbLife",
+    cover: "thumbFactbomb",
     disclaimer: "말투가 셉니다. 위로가 필요한 날에는 다른 풀이를 권해요.",
   },
   {

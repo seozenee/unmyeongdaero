@@ -8,7 +8,6 @@ export interface WritingSample { title: string; lead: string; paragraphs: string
 
 /** 실고객 정보가 아닌 고정 가상 명식으로 문체를 보여 준다. AI 호출·고객 데이터 조회는 하지 않는다. */
 export function buildDetailWritingSample(product: ReportProduct): WritingSample | null {
-  if (product.guide === "gangho") return null;
   const profile = { name: "예시", birthYear: product.roles?.subject === "child" || product.category === "study" ? 2014 : 1995,
     birthMonth: 5, birthDay: 19, birthHour: 12, birthMinute: 30, isFemale: true, isLunar: false, birthCity: "서울" };
   const now = new Date("2026-11-01T03:00:00Z");

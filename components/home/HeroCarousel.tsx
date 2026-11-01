@@ -10,7 +10,7 @@ import type { ReportProduct } from "@/lib/reports/catalog";
 import { productFont } from "@/lib/reports/fonts";
 
 /** 첫 화면에 크게 세울 상품. 순서가 곧 노출 순위다. */
-const FEATURED = ["destiny-full", "reunion-deep", "child-admission", "compatibility", "business"] as const;
+const FEATURED = ["factbomb", "destiny-full", "reunion-deep", "child-admission", "compatibility", "business"] as const;
 
 /** 손을 대지 않으면 이만큼마다 다음 장으로 */
 const AUTO_ADVANCE_MS = 5200;
@@ -66,7 +66,7 @@ export function HeroCarousel({ products }: HeroCarouselProps) {
   if (items.length === 0) return null;
 
   return (
-    <section className="-mx-margin mt-space-sm" aria-label="지금 가장 많이 보는 풀이">
+    <section className="-mx-margin mt-space-sm" aria-label="운명대로 추천 풀이">
       <ol
         ref={scroller}
         onScroll={onScroll}
@@ -98,12 +98,7 @@ export function HeroCarousel({ products }: HeroCarouselProps) {
                 {/* 그림을 최대한 살린다 — 글자가 앉는 아래쪽만 덮는다 */}
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-surface-container-lowest/95 via-surface-container-lowest/55 to-transparent" />
 
-                {/*
-                  순위.
-                  빨간 리본을 깃발처럼 꽂아 두었다. 카드마다 그 색이 제일 먼저 눈에
-                  걸려서, 정작 보여 주려던 그림보다 리본을 먼저 보게 됐다. 순위는
-                  알려 주면 되는 것이지 외칠 것이 아니다. 유리알 같은 알약 하나로 줄인다.
-                */}
+                {/* 편집 추천 순서다. 판매 순위로 표시하지 않는다. */}
                 <span
                   className={cn(
                     "absolute right-space-md top-space-md rounded-full px-2.5 py-1 font-label-sm text-label-sm leading-none backdrop-blur-md",
@@ -112,7 +107,7 @@ export function HeroCarousel({ products }: HeroCarouselProps) {
                       : "bg-black/35 text-white ring-1 ring-inset ring-white/20",
                   )}
                 >
-                  {position + 1}위
+                  {position === 0 ? "지금 추천" : "추천 풀이"}
                 </span>
 
                 {/* 간판과 한 줄. 값과 버튼은 두지 않는다 — 카드는 보여 주는 자리고,

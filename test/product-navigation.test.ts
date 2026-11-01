@@ -29,7 +29,8 @@ describe("상품 상세 이름과 이동", () => {
     const sample = buildDetailWritingSample(product)!;
     expect(sample.caption).toContain("가상 명식");
     expect(sample.paragraphs.length).toBeGreaterThanOrEqual(3);
-    expect(sample.paragraphs[0]).toContain("사주에서는");
+    expect(sample.paragraphs[0]!.length).toBeGreaterThan(50);
+    expect(sample.paragraphs.join(" ")).not.toMatch(/비겁|식상|관성|인성|재성|천간|겁재/);
     expect(sample.paragraphs.join(" ")).not.toContain("이 해석을 구체적인");
   });
   it("대표 카드·분야 카드·검색 결과 모두 새 상세 문서를 요청한다", () => {

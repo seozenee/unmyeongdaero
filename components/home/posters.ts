@@ -9,6 +9,7 @@ import type { GuideId } from "@/lib/story/guides";
 // 상품 하나에 포스터 하나. 돌려 쓰지 않는다 — 카드가 나란히 놓이는 자리라
 // 같은 그림이 두 번 나오면 바로 눈에 띈다.
 const POSTER_KEY: Record<string, string> = {
+  factbomb: "poster-factbomb",
   "reunion-deep": "poster-reunion-deep",
   reunion: "poster-reunion",
   love: "poster-love",

@@ -19,6 +19,7 @@ export const PRODUCT_FONT: Record<string, string> = {
   life: "'Song Myung', serif",
 
   // 돈·일 — 묵직한 제목체
+  factbomb: "'Gasoek One', sans-serif",
   money: "'Gasoek One', sans-serif",
   career: "'Black Han Sans', sans-serif",
   business: "'Black Han Sans', sans-serif",

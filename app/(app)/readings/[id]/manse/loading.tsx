@@ -1,14 +1,8 @@
 /**
  * 명식을 펼치는 동안 보는 화면.
  *
- * 이 길은 서버에서 두 가지를 한다 — 생년월일로 여덟 글자를 세우고, 그 값으로 "맞혀
- * 보이는" 문장을 AI 로 받아 둔다. 뒤쪽이 2~7초 걸린다.
- *
- * 그 몇 초를 빈 화면으로 두면 손님은 멈춘 줄 안다. 멈춘 줄 알면 뒤로 가거나 다시
- * 누르고, 다시 누르면 처음부터 또 기다린다.
- *
- * 그래서 기다리는 동안 무슨 일이 일어나고 있는지 보여 준다. 기다리는 시간이 같아도,
- * 까닭을 아는 기다림은 훨씬 짧게 느껴진다.
+ * 인증과 저장된 입력 정보를 확인하는 동안만 보인다.
+ * 사주를 계산하면 완성된 미리보기와 구매 버튼을 함께 보낸다. 읽는 중 글을 교체하지 않는다.
  */
 export default function ManseLoading() {
   return (
@@ -23,12 +17,12 @@ export default function ManseLoading() {
 
       <div className="flex flex-col items-center gap-space-xs text-center">
         <p className="font-headline-lg-mobile text-headline-lg-mobile tracking-tight text-on-surface">
-          지나온 시간부터 짚고 있어요
+          내 원국을 펼치고 있어요
         </p>
         <p className="font-body-md text-body-md text-on-surface-variant">
-          태어난 때의 하늘을 다시 세우고,
+          입력하신 생년월일시를 확인하고,
           <br />
-          지나온 시간과 지금의 모습을 함께 읽고 있어요.
+          여덟 글자를 정리하고 있어요.
         </p>
       </div>
 

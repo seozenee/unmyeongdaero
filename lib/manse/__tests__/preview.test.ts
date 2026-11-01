@@ -28,7 +28,7 @@ describe("만세력 개인 풀이", () => {
       expect(item.meaning.length).toBeGreaterThan(5);
     }
     const reading = buildFallbackPreview(context);
-    expect(reading.personality.body[0]).toContain("사주에서는");
+    expect(reading.personality.body.join(" ")).not.toMatch(/비겁|식상|관성|인성|재성|천간|편인|겁재/);
     expect(JSON.stringify(reading)).not.toContain("이 해석을 구체적인");
   });
   it("AI가 연결되지 않아도 성격·과거·두 분야·앞날 풀이가 모두 있다", () => {
@@ -38,7 +38,7 @@ describe("만세력 개인 풀이", () => {
     expect(reading.past).toHaveLength(2);
     expect(reading.areas).toHaveLength(2);
     expect(JSON.stringify(reading)).not.toMatch(/방금 계산했어요|문이 열립니다|맞죠\?|상위 \d+%|\d+억/);
-    expect(reading.areas[1]!.title).toContain("배우는");
+    expect(reading.areas.some(area => /배우|배울|공부/.test(area.title))).toBe(true);
   });
   it("모델이 과거 연도나 근거를 만들어 내면 채택하지 않는다", () => {
     const reading = buildFallbackPreview(context);

@@ -20,7 +20,7 @@ const context = buildPreviewContext(modules, profile, product, now);
 describe("결제 전 개인 미리보기", () => {
   it("계산된 중심 성향에 따라 자기 인식 질문이 달라진다", () => {
     const forGroup = (term: string) => buildRecognitionHook({ ...context,
-      basis: { ...context.basis, prominent: { ...context.basis.prominent!, term } } });
+      basis: { ...context.basis, placements: [], prominent: { ...context.basis.prominent!, term } } });
     expect(forGroup("관성").question).toContain("못 쉬고");
     expect(forGroup("비겁").question).toContain("내가 정해야");
     expect(forGroup("인성").question).toContain("이유를 모르면");

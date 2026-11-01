@@ -17,6 +17,8 @@ export const STITCH_ASSETS = {
   thumbCompatibility: "/webtoon/yunseul/panel-second.webp",
   /** 평생 — 펼쳐지는 운명의 두루마리 */
   thumbLife: "/webtoon/doham/panel-unfold.webp",
+  /** 팩폭 — 강호가 정면에서 명식을 짚는 전용 포스터 */
+  thumbFactbomb: "/webtoon/gangho/poster-factbomb.webp",
   /** 공부 — 붓끝이 글자를 짚는 순간 */
   thumbStudy: "/webtoon/doham/panel-brush.webp",
   /** 우리 아이 — 등불을 든 안내자 */

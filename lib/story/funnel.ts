@@ -43,6 +43,20 @@ const DEFAULT_ASK = {
 
 export function buildFunnel(report: ReportProduct): FunnelStep[] {
   const guide = getGuide(report.guide);
+  if (guide.id === "gangho") {
+    return [
+      { kind: "reply", text: "돌려 말하지 말고, 제 사주를 짚어 주세요" },
+      { kind: "line", speaker: "guide", text: "난 돌직구 강호야. 말은 짧게 해도, 왜 그렇게 읽는지는 빠뜨리지 않아." },
+      { kind: "line", speaker: "guide", text: "먼저 네 원국부터 봐야겠어. 태어난 날과 시각을 알려 줘. 시각을 모르면 모름으로 두면 돼." },
+      { kind: "birth", target: "subject", optional: false },
+      { kind: "panel", camera: "push", figure: "none", asset: "panel-brush", sfx: "스윽", caption: "강호가 붓끝으로 {name}의 첫 글자를 짚었다." },
+      { kind: "line", speaker: "guide", text: "됐어. 네가 준 정보로 원국부터 세웠어. 이제 어디를 더 짚을지 보자." },
+      { kind: "detail", prompt: "지금 가장 답답한 걸 적어 봐. 일, 돈, 사람 중 어디서 자꾸 막히는지. 안 적어도 풀이는 그대로 나와.", placeholder: "(예) 일을 자꾸 벌이는데 끝내는 건 없어요. 왜 이러는지 알고 싶어요." },
+      { kind: "panel", camera: "wide", figure: "reveal", asset: "panel-unfold", sfx: "촤르륵", caption: "강호가 명식을 끝까지 펼쳐 보였다." },
+      { kind: "line", speaker: "guide", text: "먼저 네 성향과 지나온 흐름부터 짚어 볼게. 익숙한 모습이 보이면, 다음에 무엇을 바꿀지도 같이 보자." },
+      { kind: "submit", label: "내 사주, 제대로 짚어 보기" },
+    ];
+  }
   const subjectRole = report.roles?.subject ?? "self";
   const subjectAsk =
     subjectRole === "child"

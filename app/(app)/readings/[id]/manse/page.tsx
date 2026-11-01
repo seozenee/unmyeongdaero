@@ -8,8 +8,7 @@ import { ReadingWebtoon } from "@/components/manse/ReadingWebtoon";
 import { buildManseTopics } from "@/lib/manse";
 import { getGuide } from "@/lib/story/guides";
 import { buildReadingTeaser } from "@/lib/manse/teaser";
-import { buildPreviewContext } from "@/lib/manse/preview";
-import { loadPreviewReading } from "@/lib/manse/preview-ai";
+import { buildInstantPreview, buildPreviewContext } from "@/lib/manse/preview";
 import { Icon } from "@/components/ui/Icon";
 import { getCurrentUser, loginUrl } from "@/lib/auth/session";
 import { getRepository } from "@/lib/db";
@@ -102,7 +101,7 @@ export default async function MansePage({
 
   const teaser = buildReadingTeaser(modules, reading.subject.name);
   const context = buildPreviewContext(modules, reading.subject, report, now, reading.answers.detail ?? "");
-  const narrative = await loadPreviewReading(context);
+  const narrative = buildInstantPreview(context);
   const guide = getGuide(report.guide);
 
   // 계산 기준을 사람이 읽을 문장으로 옮긴다. 진태양시 보정처럼 "왜 이 글자가 나왔는지"를
@@ -140,7 +139,7 @@ export default async function MansePage({
       )}
 
       <ReadingWebtoon teaser={teaser} name={reading.subject.name} guide={guide}
-        poster={getPoster(report.slug, report.guide)} narrative={narrative} context={context}
+        poster={getPoster(report.slug, report.guide)} context={context} narrative={narrative}
         chapters={report.chapters} productTitle={report.title} chart={
 <ManseSheet
         name={reading.subject.name}
