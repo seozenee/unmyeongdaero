@@ -33,5 +33,5 @@ export default async function ReportStoryPage({ params }: { params: { slug: stri
     ...products.filter((item) => item.category !== report.category),
   ];
 
-  return <StoryFunnel report={report} related={related} owned={owned} writingSample={buildDetailWritingSample(report)} />;
+  return <StoryFunnel report={report} related={related} owned={owned} authenticated={Boolean(user)} writingSample={buildDetailWritingSample(report)} />;
 }

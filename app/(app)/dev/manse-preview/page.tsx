@@ -25,12 +25,13 @@ export default async function MansePreview({ searchParams }: { searchParams: { s
   const context = buildPreviewContext(modules, profile, product, new Date(), answers.detail ?? "", answers);
   return <div className="py-space-md">
     <ReadingWebtoon teaser={buildReadingTeaser(modules, profile.name)} name={profile.name}
+      purchaseHref={`/checkout/${product.slug}?reading=sample-reading`}
       productTitle={product.title} guide={getGuide(product.guide)} poster={getPoster(product.slug, product.guide)}
       narrative={buildInstantPreview(context)} context={context} chapters={product.chapters}
       chart={<ManseSheet name={profile.name} birthLine="가상 고객 · 화면 검토용" pillars={parseFourPillars(modules)}
         counts={parseElementCounts(modules)} facts={[]} basis={[]} decade={null} />} />
     <ManseConfirm revealAfterId="reading-first-reveal" readingId="sample-reading" slug={product.slug} title={product.title}
       categoryLabel={product.categoryLabel} price={product.price} originalPrice={product.originalPrice ?? null}
-      chapterCount={product.chapters.length} />
+      />
   </div>;
 }

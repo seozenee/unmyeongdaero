@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BirthForm, CINEMATIC_BIRTH_STEPS } from "@/components/story/BirthForm";
 import { useTypewriter } from "@/components/story/useTypewriter";
 import { STITCH_ASSETS } from "@/components/home/assets";
@@ -121,6 +121,7 @@ export function StoryFunnel({
   owned = false,
   writingSample = null,
   rememberProfile = true,
+  authenticated = false,
 }: {
   report: ReportProduct;
   related?: ReportProduct[];
@@ -129,6 +130,7 @@ export function StoryFunnel({
   writingSample?: WritingSample | null;
   /** 로컬 검토 화면에서는 기존 내 프로필을 바꾸지 않는다. */
   rememberProfile?: boolean;
+  authenticated?: boolean;
 }) {
   const report = useMemo(() => normalizeReportIdentity(incomingReport), [incomingReport]);
   const related = useMemo(() => incomingRelated.map(normalizeReportIdentity), [incomingRelated]);
@@ -143,7 +145,7 @@ export function StoryFunnel({
 
   // 처음 열면 상품 소개. 손님이 무엇을 받는지 보고 들어가게 한다.
   // (로그인하고 돌아온 경우에는 아래 복원 훅이 "chat" 으로 되돌린다)
-  const [phase, setPhase] = useState<"intro" | "chat" | "closed">("closed");
+  const [phase, setPhase] = useState<"intro" | "chat" | "closed" | "resuming">("closed");
   const [cursor, setCursor] = useState(0);
   const [scene, setScene] = useState<Scene>(BASE_SCENE);
   const [echo, setEcho] = useState<string | null>(null);
@@ -158,6 +160,7 @@ export function StoryFunnel({
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [birthStep, setBirthStep] = useState(0);
+  const resumedSubmission = useRef<string | null>(null);
 
   const step: FunnelStep | undefined = steps[cursor];
   const name = subject?.name;
@@ -167,6 +170,8 @@ export function StoryFunnel({
     try {
       const raw = sessionStorage.getItem(storageKey(report.slug));
       if (!raw) return;
+      const resumeKey = `${report.slug}:${raw}`;
+      if (resumedSubmission.current === resumeKey) return;
       const saved = JSON.parse(raw) as SavedState;
       // 로그인 전에 제출을 마친 상태다. 질문 추가로 순서가 바뀌어도 마지막 확인 칸을 복원한다.
       const detailIndex = steps.findIndex(item => item.kind === "detail");
@@ -177,10 +182,37 @@ export function StoryFunnel({
       setDetail(saved.answers.detail ?? "");
       setPhone(saved.notifyPhone ?? "");
       setPhase("chat");
+      // 이 저장본은 제출 후 로그인하러 갈 때만 남는다. 인증 뒤에는 다시 입력시키지 않는다.
+      if (authenticated && saved.subject) {
+        resumedSubmission.current = resumeKey;
+        setPhase("resuming");
+        setSubmitting(true);
+        void (async () => {
+          try {
+            const response = await fetch("/api/readings", { method: "POST", headers: { "content-type": "application/json" },
+              body: JSON.stringify({ slug: report.slug, subject: saved.subject, partner: saved.partner,
+                answers: saved.answers, notifyPhone: saved.notifyPhone?.trim() || null }) });
+            const body = await response.json();
+            if (!response.ok) {
+              const target = body.error?.target;
+              const index = steps.findIndex(item => item.kind === "birth" && item.target === target);
+              if (index >= 0) setCursor(index);
+              setNotice(body.error?.message ?? "입력 정보를 불러오지 못했어요. 다시 시도해 주세요.");
+              setPhase("chat");
+              return;
+            }
+            sessionStorage.removeItem(storageKey(report.slug));
+            router.replace(body.redirect);
+          } catch {
+            setNotice("네트워크가 불안정해요. 입력 정보는 그대로 남아 있어요. 다시 시도해 주세요.");
+            setPhase("chat");
+          } finally { setSubmitting(false); }
+        })();
+      }
     } catch {
       // 저장소 접근 불가 → 처음부터
     }
-  }, [report.slug, steps]);
+  }, [report.slug, steps, authenticated, router]);
 
   const advance = useCallback(() => setCursor((value) => value + 1), []);
 
@@ -332,7 +364,7 @@ export function StoryFunnel({
       <ProductIntro
         report={report}
         related={related}
-        onStart={startInput}
+        onStart={cursor > 0 ? startInput : () => setPhase("intro")}
         onWatchIntro={() => setPhase("intro")}
         resuming={cursor > 0}
         writingSample={writingSample}
@@ -341,6 +373,12 @@ export function StoryFunnel({
   );
 
   if (phase === "closed") return detailPage;
+
+  if (phase === "resuming") return <div role="status" className="flex min-h-[70dvh] flex-col items-center justify-center gap-space-md px-margin text-center">
+    <Icon name="progress_activity" className="animate-spin text-[32px] text-secondary" />
+    <p className="text-lg font-semibold text-on-surface">입력하신 사주를 펼치고 있어요</p>
+    <p className="text-sm text-on-surface-variant">로그인이 확인됐어요. 입력한 정보로 바로 이어갈게요.</p>
+  </div>;
 
   if (phase === "intro") {
     return (

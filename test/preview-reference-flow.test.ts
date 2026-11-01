@@ -38,6 +38,7 @@ describe("참고 파일을 옮긴 개인 미리보기", () => {
     const html = renderToStaticMarkup(createElement(ReadingWebtoon, {
       name: profile.name, guide: getGuide(product.guide), poster: null, narrative: buildInstantPreview(context), context,
       chapters: product.chapters, productTitle: product.title, teaser: buildReadingTeaser(modules, profile.name), chart: null,
+      purchaseHref: "/checkout/destiny-full?reading=sample-reading",
     }));
     expect(html).toContain("날짜·숫자는 구성 예시예요");
     expect(html).toContain("직접 남긴 질문");

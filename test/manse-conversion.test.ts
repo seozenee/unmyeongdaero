@@ -34,13 +34,13 @@ describe("결제 전 개인 미리보기", () => {
     const html = renderToStaticMarkup(createElement(ReadingWebtoon, {
       narrative, context, name: profile.name, guide: getGuide(product.guide), poster: null,
       teaser: buildReadingTeaser(modules, profile.name), chapters: product.chapters,
-      productTitle: product.title, chart: createElement("div", null, "명식"),
+      productTitle: product.title, chart: createElement("div", null, "명식"), purchaseHref: "/checkout/destiny-full?reading=sample-reading",
     }));
     expect(html).toContain(narrative.headline);
     expect(html).toContain("공개할 근거");
     expect(html).toContain("공개할 과거 흐름");
     expect(html).not.toContain("아직 공개하지 않을");
-    expect(html).toContain('href="#reading-purchase"');
+    expect(html).toContain('href="/checkout/destiny-full?reading=sample-reading"');
     expect(html).toContain("전체 풀이에서 확인할 이야기");
   });
 });

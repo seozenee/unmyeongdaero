@@ -139,6 +139,7 @@ export default async function MansePage({
       )}
 
       <ReadingWebtoon teaser={teaser} name={reading.subject.name} guide={guide}
+        purchaseHref={`/checkout/${report.slug}?reading=${reading.id}`}
         poster={getPoster(report.slug, report.guide)} context={context} narrative={narrative}
         chapters={report.chapters} productTitle={report.title} chart={
 <ManseSheet
@@ -199,7 +200,6 @@ export default async function MansePage({
         categoryLabel={report.categoryLabel}
         price={report.price}
         originalPrice={report.originalPrice ?? null}
-        chapterCount={report.chapters.length}
       />
     </div>
   );

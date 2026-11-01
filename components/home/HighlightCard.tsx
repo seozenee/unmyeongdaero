@@ -28,7 +28,7 @@ export function HighlightCard() {
         </div>
 
         <div className="relative z-10 -mt-36 flex flex-col gap-space-sm p-space-lg">
-          <span className="font-label-md text-label-md text-secondary">{report.categoryLabel} · 42페이지 분량</span>
+          <span className="font-label-md text-label-md text-secondary">{report.categoryLabel}</span>
           <h2 className="font-headline-xl-mobile text-headline-xl-mobile leading-tight tracking-tight text-on-surface">
             월령의 밤 : 그 사람은
             <br />왜 연락을 멈췄을까?

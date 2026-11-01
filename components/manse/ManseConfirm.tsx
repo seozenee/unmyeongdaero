@@ -13,7 +13,6 @@ interface ManseConfirmProps {
   categoryLabel: string;
   price: number;
   originalPrice: number | null;
-  chapterCount: number;
   revealAfterId?: string;
 }
 
@@ -30,7 +29,6 @@ export function ManseConfirm({
   categoryLabel,
   price,
   originalPrice,
-  chapterCount,
   revealAfterId,
 }: ManseConfirmProps) {
   const router = useRouter();
@@ -81,7 +79,7 @@ export function ManseConfirm({
           }}
           className="group flex w-full items-center justify-center gap-2 rounded-lg bg-on-surface py-3.5 font-label-md text-label-md text-surface shadow-lg transition-[transform,opacity] active:scale-[0.99] disabled:opacity-60"
         >
-          {moving ? "결제 화면으로 가는 중…" : `전체 ${chapterCount}개 장 풀이 열어보기`}
+          {moving ? "결제 화면으로 가는 중…" : "내 전체 풀이 열어보기"}
           {!moving && (
             <Icon
               name="arrow_forward"

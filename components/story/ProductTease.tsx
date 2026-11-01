@@ -115,7 +115,7 @@ export function ProductTease({ report, onStart }: { report: ReportProduct; onSta
             <LockBadge className="mt-0.5" />
           </div>
           <p className="font-body-sm text-body-sm leading-relaxed text-on-surface-variant">
-            「{report.title}」에서는 이 여덟 글자를 {report.chapters.length}개 장으로 나눠, 어느 글자에서 나온 말인지까지
+            「{report.title}」에서는 이 여덟 글자를 자세히 풀어, 어느 글자에서 나온 말인지까지
             붙여 풀어 드려요.
           </p>
         </div>

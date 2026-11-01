@@ -41,7 +41,12 @@ export function WebtoonIntro({ report, onStart, onClose }: { report: ReportProdu
       sound={sound}
       onClose={onClose}
       onBack={index > 0 ? () => setIndex((value) => value - 1) : undefined}
-      footer={<StageAction onClick={advance}>{shot.action}</StageAction>}
+      footer={<div className="flex flex-col gap-2">
+        <StageAction onClick={advance}>{shot.action}</StageAction>
+        {!isLast && <button type="button" onClick={onStart} className="min-h-11 py-2 text-center text-sm text-on-surface-variant">
+          이야기 건너뛰고 정보 입력
+        </button>}
+      </div>}
     >
       {shot.balloon && (
         <SpeechBalloon key={`${shot.id}-balloon`} className="self-end" tail="bottom-right">
