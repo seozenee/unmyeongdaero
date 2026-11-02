@@ -1,30 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { GuideAvatar } from "@/components/story/GuideAvatar";
 import { Icon } from "@/components/ui/Icon";
-import { readingCardTopic } from "@/lib/story/cards";
+import { buildBookPages } from "@/lib/story/book";
 import { readableSourceNames } from "@/lib/story/sanitize";
 import { ReadingCard } from "./ReadingCard";
 import { ReadingCardBasis } from "./ReadingCardBasis";
 import { ReadingProse } from "./ReadingProse";
+import { ReadingDiagram } from "./ReadingDiagram";
+import { FourPillarsChart } from "@/components/saju/FourPillarsChart";
+import { FiveElementsRadar } from "@/components/saju/FiveElementsRadar";
 import type { ReportDocumentProps } from "./ReportDocument";
 
 /** PDF를 넘기듯 한 주제씩 읽는다. 각 페이지에서는 전체 설명을 이어서 보여 준다. */
 export function CardReportReader(props: ReportDocumentProps) {
   const report = readableSourceNames(props.report);
   const [position, setPosition] = useState(0);
-  const cards = [
-    { id: "summary", label: "내 사주 한눈에", icon: "auto_awesome" },
-    ...report.sections.map((section, index) => ({ id: `section-${index}`, label: section.title, icon: readingCardTopic(section.title).icon })),
-    ...(!report.sections.some(section => /귀인/.test(section.title)) && props.timingWindows?.benefactor.length ? [{ id: "benefactor", label: "귀인운이 들어오는 시기", icon: "diversity_1" }] : []),
-    ...(!report.sections.some(section => /연애|배우자|인연/.test(section.title)) && props.timingWindows?.partnership.length ? [{ id: "partnership", label: "인연이 깊어지는 시기", icon: "favorite" }] : []),
-    { id: "timing", label: "기억해 둘 시기", icon: "event" },
-    { id: "actions", label: "오늘의 선택", icon: "check_circle" },
-    { id: "closing", label: "마지막 한마디", icon: "forum" },
-  ];
+  const cards = buildBookPages(report.sections, {
+    chart: Boolean(props.panels.pillars || props.panels.counts),
+    benefactor: Boolean(props.timingWindows?.benefactor.length),
+    partnership: Boolean(props.timingWindows?.partnership.length),
+  });
   const active = cards[Math.min(position, cards.length - 1)]!;
-  const section = active.id.startsWith("section-") ? report.sections[Number(active.id.slice(8))] : null;
+  const section = active.sectionIndex === undefined ? null : report.sections[active.sectionIndex];
+  const touch = useRef<{ x: number; y: number } | null>(null);
   const move = (next: number) => {
     setPosition(Math.max(0, Math.min(next, cards.length - 1)));
   };
@@ -33,25 +33,48 @@ export function CardReportReader(props: ReportDocumentProps) {
     : section && /연애|배우자|인연/.test(section.title) ? props.timingWindows?.partnership : undefined;
   const currentYear = Number(new Intl.DateTimeFormat("en", { timeZone: "Asia/Seoul", year: "numeric" }).format(new Date()));
   const upcoming = report.timeline.filter(item => Number(item.period.match(/\d{4}/)?.[0] ?? currentYear) >= currentYear);
+  const menu = <label className="reading-book-menu"><Icon name="menu" className="text-[25px]" /><span className="sr-only">목차에서 읽을 이야기 선택</span>
+    <select value={position} onChange={event => move(Number(event.target.value))}>{cards.map((card, index) => <option key={card.id} value={index}>{card.label}{card.kind === "chapter" ? " · 장 표지" : ""}</option>)}</select>
+  </label>;
 
-  return <article className="reading-document reading-card-reader reading-book-reader">
-    <header className="flex items-center gap-3 py-2">
+  return <article className="reading-document reading-card-reader reading-book-reader"
+    onTouchStart={event => {
+      touch.current = null;
+      if (event.touches.length !== 1 || (event.target as Element).closest("button,a,input,select,textarea,summary,[data-book-ignore-swipe]")) return;
+      touch.current = { x: event.touches[0]!.clientX, y: event.touches[0]!.clientY };
+    }}
+    onTouchEnd={event => {
+      const start = touch.current; touch.current = null;
+      if (!start || !event.changedTouches[0]) return;
+      const dx = event.changedTouches[0].clientX - start.x;
+      const dy = event.changedTouches[0].clientY - start.y;
+      if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) move(position + (dx < 0 ? 1 : -1));
+    }} onTouchCancel={() => { touch.current = null; }}>
+    {active.kind === "cover" ? <div className="reading-book-floating-menu">{menu}</div> : <header className="flex items-center gap-3 py-2">
       <GuideAvatar guide={props.guide} size="sm" />
       <div className="min-w-0 flex-1"><h1 className="text-lg font-bold text-on-surface">{props.title}</h1><p className="text-xs leading-relaxed text-on-surface-variant">{props.subjectName}님{props.partnerName ? ` · ${props.partnerName}님` : ""}의 풀이 · {props.issuedAt}</p></div>
-      <label className="reading-book-menu"><Icon name="menu" className="text-[25px]" /><span className="sr-only">목차에서 읽을 이야기 선택</span>
-      <select value={position} onChange={event => move(Number(event.target.value))}>{cards.map((card, index) => <option key={card.id} value={index}>{card.label}</option>)}</select><Icon name="expand_more" className="pointer-events-none text-[20px]" />
-      </label>
-    </header>
+      {menu}
+    </header>}
     <div key={active.id} className="motion-safe:animate-fade-up" role="region" aria-label={active.label}>
-      {section ? <ReadingCard section={section} index={Number(active.id.slice(8))} timingWindows={timingWindows}>
-        <ReadingCardBasis section={section} panels={props.panels} glossary={props.glossary} />
+      {active.kind === "cover" ? <section className="reading-book-cover" aria-label="이름 표지"><h1>{props.subjectName}</h1></section>
+      : active.kind === "chapter" ? <section className="reading-book-chapter"><Icon name={active.icon} className="book-chapter-symbol" /><span>CHAPTER</span><h2>{active.label}</h2></section>
+      : section ? <ReadingCard section={section} index={active.sectionIndex!} timingWindows={timingWindows} diagram={<ReadingDiagram section={section} panels={props.panels} windows={timingWindows} />}>
+        <ReadingCardBasis section={section} glossary={props.glossary} />
       </ReadingCard> : <section className="reading-card reading-book-page">
         <div className="reading-card-topic"><Icon name={active.icon} className="text-[18px]" />{active.label}</div>
-        {active.id === "summary" && <>
-          <h2 className="reading-card-title">{report.headline}</h2>
+        {active.kind === "opening" && <>
+          <h2 className="reading-card-title">{props.subjectName}님께 드리는 첫 이야기</h2>
+          <p className="reading-book-lead">{report.headline}</p>
           <ReadingProse text={report.summary} />
           <div className="flex flex-wrap gap-2">{report.keywords.map(keyword => <span key={keyword} className="reading-card-keyword">#{keyword}</span>)}</div>
-          <p className="text-sm leading-relaxed text-on-surface-variant">아래 ‘다음’을 누르면 이어지는 풀이를 읽을 수 있어요.</p>
+        </>}
+        {active.kind === "chart" && <>
+          <h2 className="reading-card-title">나의 사주</h2>
+          <div className="reading-book-data" data-book-ignore-swipe>
+            {props.panels.pillars && <FourPillarsChart pillars={props.panels.pillars} />}
+            {props.panels.counts && <FiveElementsRadar counts={props.panels.counts} />}
+          </div>
+          <dl className="flex flex-col gap-3">{props.basisFacts.map(fact => <div key={fact.label} className="flex gap-3 text-sm leading-relaxed"><dt className="w-16 shrink-0 text-on-surface-variant">{fact.label}</dt><dd className="text-on-surface">{fact.value}</dd></div>)}</dl>
         </>}
         {active.id === "timing" && <>
           <h2 className="reading-card-title">언제 힘을 쓰고, 언제 쉬어 갈까요?</h2>
@@ -78,9 +101,10 @@ export function CardReportReader(props: ReportDocumentProps) {
         </>}
       </section>}
     </div>
-    <nav className="reading-card-controls" aria-label="풀이 페이지 넘기기">
-      <button type="button" className="product-button-secondary" disabled={position === 0} onClick={() => move(position - 1)}><Icon name="arrow_back" className="text-[20px]" /><span>이전</span></button>
-      <button type="button" className="product-button" onClick={() => move(position === cards.length - 1 ? 0 : position + 1)}><span>{position === cards.length - 1 ? "처음부터 다시 보기" : "다음"}</span><Icon name="arrow_forward" className="text-[20px]" /></button>
+    <nav className="reading-book-pager" aria-label="풀이 페이지 넘기기">
+      <button type="button" aria-label="이전 페이지" disabled={position === 0} onClick={() => move(position - 1)}><Icon name="chevron_left" className="text-[28px]" /></button>
+      <span aria-label={`현재 ${position + 1}페이지, 전체 ${cards.length}페이지`}>{position + 1} / {cards.length}</span>
+      <button type="button" aria-label="다음 페이지" disabled={position === cards.length - 1} onClick={() => move(position + 1)}><Icon name="chevron_right" className="text-[28px]" /></button>
     </nav>
   </article>;
 }

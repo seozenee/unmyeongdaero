@@ -680,4 +680,35 @@ details[open] > summary .reading-card-chevron { transform:rotate(180deg); }
 .reading-book-menu > select { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
 .reading-book-menu > .material-symbols-outlined:last-child { display:none; }
 .reading-book-menu:focus-within { outline:2px solid rgb(var(--accent-ink)); outline-offset:3px; }
+.reading-book-floating-menu { position:relative; height:0; z-index:5; }
+.reading-book-floating-menu .reading-book-menu { position:absolute; top:18px; right:0; }
+.reading-book-cover,.reading-book-chapter { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; margin-inline:-20px; min-height:calc(100svh - 170px); padding:70px 32px 110px; background:#2d2d2c; text-align:center; }
+.reading-book-cover h1 { margin:0; font-family:'Song Myung',serif; font-size:48px; font-weight:400; letter-spacing:.12em; color:#f2ede5; }
+.reading-book-chapter > .book-chapter-symbol { font-size:64px; color:rgb(var(--accent-ink)); text-shadow:0 0 35px rgb(var(--accent)/.3); }
+.reading-book-chapter > span:not(.book-chapter-symbol) { margin-top:9px; color:rgb(var(--accent-ink)); font-size:13px; letter-spacing:.14em; }
+.reading-book-chapter h2 { max-width:310px; margin:0; color:#f5f0e9; font-size:25px; line-height:1.65; font-weight:600; }
+.reading-book-pager { position:fixed; z-index:45; left:50%; transform:translateX(-50%); bottom:calc(4rem + 13px + env(safe-area-inset-bottom,0px)); display:grid; grid-template-columns:48px 1fr 48px; align-items:center; width:190px; min-height:52px; padding:3px 5px; border:1px solid #ffffff0b; border-radius:40px; background:#181818ed; box-shadow:0 5px 25px #00000025; backdrop-filter:blur(12px); }
+.reading-book-pager button { display:grid; place-items:center; width:44px; height:44px; border-radius:50%; color:rgb(var(--accent-ink)); }
+.reading-book-pager button:hover { background:rgb(var(--accent)/.12); }
+.reading-book-pager button:disabled { opacity:.22; }
+.reading-book-pager button:focus-visible { outline:2px solid rgb(var(--accent-ink)); outline-offset:2px; }
+.reading-book-pager > span { text-align:center; color:#eee9e2; font-size:16px; font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:.02em; }
+.reading-book-data { display:flex; flex-direction:column; gap:25px; }
+.reading-book-data > section { background:#292928; border:1px solid #ffffff14; }
+.reading-book-figure { margin:4px 0; padding:23px 17px 20px; border:1px solid rgb(var(--accent)/.28); border-radius:16px; background:#222625; }
+.reading-book-figure > figcaption { margin-bottom:22px; color:rgb(var(--accent-ink)); font-size:15px; line-height:1.6; font-weight:650; text-align:center; }
+.reading-book-figure > svg { display:block; width:100%; height:auto; }
+.reading-book-figure > p { margin:18px 0 0; color:#bcb9b2; font-size:12px; line-height:1.8; text-align:center; }
+.reading-book-figure > section { padding:14px 10px; background:transparent; }
+.book-people-timeline { position:relative; display:flex; flex-direction:column; gap:26px; padding-left:26px; }
+.book-people-timeline::before { content:''; position:absolute; top:8px; bottom:15px; left:5px; width:1px; background:rgb(var(--accent)/.45); }
+.book-people-timeline li { position:relative; display:flex; flex-direction:column; gap:7px; }
+.book-timeline-dot { position:absolute; left:-26px; top:7px; width:11px; height:11px; border-radius:50%; background:rgb(var(--accent-ink)); box-shadow:0 0 0 5px rgb(var(--accent)/.12); }
+.book-people-timeline strong { color:#f1e5d5; font-size:20px; font-weight:600; }
+.book-people-timeline li > span:last-child { color:#bfb7ac; font-size:12px; }
+.book-flow-diagram { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:15px; padding:9px 0; }
+.book-flow-diagram > div { position:relative; display:grid; place-items:center; min-height:74px; padding:10px 5px; border:1px solid rgb(var(--accent)/.35); border-radius:12px; background:rgb(var(--accent)/.08); color:#e8dfd2; text-align:center; font-size:12px; line-height:1.8; }
+.book-flow-diagram i { position:absolute; right:-14px; color:rgb(var(--accent-ink)); font-style:normal; }
+@media print { .reading-book-pager,.reading-book-floating-menu { display:none; } }
+.reading-book-dates-note { margin:0; padding-bottom:18px; color:rgb(var(--accent-ink)); font-size:13px; line-height:1.9; border-bottom:1px dashed #ffffff20; }
 .ds-locked-rows dt { flex:1; min-width:0; }.ds-locked-rows dd { flex-shrink:0; max-width:43%; }
