@@ -6,7 +6,7 @@ import { z } from "zod";
 import { getRepository } from "@/lib/db";
 import { notifyPhoneSchema } from "@/lib/readings/schema";
 import { notifyReading } from "@/lib/readings/notify";
-import { needsCalendarRepair } from "@/lib/readings/calculation";
+import { needsReadingRepair } from "@/lib/readings/calculation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,7 +19,7 @@ export async function GET(_request: Request, { params }: { params: { id: string 
 
   try {
     const { reading } = await getOwnedPurchasedReading(user, params.id);
-    if (needsCalendarRepair(reading)) return NextResponse.json({ status: reading.status === "generating" ? "generating" : "draft", error: null, errorRetryable: true, script: null });
+    if (needsReadingRepair(reading)) return NextResponse.json({ status: reading.status === "generating" ? "generating" : "draft", error: null, errorRetryable: true, script: null });
     return NextResponse.json({
       status: reading.status,
       error: reading.error,

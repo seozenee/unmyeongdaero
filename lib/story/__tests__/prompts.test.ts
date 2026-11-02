@@ -28,6 +28,7 @@ describe("풀이 작성 기준", () => {
     expect(prompt).toContain('"currentDecade":{"startAge":37');
     expect(prompt.length).toBeLessThan(30_000);
     const context = JSON.parse(prompt.match(/<modules>([\s\S]*?)<\/modules>/)![1]!);
+    expect(context.healthBalance).toBeUndefined();
     for (const month of context.weolun.months) expect(month.year * 12 + month.month).toBeGreaterThanOrEqual(2026 * 12 + 11);
   });
 
@@ -43,5 +44,18 @@ describe("풀이 작성 기준", () => {
     expect(prompt.match(/<\/asked>/g)).toHaveLength(1);
     expect(prompt).toContain("태어난 시각 모름");
     expect(prompt).toContain("직업을 바꾸고 싶어요");
+  });
+
+  it.each(["factbomb", "destiny-full"])("%s는 직업 질문만 있어도 전반 사주를 읽으며 능력 높낮이 틀을 주입하지 않는다", slug => {
+    const product = listReports("report").find(item => item.slug === slug)!;
+    const instructions = buildReportSystemPrompt(product);
+    expect(instructions).toContain("이직·창업만 물어도 다른 장을 직장 이야기로 바꾸지 않는다");
+    expect(product.chapters.join(" ")).toMatch(/배우자/);
+    expect(product.chapters.join(" ")).toMatch(/귀인/);
+    const source = buildReportUserPrompt(product, {
+      subject: { name: "검토", birthYear: 1990, birthMonth: 3, birthDay: 14, birthHour: 7, birthMinute: 0, isFemale: false, isLunar: false, birthCity: "서울" },
+      partner: null, answers: { detail: "이직만 궁금해요" },
+    }, {}, "2026-11-02");
+    expect(source).not.toContain("<틀로본결>");
   });
 });

@@ -12,9 +12,8 @@ import { env, ServiceNotConfiguredError } from "@/lib/env";
  *   { model, input, text: { format: { type:"json_schema", name, schema } } }
  *   → { output: [{ content: [{ type:"output_text", text }] }] }
  *
- * strict 는 켜지 않는다. 켜면 스키마의 모든 속성이 required 여야 하고
- * additionalProperties:false 가 강제되는데, 우리 스키마는 그 모양이 아니다.
- * 형식만 맞춰 받고 검증은 우리 zod 로 한 번 더 한다.
+ * 일반 호출은 Zod로 응답을 검증한다. 리포트는 모든 필드가 required이고
+ * additionalProperties:false인 전용 스키마와 strict:true를 함께 사용한다.
  */
 
 const BASE = "https://api.openai.com/v1/responses";
@@ -40,6 +39,10 @@ export interface OpenAiResult {
 
 export async function callOpenAi(input: {
   input: string;
+  /** 리포트처럼 작업별로 검증한 모델을 지정할 때 */
+  model?: string;
+  /** 모든 필드가 required인 리포트 전용 스키마의 형식을 보장한다 */
+  strict?: boolean;
   /** 사용자 자료와 구분되는 상위 작성 지침 */
   instructions?: string;
   schema: Record<string, unknown>;
@@ -54,10 +57,10 @@ export async function callOpenAi(input: {
       authorization: `Bearer ${env.openaiApiKey}`,
     },
     body: JSON.stringify({
-      model: OPENAI_MODEL,
+      model: input.model ?? OPENAI_MODEL,
       instructions: input.instructions,
       input: input.input,
-      text: { format: { type: "json_schema", name: "story_report", schema: input.schema } },
+      text: { format: { type: "json_schema", name: "story_report", schema: input.schema, ...(input.strict ? { strict: true } : {}) } },
     }),
     signal: input.signal,
   });

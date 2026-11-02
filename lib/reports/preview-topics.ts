@@ -35,6 +35,10 @@ export function lockedTopicsFor(context: PreviewContext): LockedTopic[] {
 
 /** 실제 판매 목차의 내용을 쉽게 읽을 세 항목으로 펼친다. */
 export function chapterPreview(title: string): readonly string[] {
+  if (/귀인/.test(title)) return ["내 편이 되는 사람의 역할과 특징", "조언과 소개가 힘이 되는 시기", "도움을 알아보고 관계를 이어 가는 법"];
+  if (/지나온|과거/.test(title)) return ["최근의 변화가 겹쳤던 해", "그때 마음과 선택이 달라진 이유", "지금까지 이어지는 반복과 전환점"];
+  if (/표현|말과/.test(title)) return ["내 말을 듣게 만드는 타고난 강점", "설명과 설득이 잘 맞는 자리", "같은 말이 오해로 바뀌는 순간"];
+  if (/배우자/.test(title)) return ["내가 끌리는 사람과 오래 편한 사람", "관계의 흐름이 겹치는 연도와 달", "가까워진 뒤 맞춰 가야 할 부분"];
   if (/몸|건강|체질/.test(title)) return ["무리할 때의 생활 패턴", "일과 휴식을 조절할 기준", "일상에서 먼저 확인할 변화"];
   if (/돈|재물|수입|사업/.test(title)) return ["수입과 지출에서 반복되는 선택", "기회가 생겼을 때 살펴볼 조건", "내 생활에 맞는 준비와 기준"];
   if (/인연|연애|재회|마음|관계|부부|결혼|상대/.test(title)) return ["서로에게 편한 거리와 표현", "같은 일로 어긋나는 이유", "실제 대화와 행동에서 확인할 것"];

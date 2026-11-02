@@ -94,7 +94,7 @@ export const PITCH: Record<string, ProductPitch> = {
   "destiny-full": {
     hanja: "命",
     claims: [
-      "타고난 그릇부터 말년까지 열한 장으로 꿰어 드려요.",
+      "타고난 그릇부터 말년까지 한 사람의 이야기로 꿰어 드려요.",
       "열 해마다 바뀌는 아홉 칸을 전부 펼쳐요.",
       "재물·인연·몸까지 한 사람의 여덟 글자 위에서 함께 읽어요.",
     ],

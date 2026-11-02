@@ -4,7 +4,7 @@ import { isCompleteReport } from "@/lib/story/report";
 import { renderReportPdf, reportPdfFilename } from "@/lib/pdf/render";
 import { ensureReadingPdf, readStoredPdf } from "@/lib/pdf/store";
 import { getOwnedPurchasedReading } from "@/lib/readings/service";
-import { needsCalendarRepair } from "@/lib/readings/calculation";
+import { needsReadingRepair } from "@/lib/readings/calculation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,7 +28,7 @@ export async function GET(_request: Request, { params }: { params: { id: string 
 
   try {
     const { reading, report } = await getOwnedPurchasedReading(user, params.id);
-    if (needsCalendarRepair(reading)) return jsonError(409, "CALENDAR_REPAIR_REQUIRED", "음력 계산을 보완하고 있어요. 풀이 화면을 먼저 열어 주세요. 추가 결제는 없습니다.");
+    if (needsReadingRepair(reading)) return jsonError(409, "READING_REPAIR_REQUIRED", "계산과 풀이 구성을 보완하고 있어요. 풀이 화면을 먼저 열어 주세요. 추가 결제는 없습니다.");
     if (!isCompleteReport(reading.script)) {
       return jsonError(409, "REPORT_NOT_READY", "풀이가 아직 준비되지 않았어요.");
     }

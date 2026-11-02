@@ -15,6 +15,7 @@ const blockSchema = z.object({
   title: z.string().min(1), lead: z.string().min(1),
   body: z.array(z.string().min(1)).min(2).max(4),
   evidenceIds: z.array(z.string()).min(1).max(3),
+  reason: z.string().optional(),
 });
 export const previewReadingSchema = z.object({
   headline: z.string().min(1), intro: z.string().min(1),
@@ -73,6 +74,7 @@ export function buildPreviewContext(modules: SazuModules, profile: BirthProfile,
     months: teaser.months.slice(0, 6).map(month => ({ period: month.label, tone: month.tone, note: plain(month.note) })),
     character: { inside: text(character.안에서), outside: text(character.밖에서) },
     topics: product.chapters, focus,
+    pillars: { year: pillars.year, month: pillars.month, day: pillars.day, hour: pillars.hour },
   };
 }
 export type PreviewContext = ReturnType<typeof buildPreviewContext>;

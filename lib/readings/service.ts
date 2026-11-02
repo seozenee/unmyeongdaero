@@ -21,10 +21,11 @@ import { assertReportContent } from "@/lib/story/quality";
 import { generateOpenAiReport } from "@/lib/story/generate-openai";
 import { generationSchema, resolveGeneratedReport } from "@/lib/story/generation-schema";
 import { withCalculatedPeopleTiming } from "@/lib/story/report-timing";
+import { REPORT_CONTENT_VERSION } from "@/lib/story/version";
 import { hasLive, startLive, streamLive } from "./live";
 import { notifyReading } from "./notify";
 import { readingDraftSchema, validateDraftForReport } from "./schema";
-import { needsCalendarRepair } from "./calculation";
+import { needsReadingRepair } from "./calculation";
 
 /**
  * 실패를 손님에게 어떻게 말할지 정한다.
@@ -247,9 +248,10 @@ async function runGeneration(reading: Reading, report: ReportProduct, live: Retu
     // 모든 제공자와 개발용 생성기에 같은 기준을 적용한다. JSON 검증만으로는 빈 보고서를 막지 못한다.
     assertReportContent(result, report);
     auditReport(result, report.slug);
+    const completed = { ...result, contentVersion: REPORT_CONTENT_VERSION };
     const generatedAt = new Date().toISOString();
     await repo.updateReading(reading.id, {
-      script: result,
+      script: completed,
       status: "ready",
       error: null,
       generatedAt,
@@ -257,7 +259,7 @@ async function runGeneration(reading: Reading, report: ReportProduct, live: Retu
       pdfCreatedAt: null,
     });
     // 모델 내부 ID나 검수 전 문장은 브라우저에 흘리지 않는다. 저장된 완성본만 전달한다.
-    live.push(JSON.stringify(result));
+    live.push(JSON.stringify(completed));
     live.succeed();
 
     // PDF 를 굽고 카톡으로 알린다. 화면을 이미 닫은 사람도 결과를 받게 하는 것이 목적이므로,
@@ -267,7 +269,7 @@ async function runGeneration(reading: Reading, report: ReportProduct, live: Retu
     // 번호를 남기지 않았다고 해서 보관본이 없어야 할 이유는 없다. 그 사람도 나중에
     // 내려받기를 누르면 조판이 끝나기를 기다려야 했다.
     // 생성 중에 등록한 알림 번호와 계산 자료도 완성 알림·PDF에 반영한다.
-    const finished = await repo.getReading(reading.id) ?? { ...reading, script: result, generatedAt };
+    const finished = await repo.getReading(reading.id) ?? { ...reading, script: completed, generatedAt };
     await ensureReadingPdf(finished).catch((error) =>
       console.error(`[reading ${reading.id}] PDF 보관 실패`, error),
     );
@@ -292,7 +294,7 @@ export type GenerationStart =
 
 export async function startOrAttachGeneration(user: AppUser, readingId: string): Promise<GenerationStart> {
   const { reading, report } = await getOwnedPurchasedReading(user, readingId);
-  if (reading.status === "ready" && isCompleteReport(reading.script) && !needsCalendarRepair(reading)) return { kind: "ready", report: reading.script };
+  if (reading.status === "ready" && isCompleteReport(reading.script) && !needsReadingRepair(reading)) return { kind: "ready", report: reading.script };
 
   const attached = streamLive(reading.id);
   if (attached) return { kind: "stream", stream: attached };

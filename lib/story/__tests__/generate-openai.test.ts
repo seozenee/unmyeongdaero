@@ -12,7 +12,7 @@ const product = getReport("career")!;
 const reading = { subject: SAZU_SAMPLE_PROFILES[0]!.profile, partner: null, answers: {} } as Reading;
 const sazu = buildManseTopics(product.topics, reading.subject, null, new Date("2026-11-01"));
 const draft = buildTemplateReport(product, reading, sazu);
-type Call = { instructions: string; schema: { properties: { sections?: { items: { properties: { chapterId: { enum?: string[]; const?: string } } } } } }; signal: AbortSignal };
+type Call = { instructions: string; input: string; schema: { properties: { overview?: unknown; sections?: { items: { properties: { chapterId: { enum?: string[]; const?: string } } } } } }; signal: AbortSignal };
 const reply = (value: unknown) => ({ text: JSON.stringify(value) });
 
 function responder(report = draft) {
@@ -20,6 +20,13 @@ function responder(report = draft) {
     const batch = input.schema.properties.sections;
     if (!batch) {
       const { sections: _, ...summary } = report;
+      if (input.schema.properties.overview) {
+        const { summary: __, ...header } = summary;
+        return reply({ ...header, corrections: [], choices: Object.fromEntries(["relationship", "people", "work", "money"].map(key => [key, { do: `${key}에서 해 볼 선택이에요.`, avoid: `${key}에서 피하고 대신 할 선택이에요.` }])), overview: {
+          personality: "타고난 성격이에요.", relationship: "인연과 배우자의 이야기예요.", benefactor: "귀인과 사람의 이야기예요.",
+          work: "잘 맞는 직업의 이야기예요.", money: "재물의 이야기예요.", timing: "앞으로의 시기예요.",
+        } });
+      }
       return reply({ ...summary, corrections: [] });
     }
     const schema = batch.items.properties.chapterId;
@@ -80,6 +87,9 @@ describe("분할 작성 후 전체 검수", () => {
     expect(call).toHaveBeenCalledTimes(4);
     expect(result.sections.map(section => section.title)).toEqual(full.chapters);
     expect(result.sections.every(section => section.body.length >= 2 && section.evidence.length > 0)).toBe(true);
+    expect(result.summary).toContain("인연과 배우자");
+    expect(result.summary).toContain("귀인과 사람");
+    expect(result.summary).toContain("재물");
   });
 
   it("검수가 실패하면 초안을 완성본으로 반환하지 않는다", async () => {
@@ -89,6 +99,22 @@ describe("분할 작성 후 전체 검수", () => {
       return respond(input);
     });
     await expect(generate()).rejects.toThrow("검수 연결 실패");
+  });
+
+  it("검수에서 근거를 빈 배열로 지워도 같은 작성 요청 안에서 한 번 보완한다", async () => {
+    const respond = responder();
+    let reviews = 0;
+    call.mockImplementation((input: Call) => {
+      const response = respond(input);
+      if (!input.schema.properties.sections && reviews++ === 0) return reply({ ...JSON.parse(response.text), corrections: [
+        { chapterId: "chapter_1", lead: null, body: [], evidence: [] },
+      ] });
+      return response;
+    });
+    const result = await generate();
+    expect(reviews).toBe(2);
+    expect(call).toHaveBeenCalledTimes(5);
+    expect(result.sections[0]!.evidence).toEqual(draft.sections[0]!.evidence);
   });
 
   it("중복·누락된 장이 있으면 검수나 완성 처리로 넘어가지 않는다", async () => {

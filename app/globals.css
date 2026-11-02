@@ -531,3 +531,78 @@ body[data-stage-open="true"] > nav {
     display: revert !important;
   }
 }
+
+/* 명식 미리보기와 상품 상세의 연속 장면. 글꼴 저작권: 가평군. */
+@font-face { font-family:'GapyeongBrush'; src:url('/fonts/GapyeongHanseokbongB.woff') format('woff'),url('/fonts/GapyeongHanseokbongB.otf') format('opentype'); font-weight:400 900; font-style:normal; font-display:swap; }
+.destiny-sales { --ds-bg:#100608; --ds-ink:#f5ece6; --ds-muted:#b7a59b; --ds-red:#bd6566; --ds-gold:#e8ddc4; background:var(--ds-bg); color:var(--ds-ink); overflow:clip; padding-bottom:32px; }
+.destiny-sales em { color:var(--ds-red); font-style:normal; }
+.ds-reveal { position:relative; }
+.ds-reveal.ds-in { animation:ds-enter .85s cubic-bezier(.2,.65,.3,1) both; }
+.ds-opening { position:relative; }
+.ds-scene { position:relative; width:100%; aspect-ratio:3/4; isolation:isolate; overflow:hidden; }
+.ds-scene > div { background:var(--ds-bg); }
+.ds-scene::after { content:''; position:absolute; inset:0; pointer-events:none; background:linear-gradient(to bottom,var(--ds-bg) 0%,transparent 14%,transparent 67%,var(--ds-bg) 100%); z-index:1; }
+.ds-scene img,.ds-scene video { object-fit:cover; }
+.ds-hero { aspect-ratio:9/13; }
+.ds-hero::after { background:linear-gradient(to bottom,var(--ds-bg),transparent 10%,transparent 59%,var(--ds-bg) 98%); }
+.ds-hero-caption { position:relative; z-index:2; margin-top:-72px; padding:0 24px 10px; text-align:center; }
+.ds-hero-caption > span { font-size:12px; letter-spacing:.22em; color:#c9a78f; }
+.ds-hero-caption h1 { margin:18px 0 0; font-family:'GapyeongBrush','Song Myung',serif; font-size:clamp(31px,8.6vw,40px); line-height:1.5; font-weight:700; }
+.ds-say { padding:66px 20px; text-align:center; }
+.ds-say > p { margin:0; font-family:'GapyeongBrush','Song Myung',serif; font-size:clamp(26px,7vw,34px); font-weight:700; line-height:1.65; letter-spacing:-.035em; word-break:keep-all; }
+.ds-say-small > p { font-size:26px; }
+.ds-opening-preview { position:relative; margin:8px 16px 28px; border:1px solid #8e393a; border-radius:3px; padding:38px 24px 22px; background:radial-gradient(ellipse at 45% 30%,#44131666,transparent 80%); }
+.ds-opening-preview::before,.ds-opening-preview::after { content:'◆'; color:#bd7770; position:absolute; font-size:10px; background:var(--ds-bg); padding:0 14px; left:50%; transform:translateX(-50%); }
+.ds-opening-preview::before { top:-9px; }.ds-opening-preview::after { bottom:-8px; }
+.ds-opening-preview > div { display:flex; gap:16px; position:relative; padding:0 0 28px; }
+.ds-opening-preview > div:not(:nth-last-child(2))::before { content:''; position:absolute; left:5px; top:14px; bottom:-1px; width:1px; background:#71413c; }
+.ds-time-dot { width:11px; height:11px; border-radius:50%; background:var(--ds-dot); box-shadow:0 0 12px var(--ds-dot); margin-top:11px; flex-shrink:0; }
+.ds-opening-preview > div p { margin:0 0 5px; font-family:'GapyeongBrush','Song Myung',serif; font-size:24px; color:#e8ddc4; }
+.ds-opening-preview small { font-family:inherit; font-size:18px; }.ds-opening-preview b { font-size:17px; font-weight:500; }
+.ds-opening-preview > .ds-lock-note { margin-top:6px; font-size:11px; }
+.ds-eye { aspect-ratio:16/8; margin:0; clip-path:polygon(0 13%,8% 18%,20% 9%,39% 17%,58% 10%,80% 14%,100% 8%,100% 89%,85% 83%,62% 93%,43% 86%,20% 94%,0 87%); }
+.ds-eye img,.ds-eye video { object-position:50% 45%; }.ds-eye::after { background:linear-gradient(90deg,#10060880,transparent 25%,transparent 75%,#10060880); }
+.ds-turn { aspect-ratio:3/4; margin-top:-25px; }.ds-turn + .ds-say { margin-top:-35px; }
+.ds-chapter { display:flex; justify-content:center; align-items:center; gap:16px; margin:38px 0 32px; padding:24px 18px; color:#e8ddc4; background:linear-gradient(90deg,transparent,#42151988 30%,#42151988 70%,transparent); border-block:1px solid #7b34374d; }
+.ds-chapter p { margin:0; font-family:'GapyeongBrush','Song Myung',serif; font-size:24px; letter-spacing:.035em; }.ds-chapter > span { color:#af5c55; font-size:9px; }
+.ds-pillars { position:relative; margin:0 20px 34px; padding:24px 18px 20px; background:linear-gradient(135deg,#251316,#160b0c); border:1px solid #8c4f42; border-radius:3px; box-shadow:inset 0 0 0 4px #170a0c,inset 0 0 0 5px #68423455; }
+.ds-pillars-seal { position:absolute; right:12px; top:-17px; background:#551e23; border:1px solid #ab6056; padding:3px 8px; font-size:17px; font-family:serif; color:#e5b59a; }
+.ds-pillar-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); text-align:center; gap:7px; }.ds-pillar-grid > div { border-right:1px solid #99755533; }.ds-pillar-grid > div:last-child { border:0; }
+.ds-pillar-grid p { font-family:serif; font-size:18px; color:#b7a292; margin:0 0 12px; }.ds-pillar-grid strong { display:block; font-family:'Song Myung',serif; font-size:42px; line-height:1.4; font-weight:400; color:#ddcdae; }.ds-pillar-grid small { display:block; margin-top:12px; font-size:12px; color:#a78c7e; }.ds-pillar-grid .ds-day strong { color:#c77e75; }
+.ds-card { margin:28px 16px 58px; padding:34px 21px 24px; border:1px solid #a6534b; border-radius:5px; background:radial-gradient(ellipse at 50% 0,#5c212129,transparent 60%),#170c0e; box-shadow:inset 0 0 0 5px #100608,inset 0 0 0 6px #703a354d; }
+.ds-card::before,.ds-card::after { content:''; pointer-events:none; position:absolute; width:12px; height:12px; border-color:#c1846d; }.ds-card::before { top:10px; left:10px; border-top:1px solid;border-left:1px solid; }.ds-card::after { bottom:10px; right:10px; border-right:1px solid;border-bottom:1px solid; }
+.ds-seal { position:absolute; left:50%; top:-17px; transform:translateX(-50%); font-family:'Song Myung',serif; font-size:17px; padding:2px 13px; color:#d7a78b; border:1px solid #92443d; background:#3e141a; letter-spacing:.12em; }
+.ds-card h3 { margin:4px 0 25px; text-align:center; font-family:'GapyeongBrush','Song Myung',serif; font-size:clamp(23px,6vw,28px); font-weight:700; line-height:1.6; letter-spacing:-.02em; word-break:keep-all; }
+.ds-card h3 small { display:block; margin-top:12px; font-family:Pretendard,sans-serif; color:#d3bcaa; font-size:12px; font-weight:400; letter-spacing:0; }.ds-stem { display:block; margin:18px auto 5px; font-family:'Song Myung',serif; color:#dfb680; font-size:65px; line-height:1.2; text-shadow:0 0 24px #bf8e4350; }
+.ds-card-body > p { margin:0 0 24px; font-size:16px; line-height:1.95; font-weight:400; color:#e2d6ce; word-break:keep-all; overflow-wrap:anywhere; }.ds-card-body > p:last-child { margin-bottom:0; }.ds-card-body p.ds-emphasis { color:#f0c6ae; font-weight:600; }.ds-card-body p.ds-question { color:#d18b85; font-family:'GapyeongBrush','Song Myung',serif; font-size:21px; line-height:1.7; }
+.ds-card blockquote { margin:0 0 24px; padding:12px 0 12px 16px; border-left:2px solid #d25454; font-size:17px; line-height:1.9; color:#ecdccf; }
+.ds-evidence { border-top:1px solid #84504a55; padding-top:14px; font-size:12px; line-height:1.9; color:#b8a59b; }.ds-evidence summary { cursor:pointer; color:#cfb7a7; }.ds-evidence p { margin:16px 0 0; }.ds-evidence b { color:#d7b499; font-weight:500; }
+.ds-input-check { margin:0 20px 60px; border-bottom:1px solid #77504b66; padding-bottom:15px; font-size:12px; color:#bea99b; }.ds-input-check summary { cursor:pointer; }.ds-input-check > div { padding-top:22px; }.ds-input-check .font-headline-md { color:#e8ddc4; }
+.ds-love-scene { aspect-ratio:9/15; }.ds-love-scene + .ds-say { margin-top:-50px; }.ds-area-title { margin:65px 0 15px; text-align:center; font-family:'GapyeongBrush','Song Myung',serif; font-size:42px; font-weight:700; color:#e8ddc4; }
+.ds-mosaic { display:inline-flex; vertical-align:middle; position:relative; width:3.4em; height:1.25em; max-width:100%; overflow:hidden; border-radius:2px; background:repeating-conic-gradient(#c9ad975c 0 25%,#533632a6 0 50%) 0/8px 8px; transform:translateY(-.05em); user-select:none; filter:blur(1.5px); }
+.ds-mosaic span { opacity:.14; filter:blur(4px); font-size:inherit; white-space:nowrap; }.ds-mosaic-wide { width:7em; }
+.ds-locked-rows { border-top:1px solid #88605555; margin:25px 0 20px; }.ds-locked-rows > div { display:flex; gap:12px; justify-content:space-between; align-items:center; border-bottom:1px solid #88605544; padding:17px 0; }.ds-locked-rows dt { font-size:13px; color:#bcaa9d; }.ds-locked-rows dd { margin:0; color:#cfb69c; font-size:13px; }
+.ds-lock-note { display:flex; gap:6px; justify-content:center; align-items:center; margin:24px 0 0; color:#ac9487; font-size:11px; font-family:Pretendard,sans-serif; line-height:1.7; text-align:center; }
+.ds-partner-art { position:relative; width:100%; aspect-ratio:4/3; overflow:hidden; margin:20px 0 26px; background:radial-gradient(ellipse at 50% 80%,#68273644,transparent 65%); }.ds-partner-art > div { position:absolute; width:65px; height:90px; border-radius:50% 50% 40% 40%; background:#b29a8a; filter:blur(13px); top:20%; left:calc(50% - 32px); }.ds-partner-art > div::after { content:''; position:absolute; width:175px; height:150px; top:85px; left:-55px; border-radius:50% 50% 0 0; background:#4e4142; }.ds-partner-art > span { position:absolute; font-family:'Song Myung',serif; font-size:60px; color:#d6b7a4; left:50%; top:44%; transform:translate(-50%,-50%); text-shadow:0 0 30px #100608; }.ds-partner-art > i { position:absolute; width:12px; height:23px; border-radius:50% 0 50% 0; background:#bc7670; opacity:.5; top:55%; left:15%; transform:rotate(40deg); animation:ds-petal 8s ease-in-out infinite; }.ds-partner-art > i:last-child { top:30%; left:78%; animation-delay:-4s; }
+.ds-date-hint { text-align:center; }.ds-date-hint > b { color:#e8ddc4; }.ds-date-hint .ds-mosaic { width:4em; }.ds-money-scene { aspect-ratio:4/3; margin:0 0 -10px; }.ds-wealth-reveal { display:flex; align-items:center; justify-content:center; flex-direction:column; padding:24px 0 18px; gap:12px; }.ds-wealth-reveal .ds-mosaic { font-size:40px; width:5em; height:1.3em; }.ds-wealth-reveal > span:last-child { color:#a48a7a; font-size:12px; letter-spacing:.12em; }
+.ds-domain-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:28px 10px; padding:30px 22px 75px; text-align:center; }.ds-domain-grid > div > span { display:grid; place-items:center; margin:auto; width:64px; height:64px; border:1px solid #99554e80; border-radius:50%; background:radial-gradient(circle,#9e45353a,transparent); font-size:29px; font-family:'Song Myung',serif; color:#d5ad8b; }.ds-domain-grid p { font-size:13px; margin:10px 0 0; color:#d7c2b3; }
+.ds-fortune-graph { margin:20px 0; }.ds-fortune-graph svg { display:block; width:100%; }.ds-fortune-graph figcaption { color:#a68e80; font-size:11px; text-align:center; }
+.ds-finale { aspect-ratio:9/15; margin-top:40px; }.ds-finale + .ds-say { margin-top:-65px; }.ds-assurance { text-align:center; margin:0 22px 66px; }.ds-assurance > div { padding:30px 0; border-bottom:1px solid #673c3766; }.ds-assurance b { font-family:'GapyeongBrush','Song Myung',serif; font-size:29px; color:#e6c39b; }.ds-assurance p { color:#baa497; font-size:14px; line-height:1.8; margin:14px 0 0; }
+.ds-toc { padding:8px 20px; }.ds-toc-item { margin:0 0 22px; padding:24px 20px 20px; border:1px solid #81483f88; background:linear-gradient(130deg,#42201c66,#170b0d); }.ds-toc-item h3 { display:flex; gap:10px; margin:0 0 18px; font-family:'GapyeongBrush','Song Myung',serif; font-size:21px; font-weight:700; line-height:1.55; color:#e7d4bc; }.ds-toc-item h3 > span { flex-shrink:0; font-size:10px; margin-top:6px; color:#b4755c; }.ds-toc-item ul { list-style:none; margin:0; padding:0; }.ds-toc-item li { color:#b29b8d; margin:9px 0; font-size:13px; line-height:1.8; }.ds-toc-item li::before { content:'·'; margin-right:8px; color:#c98f70; }
+.ds-main-cta { display:flex; justify-content:center; align-items:center; gap:9px; margin:26px 20px 15px; padding:18px 12px; border:1px solid #ac5d62; border-radius:6px; background:linear-gradient(135deg,#8f3543,#632632); color:#fff1e8; font-size:17px; font-weight:700; box-shadow:0 0 32px #6d323d33; width:calc(100% - 40px); }.ds-main-cta:active { transform:scale(.985); }.ds-main-cta:disabled { opacity:.6; }.ds-footnote { margin:0 25px 22px; text-align:center; color:#b59b8c; font-size:11px; line-height:1.9; }.ds-font-credit { margin:44px 20px 0; text-align:center; color:#81695f; font-size:10px; }.ds-watch { display:block; margin:18px auto 0; padding:10px 12px; text-decoration:underline; text-underline-offset:4px; color:#bba391; font-size:12px; }
+.ds-preview-label { text-align:center; margin:0 24px 40px; padding:12px; color:#b79c8c; border-block:1px solid #6a3c3455; font-size:11px; line-height:1.8; }.ds-sticky-cta { position:sticky; z-index:25; bottom:calc(4rem + env(safe-area-inset-bottom,0px)); padding:18px 0 10px; background:linear-gradient(transparent,#100608 28%); margin-top:20px; }.ds-sticky-cta .ds-main-cta { margin-top:12px; margin-bottom:6px; }.ds-sticky-cta .ds-footnote { margin-bottom:0; }
+body:has(.destiny-sales) #reading-purchase > div { background:#1e0c10f5; border:1px solid #97463e; --tw-ring-color:transparent; border-radius:6px; }.destiny-sales + #reading-purchase button,body:has(.destiny-sales) #reading-purchase button { background:linear-gradient(135deg,#8f3543,#632632); color:#fff1e8; border:1px solid #b5686c; }
+@keyframes ds-enter { from { transform:translateY(22px); } to { transform:translateY(0); } }
+@keyframes ds-petal { 0%,100% { transform:translateY(0) rotate(40deg); } 50% { transform:translateY(16px) rotate(75deg); } }
+@media (prefers-reduced-motion:reduce) { .destiny-sales *,.destiny-sales *::before,.destiny-sales *::after { animation:none !important; transition:none !important; } }
+
+/* 긴 풀이는 문장과 이유가 눈에 나뉘도록 조판한다. */
+.reading-document .report-prose { display:flex; flex-direction:column; gap:22px; }
+.reading-document .report-prose p { margin:0; font-size:17px; font-weight:400; line-height:2; letter-spacing:-.015em; color:#e2ddd7; word-break:keep-all; overflow-wrap:anywhere; }
+.reading-document .report-prose strong { color:#fff1df; font-weight:650; }
+.reading-document section[id^="section-"] { margin-top:20px; padding-bottom:30px; border-bottom:1px dashed #ffffff24; }
+.reading-document section[id^="section-"] > .report-prose + .report-prose { margin-top:8px; }
+.reading-document section[id^="section-"] h2 { color:#edb184; font-size:25px; line-height:1.55; }
+@media print { .reading-document .report-prose p { color:#222; }.reading-document .report-prose strong { color:#111; } }
+.destiny-sales h1,.destiny-sales h3 { overflow-wrap:anywhere; }
+.ds-locked-rows dt { flex:1; min-width:0; }.ds-locked-rows dd { flex-shrink:0; max-width:43%; }

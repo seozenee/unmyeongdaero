@@ -38,11 +38,18 @@ interface ReadingExperienceProps {
   templateMode: boolean;
   hasNotifyPhone?: boolean;
   calendarRepair?: boolean;
+  scopeRepair?: boolean;
 }
 
 function CalendarRepairNotice({ done }: { done: boolean }) {
   return <p role="status" className="rounded-xl border border-secondary/30 bg-secondary/5 p-space-md text-sm leading-relaxed text-on-surface-variant">
     {done ? "한국 음력 기준으로 날짜와 대운을 보완한 풀이입니다. 추가 결제는 없습니다." : "음력 생일의 대운 계산을 바로잡았습니다. 기존 열람권으로 풀이를 다시 준비하고 있어요. 추가 결제는 없습니다."}
+  </p>;
+}
+
+function ScopeRepairNotice({ done }: { done: boolean }) {
+  return <p role="status" className="rounded-xl border border-secondary/30 bg-secondary/5 p-space-md text-sm leading-relaxed text-on-surface-variant">
+    {done ? "성격·인연·배우자·귀인·일과 돈을 함께 담아 보완한 풀이예요. 추가 결제는 없습니다." : "성격·인연·배우자·귀인까지 빠짐없이 읽도록 기존 풀이를 보완하고 있어요. 열람권은 그대로이며 추가 결제는 없습니다."}
   </p>;
 }
 
@@ -238,6 +245,7 @@ export function ReadingExperience(props: ReadingExperienceProps) {
         </div>
         {(props.sample || props.templateMode) && <DevNotice sample={props.sample} templateMode={props.templateMode} />}
         {props.calendarRepair && <CalendarRepairNotice done />}
+        {props.scopeRepair && <ScopeRepairNotice done />}
         <ReadingNotificationForm readingId={props.readingId} hasPhone={props.hasNotifyPhone} />
         <ReportDocument
           report={finalReport}
@@ -274,6 +282,7 @@ export function ReadingExperience(props: ReadingExperienceProps) {
 
       {(props.sample || props.templateMode) && <DevNotice sample={props.sample} templateMode={props.templateMode} />}
       {props.calendarRepair && <CalendarRepairNotice done={Boolean(finalReport)} />}
+      {props.scopeRepair && <ScopeRepairNotice done={Boolean(finalReport)} />}
       <ReadingNotificationForm readingId={props.readingId} hasPhone={props.hasNotifyPhone} />
 
       {beats.length === 0 && !failure && (

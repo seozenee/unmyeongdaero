@@ -135,7 +135,7 @@ export function writeInstantPreview(context: PreviewContext): PreviewReading {
   if (context.slug === "parent-child") areas = [relationship, parenting];
   return {
     headline: hook.question, intro: hook.scene,
-    personality: { title: v("남들이 보는 나와, 가까운 사람이 아는 나", "남들이 보는 너와, 가까운 사람이 아는 너"), lead: v(...drive.lead),
+    personality: { title: v("남들이 보는 나와, 가까운 사람이 아는 나", "남들이 보는 너와, 가까운 사람이 아는 너"), lead: v(...drive.lead), reason: v(...drive.reason),
       body: [`${v(...drive.scene)} ${outer ? v(...outer) : ""}`, `${inner ? v(...inner) : ""} ${v(...drive.burden)}`, v(...drive.reason)], evidenceIds: evidence(["character", "inside", "outside"]) },
     past: context.past.map(item => {
       const copy = PAST[item.theme] ?? PAST.정인!;

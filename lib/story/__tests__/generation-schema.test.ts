@@ -13,7 +13,7 @@ describe("생성한 본문과 상품 목차 연결", () => {
   it("AI가 제목을 바꾸거나 순서를 섞어도 ID의 본문을 서버 목차에 정확히 연결한다", () => {
     const report = resolveGeneratedReport({ ...payload, sections: [...payload.sections].reverse() }, product);
     expect(report.sections.map(section => section.title)).toEqual(product.chapters);
-    expect(report.sections.map(section => section.lead)).toEqual(["장 1", "장 2", "장 3", "장 4", "장 5"]);
+    expect(report.sections.map(section => section.lead)).toEqual(product.chapters.map((_, index) => `장 ${index + 1}`));
     expect(JSON.stringify(report)).not.toContain("chapterId");
     expect(() => storyReportSchema.parse(report)).not.toThrow();
   });

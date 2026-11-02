@@ -1317,6 +1317,30 @@ const talentFit: Builder = (ctx, title) => {
   );
 };
 
+/** 전반 풀이의 새 장은 직업 장의 복사본으로 채우지 않는다. */
+const pastChanges: Builder = ({ me }, title) => {
+  const years = list(at(me.modules, "retrospective")).slice(-2);
+  return section(title, "지나온 변화는 지금 반복하는 선택을 돌아보는 실마리가 돼요", [
+    ...years.map(year => `${num(at(year, "year"))}년에는 ${str(at(year, "interpretation")) ?? "그해의 관계와 선택을 돌아볼 수 있어요."}`),
+    "이 해석이 실제로 있었던 사건을 증명하는 것은 아니에요. 그때 중요하게 여긴 일과 지금도 남아 있는 선택을 나란히 놓고 읽어 보세요.",
+    "어떤 일이 있었는지 떠오른다면, 그때와 지금 내가 달라진 부분도 함께 살펴보세요.",
+  ], [pillarEvidence(me, "year")]);
+};
+const expressionGift: Builder = ({ me }, title) => section(title,
+  str(at(me.modules, "readingFocus.expression.lead")) ?? "말과 표현은 생각을 어떻게 밖으로 꺼내는지부터 읽어요", [
+    str(at(me.modules, "readingFocus.expression.reason")) ?? "내 생각을 먼저 정리하는 방식과, 사람 앞에서 꺼내는 방식은 다를 수 있어요.",
+    str(at(me.modules, "readingFocus.expression.caution")) ?? "말을 많이 하는 것보다, 내가 이해한 것을 상대가 알아듣게 이어 주는 모습이 중요해요.",
+  ], [pillarEvidence(me, "month")]);
+const peopleTiming = (kind: "benefactor" | "partnership"): Builder => ({ me }, title) => {
+  const windows = list(at(me.modules, `readingFocus.${kind}`)).slice(0, 2);
+  const helper = kind === "benefactor";
+  return section(title, helper ? "귀인은 조언과 소개가 실제 실마리로 이어지는 관계에서 읽어요" : "배우자와의 인연은 끌림과 함께 가까워지는 흐름을 읽어요", [
+    helper ? "혼자 정답을 찾을 때와, 사람을 통해 길이 열릴 때는 달라요. 귀인운은 대신 인생을 결정해 줄 누군가보다 나에게 필요한 도움의 역할로 살펴봐요." : "새로운 만남뿐 아니라, 이미 이어 가는 관계가 더 구체적인 약속으로 나아가는 때도 함께 읽어요.",
+    ...windows.map(window => `${str(at(window, "period")) ?? "다가오는 시기"}: ${list(at(window, "reasons")).map(str).filter(Boolean).join(". ")}`),
+    helper ? "좋은 조언도 실제 내 사정을 듣고 건넨 말인지, 도움에 무리한 조건이 붙지는 않는지 함께 보세요." : "관계의 시기가 겹친다고 만남이 정해지는 것은 아니에요. 서로의 의사와 약속을 지키는 모습이 함께 있어야 가까워질 수 있어요.",
+  ], [pillarEvidence(me, helper ? "month" : "day")]);
+};
+
 const BUILDERS: Record<string, Builder[]> = {
   study: [natal, studyStyle, timing, cautionSection],
   "child-study": [natal, studyStyle, timing, careerDirection, parentTalk],
@@ -1334,11 +1358,11 @@ const BUILDERS: Record<string, Builder[]> = {
   "child-admission": [natal, studyStyle, admissionYears, decadeMap, yearMonths, admissionChoice, parentTalk],
   "child-dream": [natal, talentDirection, careerDirection, decadeMap, talentFit, parentTalk],
   "child-talent": [natal, talentDirection, decadeMap, parentTalk],
-  // 장 다섯이 서로 다른 자리를 본다 — 성격 · 일 · 놓을 것 · 돈과 사람 · 때
-  factbomb: [natal, bizShape, cautionSection, wealthStructure, timing],
+  // 성격·과거·인연·귀인·직업·표현·선택·재물·시기를 각각 읽는다.
+  factbomb: [natal, pastChanges, loveSeat, peopleTiming("benefactor"), bizShape, expressionGift, cautionSection, wealthStructure, timing],
   "destiny-full": [
     natal, natalRelations, elementsAndYongsin, decadeMap, timing,
-    yearCore, wealthStructure, loveSeat, healthBalance, lateYears, actionSection,
+    yearCore, wealthStructure, loveSeat, peopleTiming("partnership"), peopleTiming("benefactor"), healthBalance, lateYears, actionSection,
   ],
 };
 

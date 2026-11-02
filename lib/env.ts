@@ -49,6 +49,7 @@ export const env = {
   geminiModel: read("GEMINI_MODEL"),
   openaiApiKey: read("OPENAI_API_KEY"),
   openaiModel: read("OPENAI_MODEL"),
+  openaiReportModel: read("OPENAI_REPORT_MODEL"),
   supabaseUrl: read("SUPABASE_URL"),
   supabaseAnonKey: read("SUPABASE_ANON_KEY"),
   supabaseServiceRoleKey: read("SUPABASE_SERVICE_ROLE_KEY"),

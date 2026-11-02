@@ -1,267 +1,178 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { GuideAvatar } from "@/components/story/GuideAvatar";
-import { useInView } from "@/components/home/useInView";
-import { LockedReadingCard } from "./LockedReadingCard";
+import dynamic from "next/dynamic";
 import { Icon } from "@/components/ui/Icon";
-import { SpeechBalloon } from "@/components/webtoon/ComicText";
-import { WebtoonMedia } from "@/components/webtoon/WebtoonMedia";
-import { getWebtoonAsset, type WebtoonAsset } from "@/components/webtoon/assets";
+import type { WebtoonAsset } from "@/components/webtoon/assets";
 import { chapterPreview, lockedTopicsFor } from "@/lib/reports/preview-topics";
-import { cn } from "@/lib/cn";
 import type { ReadingTeaser as Teaser } from "@/lib/manse/teaser";
 import type { Guide } from "@/lib/story/guides";
-import type { PreviewContext, PreviewEvidence, PreviewReading } from "@/lib/manse/preview";
+import type { PreviewContext, PreviewReading } from "@/lib/manse/preview";
+import { SalesAssurance, SalesCard, SalesChapter, SalesLockNote, SalesMosaic, SalesReveal, SalesSay, SalesScene } from "./CinematicSales";
 
-/** 스크롤해 들어올 때 한 번 떠오른다 */
-function Panel({ children, className }: { children: React.ReactNode; className?: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [shown, setShown] = useState(false);
+const LegacyReadingWebtoon = dynamic(() => import("./LegacyReadingWebtoon").then(module => module.LegacyReadingWebtoon));
 
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-    if (typeof IntersectionObserver === "undefined" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setShown(true);
-      return;
-    }
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setShown(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "-12% 0px" },
-    );
-    observer.observe(node);
-    // 관찰자가 돌지 않는 자리에서도 글이 사라지면 안 된다
-    const failOpen = window.setTimeout(() => {
-      const bounds = node.getBoundingClientRect();
-      if (bounds.top < window.innerHeight && bounds.bottom > 0) setShown(true);
-    }, 1200);
-    return () => {
-      observer.disconnect();
-      window.clearTimeout(failOpen);
-    };
-  }, []);
+const NATURE: Record<string, [string, string]> = {
+  갑: ["쉽게 꺾이지 않는", "큰 나무의 결"], 을: ["유연하게 길을 찾는", "풀과 덩굴의 결"],
+  병: ["사람들 앞을 밝히는", "태양의 결"], 정: ["작은 차이를 놓치지 않는", "등불의 결"],
+  무: ["쉽게 자리를 내주지 않는", "큰 산의 결"], 기: ["사람과 일을 품어내는", "대지의 결"],
+  경: ["결정한 것은 밀고 나가는", "단단한 쇠의 결"], 신: ["작은 차이까지 가려내는", "잘 다듬은 보석의 결"],
+  임: ["넓게 보고 길을 찾아가는", "큰 물길의 결"], 계: ["조용히 스며들어 이해하는", "비와 이슬의 결"],
+};
 
-  return (
-    <div
-      ref={ref}
-      className={cn(
-        "story-reveal transition-all duration-700 ease-out",
-        shown && "is-shown",
-        shown ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0",
-        className,
-      )}
-    >
-      {children}
-    </div>
-  );
-}
-
-/**
- * 크게 던지는 두 줄.
- *
- * 윗줄은 흰 글씨로 깔고, 아랫줄만 브랜드 색으로 때린다. 한 덩어리로 다 굵게 쓰면
- * 어디를 보라는 건지 알 수 없어 그냥 시끄러운 글이 된다. 눈이 한 군데에만 걸려야
- * 그 한 줄이 남는다.
- */
-function Punch({ lead, hit }: { lead: string; hit: string }) {
-  return (
-    <div className="story-punch flex flex-col items-center gap-2 bg-surface px-margin py-space-xl text-center">
-      <p className="text-[1.5rem] font-bold leading-snug tracking-tight text-on-surface">{lead}</p>
-      <p className="story-highlight text-[1.9rem] font-bold leading-snug tracking-tight text-secondary">{hit}</p>
-    </div>
-  );
-}
-
-/** 잠긴 장을 예고하는 머리 — 몇 장이 더 있는지 눈으로 보여 준다 */
-function ChapterMark({ no, title }: { no: number; title: string }) {
-  return (
-    <div className="story-chapter flex flex-col items-center gap-2 bg-surface px-margin pt-space-xl">
-      <span aria-hidden="true" className="story-chapter-seal">{String(no).padStart(2, "0")}</span>
-      <span className="font-label-sm text-label-sm tracking-[0.3em] text-secondary">
-        CHAPTER {String(no).padStart(2, "0")}
-      </span>
-      <h2 className="text-[1.4rem] font-bold leading-snug tracking-tight text-on-surface">{title}</h2>
-    </div>
-  );
-}
-
-/** 안내자가 건네는 말 한 칸 */
-function Says({ guide, children }: { guide: Guide; children: React.ReactNode }) {
-  return (
-    <div className="flex items-end gap-space-sm">
-      <GuideAvatar guide={guide} size="sm" />
-      <SpeechBalloon tail="bottom-left" className="flex-1">
-        {children}
-      </SpeechBalloon>
-    </div>
-  );
-}
-
-function Evidence({ ids, facts }: { ids: string[]; facts: PreviewEvidence[] }) {
-  const selected = ids.flatMap(id => facts.filter(fact => fact.id === id));
-  return (
-    <details className="mt-space-md rounded-xl border border-outline-variant/40 bg-surface-container-low px-space-md py-space-sm">
-      <summary className="cursor-pointer font-label-sm text-label-sm text-secondary">이렇게 읽은 근거</summary>
-      <dl className="mt-space-sm flex flex-col gap-space-sm">
-        {selected.map(fact => <div key={fact.id}>
-          <dt className="font-label-sm text-label-sm text-on-surface">{fact.label}</dt>
-          <dd className="mt-1 font-body-sm text-body-sm leading-relaxed text-on-surface-variant">{fact.note}</dd>
-        </div>)}
-      </dl>
-    </details>
-  );
-}
-
-function ReadingBlock({ block, facts, limit = 2 }: { block: PreviewReading["personality"]; facts: PreviewEvidence[]; limit?: number }) {
-  return <article className="px-margin py-space-lg">
-    <h3 className="text-[1.4rem] font-bold leading-snug tracking-tight text-on-surface">{block.title}</h3>
-    <p className="mt-space-md text-[1.1rem] font-semibold leading-relaxed text-secondary">{block.lead}</p>
-    <div className="mt-space-md flex flex-col gap-space-md">
-      {block.body.slice(0, limit).map((paragraph, index) => <p key={index} className="font-body-md text-body-md leading-[1.9] text-on-surface-variant">{paragraph}</p>)}
-    </div>
-    <Evidence ids={block.evidenceIds} facts={facts} />
-  </article>;
-}
-
-function PreviewScene({ guide, assetKey, caption, impact = false }: { guide: Guide; assetKey: string; caption: string; impact?: boolean }) {
-  const { ref, inView } = useInView<HTMLDivElement>();
-  const asset = getWebtoonAsset(guide.id, assetKey);
-  if (!asset) return null;
-  return <div ref={ref} data-visible={inView} className={cn("story-scene relative my-space-md aspect-[4/3] overflow-hidden", assetKey === "intro-5" && "story-eye", impact && "story-impact")}>
-    <WebtoonMedia asset={asset} active={inView} />
-    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-    {impact && <><span aria-hidden="true" className="story-sfx">탁</span><span aria-hidden="true" className="story-impact-ring" /></>}
-    <p className="absolute inset-x-margin bottom-space-lg text-center text-[1.4rem] font-bold leading-snug text-white">{caption}</p>
+function Pillars({ context }: { context: PreviewContext }) {
+  return <div className="ds-pillars" aria-label={`${context.name}님의 사주 원국`}>
+    <span className="ds-pillars-seal" aria-hidden="true">命式</span>
+    <div className="ds-pillar-grid">{(["hour", "day", "month", "year"] as const).map((key, index) => {
+      const pillar = context.pillars[key];
+      return <div key={key} className={key === "day" ? "ds-day" : ""}>
+        <p>{["時", "日", "月", "年"][index]}</p>
+        <strong>{pillar?.hanja[0] ?? "—"}</strong><strong>{pillar?.hanja[1] ?? "—"}</strong>
+        <small>{pillar?.full ?? "시간 미상"}</small>
+      </div>;
+    })}</div>
   </div>;
 }
 
-/** 자기 인식 → 원국의 이유 → 과거 회고 → 잠긴 질문으로 이어지는 결제 전 미리보기. */
-export function ReadingWebtoon({ name, guide, poster, narrative, context, chapters, productTitle, chart, purchaseHref }: {
+function LockedRows({ labels }: { labels: readonly string[] }) {
+  return <dl className="ds-locked-rows">{labels.map(label => <div key={label}><dt>{label}</dt><dd><SalesMosaic wide /></dd></div>)}</dl>;
+}
+
+function FortuneGraph({ context }: { context: PreviewContext }) {
+  const months = context.months.slice(0, 6);
+  if (!months.length) return null;
+  const y = (tone: string) => tone === "good" ? 33 : tone === "caution" ? 115 : 76;
+  const points = months.map((month, i) => `${26 + i * (288 / Math.max(months.length - 1, 1))},${y(month.tone)}`);
+  return <figure className="ds-fortune-graph">
+    <svg viewBox="0 0 340 160" role="img" aria-label="계산한 앞으로의 월별 흐름. 구체적인 해석은 전체 풀이에서 공개합니다.">
+      {[35, 78, 121].map(v => <line key={v} x1="20" x2="320" y1={v} y2={v} stroke="#756051" strokeOpacity=".2" strokeDasharray="3 5" />)}
+      <path d={`M${points.join(" L")}`} fill="none" stroke="#e4bd80" strokeWidth="2.5" />
+      {points.map((point, i) => <circle key={i} cx={point.split(",")[0]} cy={point.split(",")[1]} r="4" fill={months[i]!.tone === "caution" ? "#b45c62" : "#e4bd80"} />)}
+      {months.map((month, i) => <text key={month.period} x={26 + i * (288 / Math.max(months.length - 1, 1))} y="153" textAnchor="middle" fill="#a68e80" fontSize="10">{month.period.replace(/\d{4}년\s*/, "")}</text>)}
+    </svg>
+    <figcaption>좋은 흐름과 신중하게 살펴볼 흐름을 함께 읽습니다.</figcaption>
+  </figure>;
+}
+
+/** 입력한 명식 → 원국의 이유 → 인연·재물·귀인·시기 → 구입으로 이어지는 한 편의 상세 화면. */
+export function ReadingWebtoon(props: React.ComponentProps<typeof CinematicReadingWebtoon>) {
+  return ["factbomb", "destiny-full", "life"].includes(props.context.slug)
+    ? <CinematicReadingWebtoon {...props} /> : <LegacyReadingWebtoon {...props} />;
+}
+
+function CinematicReadingWebtoon({ name, guide, poster, narrative, context, chapters, productTitle, chart, purchaseHref }: {
   teaser: Teaser; name: string; guide: Guide; poster: WebtoonAsset | null;
   narrative: PreviewReading; context: PreviewContext; chapters: readonly string[];
   productTitle: string; chart: React.ReactNode; purchaseHref: string;
 }) {
-  const areaChapter = narrative.past.length > 0 ? 3 : 2;
   const blunt = context.speech === "반말";
+  const say = (polite: string, direct: string) => blunt ? direct : polite;
+  const person = context.child ? `${name}의` : blunt ? name : `${name}님`;
   const topics = lockedTopicsFor(context);
-  return (
-    <section className="reading-story -mx-margin flex flex-col">
-      <Panel>
-        <div className="story-opening relative aspect-[9/14] w-full overflow-hidden">
-          {poster && <WebtoonMedia asset={poster} className="absolute inset-0" />}
-          <div aria-hidden="true" className="story-orbit"><i /><i /><i /></div>
-          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black to-transparent" />
-          <div className="absolute inset-x-margin bottom-space-lg text-center">
-            <span className="font-label-sm text-label-sm tracking-widest text-white/70">{productTitle} · {name}님의 풀이</span>
-          </div>
-        </div>
-      </Panel>
+  const stem = context.pillars.day;
+  const nature = NATURE[stem.stem] ?? NATURE.갑!;
+  const adult = !context.minor && !context.child;
+  const broad = ["factbomb", "destiny-full", "life"].includes(context.slug);
+  const partnerWindow = context.focus?.partnership.filter(window => window.year >= Number(context.today.slice(0, 4))).sort((a, b) => a.year - b.year || (a.month ?? 0) - (b.month ?? 0))[0];
+  const benefactor = context.focus?.benefactor.filter(window => window.year >= Number(context.today.slice(0, 4))).sort((a, b) => a.year - b.year || (a.month ?? 0) - (b.month ?? 0))[0];
+  const relationTitle = adult ? "연애·배우자운" : "사람과의 인연";
+  return <section className="destiny-sales reading-story -mx-margin">
+    <div className="ds-opening">
+      <SalesScene guide={guide.id} shot="sales-hero" fallback="intro-4" className="ds-hero" asset={guide.id === "gangho" ? undefined : poster} />
+      <div className="ds-hero-caption"><span>{productTitle}</span><h1>{person},<br />{say("잘 오셨어요.", "그래 잘 왔어.")}</h1></div>
+    </div>
+    <SalesSay>{say("당신에게 다가올", "네게 다가올")}<br /><em>{say("운명을 펼쳐 볼게요", "운명을 펼쳐 보자")}</em></SalesSay>
+    <SalesReveal className="ds-opening-preview">
+      {[
+        { label: adult ? "마음이 움직이는 인연" : "곁에서 힘이 되는 사람", color: "#7594d4" },
+        { label: context.minor || context.child ? "타고난 재능이 살아나는 길" : "돈이 모이는 나만의 방식", color: "#d6b272" },
+        { label: "한 번 더 살펴봐야 할 선택", color: "#b45c62" },
+      ].map(item => <div key={item.label} style={{ "--ds-dot": item.color } as React.CSSProperties}><span className="ds-time-dot" /><div><p><SalesMosaic /> <small>년</small> <SalesMosaic /> <small>월</small></p><b>{item.label}</b></div></div>)}
+      <SalesLockNote>시기와 구체적인 이유는 전체 풀이에서 공개돼요.</SalesLockNote>
+    </SalesReveal>
+    <SalesSay>{say("오호라, 잠시만요…", "오호라, 잠시만…")}</SalesSay>
+    <SalesScene guide={guide.id} shot="sales-eye" className="ds-eye" />
+    <SalesSay>{say("좋은 모습만으로는", "좋은 말만으로는")}<br /><em>{say("설명되지 않는 사주예요", "다 설명 안 되는 사주야")}</em></SalesSay>
+    <SalesSay className="ds-say-small">{say("방금 본 건", "방금 본 건")}<br />{say("당신 이야기의 극히 일부예요", "네 이야기의 극히 일부일 뿐")}</SalesSay>
+    <SalesScene guide={guide.id} shot="intro-4" className="ds-turn" />
+    <SalesSay>{say("잘하는 것부터", "네가 잘하는 것부터")}<br />{say("자꾸 같은 데서 막히는 이유까지,", "자꾸 같은 데서 막히는 이유까지,")}<br /><em>{say("이제 하나씩 짚어 볼게요", "이제 제대로 짚어줄게")}</em></SalesSay>
 
-      <Panel className="px-margin pb-space-md pt-space-xl text-center">
-        <p className="mb-space-md font-label-sm text-label-sm tracking-[0.2em] text-secondary">{blunt ? "돌려 말하지 않을게." : "당신의 이야기를 펼쳐 볼게요."}</p>
-        <h1 className="text-[2rem] font-bold leading-[1.4] tracking-tight text-white">{name}{context.child ? "의 이야기" : blunt ? "" : "님"},<br />{narrative.headline}</h1>
-      </Panel>
+    <SalesChapter title="사주 원국 분석" />
+    <SalesSay>{person},<br /><em>{narrative.headline}</em></SalesSay>
+    <Pillars context={context} />
+    <SalesCard seal="本性" title={<>{say("당신은", "넌")} {nature[0]}<br /><em>{nature[1]}</em>{say("을 타고났어요", "을 타고났어")}<span className="ds-stem">{stem.hanja[0]}</span><small>나를 나타내는 글자 · {stem.stem}</small></>}>
+      <p>{say(`${name}님, 가장 먼저 짚이는 모습이 있어요.`, `${name}, 네가 가장 잘하는 걸 짚어볼까?`)}</p>
+      <p className="ds-emphasis">{narrative.personality.lead}</p>
+      <p>{narrative.personality.body[0]}</p>
+      <p>{narrative.personality.body[1]}</p>
+      <p className="ds-question">{say("왜 이런 모습이 반복될까요?", "왜 이런 모습이 반복될까?")}</p>
+      <p>{say("답은 태어난 여덟 글자에 있어요.", "답은 네 사주에 있어.")}</p>
+      <p>{narrative.personality.reason}</p>
+      <details className="ds-evidence"><summary>이렇게 읽은 근거</summary>{narrative.personality.evidenceIds.flatMap(id => context.facts.filter(fact => fact.id === id)).map(fact => <p key={fact.id}><b>{fact.label}</b><br />{fact.note}</p>)}</details>
+    </SalesCard>
+    <div id="reading-first-reveal" />
+    <details className="ds-input-check"><summary>입력한 생년월일과 계산된 사주표 확인</summary><div>{chart}</div></details>
 
-      <Panel><Punch lead={blunt ? "남들은 모르는 너의 선택" : "남들은 모르는 나의 선택"} hit={blunt ? "왜 늘 같은 데서 막힐까?" : "왜 늘 같은 데서 막힐까요?"} /></Panel>
-      <PreviewScene guide={guide} assetKey="intro-5" caption={blunt ? "좋은 말만 들으러 온 건 아니지?" : "좋은 말보다, 내게 맞는 답이 필요할 때"} />
+    {narrative.past.length > 0 && <>
+      <SalesChapter title="지나온 시간의 흔적" />
+      <SalesSay>{say("미래 이야기 전에,", "앞날 얘기 전에,")}<br /><em>{say("지나온 시간부터 볼게요", "네가 지나온 때부터 볼게")}</em></SalesSay>
+      {narrative.past.slice(0, 1).map(item => <SalesCard key={item.year} seal="過去" title={<>{item.year}년,<br /><em>{item.title}</em></>}>
+        <p>{item.body[0]}</p><p className="ds-question">{item.check}</p>
+        <SalesLockNote>지나온 경험과 앞으로의 흐름을 함께 이어서 읽어요.</SalesLockNote>
+      </SalesCard>)}
+    </>}
 
-      <Panel className="px-margin py-space-xl">
-        <Says guide={guide}>{narrative.intro}</Says>
-        <p className="mt-space-lg text-center font-body-md text-body-md leading-relaxed text-on-surface-variant">{blunt ? "실제로 겪은 모습과 비교하며 읽어 봐." : "실제로 겪은 모습과 비교하며 읽어 보세요."}</p>
-        {Object.values(context.lifeContext).some(Boolean) && <div className="mt-space-lg border-t border-white/10 pt-space-md">
-          <p className="mb-space-sm font-label-sm text-label-sm text-outline">직접 알려준 지금의 상황</p>
-          <div className="flex flex-wrap gap-space-xs">{Object.values(context.lifeContext).filter(Boolean).map(value => <span key={value} className="rounded-full border border-secondary/25 px-3 py-1.5 font-body-sm text-body-sm text-on-surface-variant">{value}</span>)}</div>
-        </div>}
-      </Panel>
-      <PreviewScene guide={guide} assetKey="intro-4" impact caption={blunt ? "이제, 네 사주를 펼쳐 보자." : "이제, 내 사주를 펼쳐 볼게요."} />
-      <ChapterMark no={1} title={blunt ? "너, 이런 모습 있지?" : "이런 모습, 익숙하지 않으세요?"} />
-      <Panel><ReadingBlock block={narrative.personality} facts={context.facts} /></Panel>
-      <div id="reading-first-reveal" aria-hidden="true" />
-      <details className="mx-margin mb-space-lg rounded-2xl border border-outline-variant/40 bg-surface-container-low p-space-md">
-        <summary className="cursor-pointer font-label-md text-label-md text-on-surface">입력한 생년월일과 내 사주표 확인하기</summary>
-        <div className="pt-space-lg">{chart}</div>
-      </details>
-      <PreviewScene guide={guide} assetKey="panel-brush" caption={blunt ? "잘하는 것과, 같은 데서 막히는 이유" : "내가 잘하는 것과, 같은 데서 막히는 이유"} />
+    <SalesScene guide={guide.id} shot="sales-love" fallback="panel-second" className="ds-love-scene" />
+    <SalesSay>{say("그런데 이 사주,", "그런데 네 사주,")}<br /><em>{say("사람과의 인연도 빼놓을 수 없어요", "사람과의 인연을 빼놓을 수 없지")}</em></SalesSay>
+    <SalesChapter title="영역별 점사" />
+    <h2 className="ds-area-title">{relationTitle}</h2>
+    <SalesSay>{say("누구에게 끌리고,", "넌 누구에게 끌리고,")}<br /><em>{say("누구와 오래 편안할까요?", "누구랑 오래 편할까?")}</em></SalesSay>
+    <SalesCard seal="緣" title={<>{person},<br /><em>{adult ? "인연의 모습" : "곁에 둘 사람의 모습"}</em></>}>
+      <p>{narrative.areas.find(area => /관계|거리|가까/.test(area.title))?.lead ?? say("마음이 끌리는 방식과 가까워진 뒤의 모습은 다를 수 있어요.", "마음이 끌리는 방식이랑 가까워진 뒤의 모습은 다를 수 있어.")}</p>
+      <div className="ds-partner-art" aria-hidden="true"><div /><span>緣</span><i /><i /></div>
+      <LockedRows labels={adult ? ["인연을 살펴볼 시기", "마음이 가까워지는 자리", "끌리는 사람의 성향", "오래 가는 관계의 조건"] : ["마음이 편한 사람", "서로 배우는 관계", "도움을 주고받는 방식"]} />
+      {adult && partnerWindow && <p className="ds-date-hint"><b>{partnerWindow.year}년</b>, <SalesMosaic /> {say("흐름이 겹치는 시기를 더 자세히 읽어요.", "흐름이 겹치는 때를 더 자세히 짚어줄게.")}</p>}
+      <SalesLockNote>{say("누가 잘 맞는지, 왜 그때인지까지 이어서 읽어요.", "누가 잘 맞고, 왜 그때인지까지 짚어줄게.")}</SalesLockNote>
+    </SalesCard>
 
-      {narrative.past.length > 0 && <>
-        <ChapterMark no={2} title="지나온 시간에 남은 흔적" />
-        <p className="px-margin pt-space-md font-body-sm text-body-sm leading-relaxed text-outline">{blunt ? "그해에 어떤 모습이 있었는지 떠올려 봐." : "그해에 어떤 모습이 있었는지 떠올려 보세요."}</p>
-        <div className="flex flex-col gap-space-lg px-margin py-space-lg">
-          {narrative.past.slice(0, 1).map(item => {
-            const source = context.past.find(past => past.year === item.year)!;
-            return <Panel key={item.year}>
-              <article className="rounded-2xl border border-secondary/20 bg-surface-container-low p-space-lg">
-                <p className="font-label-sm text-label-sm tracking-widest text-secondary">{item.year}년 · {source.age}살 무렵</p>
-                <h3 className="mt-space-sm text-[1.35rem] font-bold leading-snug tracking-tight text-on-surface">{item.title}</h3>
-                <div className="mt-space-md flex flex-col gap-space-md">
-                  {item.body.slice(0, 1).map((paragraph, index) => <p key={index} className="font-body-md text-body-md leading-[1.9] text-on-surface-variant">{paragraph}</p>)}
-                </div>
-                <p className="mt-space-lg border-l-2 border-secondary/60 pl-space-md font-body-sm text-body-sm leading-relaxed text-on-surface">{item.check}</p>
-                <details className="mt-space-md font-body-sm text-body-sm text-outline">
-                  <summary className="cursor-pointer">{item.year}년 해석의 근거</summary>
-                  <p className="mt-space-sm leading-relaxed">{source.interpretation}</p>
-                  {source.reasons.slice(0, 2).map((reason, index) => <p key={index} className="mt-space-xs leading-relaxed">{reason}</p>)}
-                </details>
-              </article>
-            </Panel>;
-          })}
-        </div>
-      </>}
+    <SalesSay>{person},<br />{say("인연 말고도", "인연 말고도")}<br /><em>{say("중요하게 봐야 할 게 있어요", "짚어야 할 게 더 있어")}</em></SalesSay>
+    <h2 className="ds-area-title">{context.minor || context.child ? "재능과 배움" : "재물·직업운"}</h2>
+    <SalesScene guide={guide.id} shot="panel-unfold" className="ds-money-scene" />
+    <SalesCard seal={adult ? "財物" : "才能"} title={<>{person}{blunt ? "의" : "의"}<br /><em>{adult ? "돈이 들어오는 길" : "타고난 힘을 쓰는 길"}</em></>}>
+      <p className="ds-emphasis">{adult ? (blunt ? context.focus?.business.lead.replace(/사주예요\.$/, "사주야.").replace(/어울려요\.$/, "어울려.") : context.focus?.business.lead) : narrative.areas[0]?.lead}</p>
+      <div className="ds-wealth-reveal"><SalesMosaic wide /><span>{adult ? "재물의 흐름" : "재능의 쓰임"}</span></div>
+      <LockedRows labels={adult ? ["월급과 사업, 맞는 방식", "내 강점이 돈으로 이어지는 분야", "기회를 살펴볼 시기", "돈이 새는 지점"] : ["이해가 빠른 설명 방식", "직접 해 볼 때의 강점", "준비한 것을 펼쳐 볼 시기"]} />
+      <SalesLockNote />
+    </SalesCard>
 
-      <PreviewScene guide={guide} assetKey="panel-second" caption="같은 성향도, 관계와 일에서는 다르게 나타나요" />
-      <ChapterMark no={areaChapter} title="같은 모습이 다른 곳에서도 나타나요" />
-      {narrative.areas.map(block => <Panel key={block.title}>
-        <ReadingBlock block={block} facts={context.facts} limit={1} />
-        <div className="mx-margin mb-space-lg flex items-start gap-space-sm rounded-xl bg-surface-container p-space-md">
-          <Icon name="lock" className="mt-1 text-[18px] text-secondary" />
-          <p className="font-body-sm text-body-sm leading-relaxed text-on-surface-variant">이 성향이 언제 강점이 되고, 어떤 선택에서 발목을 잡는지. 구체적인 시기와 대응은 전체 풀이로 이어집니다.</p>
-        </div>
-      </Panel>)}
+    {(broad || /귀인/.test(context.concern)) && <>
+      <SalesSay>{say("그리고 꼭 짚고 싶은 건", "그리고 꼭 짚고 싶은 건")}<br /><em>{say("내 편이 되어 주는 사람이에요", "네 편이 되어 주는 사람이야")}</em></SalesSay>
+      <SalesCard seal="貴人" title={<>{say("도움의 실마리가 열리는", "도움의 실마리가 열리는")}<br /><em>{say("귀인의 시기와 모습", "귀인의 때와 모습")}</em></>}>
+        <p>{say("혼자 밀어붙일 때보다 조언과 소개가 길을 만들어 주는 때가 있어요. 어떤 관계에서 그 도움을 살펴보면 좋을지 함께 읽어요.", "혼자 밀어붙일 때보다 조언이나 소개가 길을 만들어 주는 때가 있어. 어떤 관계에서 그 도움을 살펴볼지 같이 읽어줄게.")}</p>
+        <p className="ds-date-hint">{benefactor ? `${benefactor.year}년` : "다가오는 시간"} <SalesMosaic /></p>
+        <LockedRows labels={["도움이 되는 사람의 역할", "조언과 소개를 살펴볼 때", "도움과 간섭을 구별할 기준"]} />
+        <SalesLockNote />
+      </SalesCard>
+    </>}
 
-      <ChapterMark no={areaChapter + 1} title="그다음 이야기는 아직 남아 있어요" />
-      <div className="flex flex-col gap-space-sm px-margin py-space-lg">
-        {topics.map((topic, index) => <LockedReadingCard key={topic.title} topic={topic} no={index + 1} />)}
-      </div>
-      {context.months.length > 0 && <section className="mx-margin mb-space-lg rounded-3xl border border-outline-variant/40 bg-surface-container-low p-space-lg">
-        <p className="font-label-sm text-label-sm tracking-widest text-secondary">앞으로의 시간</p>
-        <h2 className="mt-space-sm text-[1.35rem] font-bold leading-snug text-on-surface">언제 시작하고, 언제 한 번 더 살펴볼까요?</h2>
-        <div className="mt-space-lg flex gap-space-xs" aria-label="앞으로 여섯 달의 상세 풀이 미리보기">
-          {context.months.map(month => <div key={month.period} className="flex min-w-0 flex-1 flex-col items-center gap-space-sm">
-            <span className="h-1.5 w-full rounded-full bg-secondary/30" />
-            <span className="text-center font-label-sm text-[11px] text-outline">{month.period.replace("년 ", ".").replace("월", "")}</span>
-            <span aria-hidden="true" className="h-12 w-full rounded-lg bg-on-surface/10 blur-[3px]" />
-            <Icon name="lock" className="text-[15px] text-outline" />
-          </div>)}
-        </div>
-        <p className="mt-space-md font-body-sm text-body-sm leading-relaxed text-outline">각 시기에 무엇을 준비하고 어떤 선택을 점검할지는 전체 풀이에 이어집니다.</p>
-      </section>}
-      {context.concern && <section className="mx-margin mb-space-lg rounded-3xl border border-secondary/20 bg-secondary/5 p-space-lg">
-        <p className="font-label-sm text-label-sm text-secondary">직접 남긴 질문</p>
-        <blockquote className="mt-space-md whitespace-pre-wrap text-[1.15rem] font-semibold leading-relaxed text-on-surface">“{context.concern.slice(0, 300)}”</blockquote>
-        <p className="mt-space-md font-body-sm text-body-sm leading-relaxed text-on-surface-variant">이 질문에서 확인할 조건과 선택 기준도 전체 풀이에 함께 담아요.</p>
-        <div aria-hidden="true" className="mt-space-lg flex flex-col gap-space-sm">{[1, 2, 3].map(i => <div key={i} className="h-3 rounded bg-on-surface/10 blur-[3px] last:w-2/3" />)}</div>
-        <p className="mt-space-md flex items-center gap-space-xs font-label-sm text-label-sm text-outline"><Icon name="lock" className="text-[16px]" /> 결제 후 사주와 질문을 함께 읽어 작성돼요</p>
-      </section>}
-      <PreviewScene guide={guide} assetKey="report-cover" caption="지금 읽은 모습에서, 다음 선택까지" />
-      <Panel><Punch lead={blunt ? "성향을 알았다면, 다음은 선택이야." : "성향을 알았다면, 다음은 선택이에요."} hit="언제 움직일지, 무엇을 바꿀지까지." /></Panel>
-      <div className="px-margin pb-space-lg">
-        <h2 className="text-[1.35rem] font-bold text-on-surface">전체 풀이에서 확인할 이야기</h2>
-        <ol className="mt-space-md divide-y divide-outline-variant/30 rounded-2xl border border-outline-variant/30 bg-surface-container-low px-space-md">
-          {chapters.map((title, index) => <li key={title} className="story-toc-item flex items-start gap-space-sm py-space-lg">
-            <span className="font-label-sm text-label-sm text-secondary">{String(index + 1).padStart(2, "0")}</span>
-            <div className="flex-1"><p className="font-body-md text-body-md font-semibold text-on-surface">{title}</p><ul className="mt-space-sm flex flex-col gap-space-xs">{chapterPreview(title).map(item => <li key={item} className="font-body-sm text-body-sm leading-relaxed text-outline">· {item}</li>)}</ul></div>
-            <Icon name="lock" className="text-[17px] text-outline" />
-          </li>)}
-        </ol>
-        <p className="mt-space-md font-body-sm text-body-sm leading-relaxed text-outline">성격만이 아니라 지나온 변화, 앞으로의 시기와 선택까지 한 편으로 이어서 읽어 드려요.</p>
-        <a href={purchaseHref} className="mt-space-lg flex w-full items-center justify-center gap-space-xs rounded-xl bg-secondary px-space-md py-space-md font-label-md text-label-md font-bold text-on-secondary">내 전체 풀이 확인하기<Icon name="arrow_forward" className="text-[18px]" /></a>
-      </div>
-    </section>
-  );
+    <div className="ds-domain-grid">{(adult ? ["연애운", "재물운", "직업운", "배우자운", "귀인운", "삶의 흐름"] : ["성격", "재능", "배움", "친구", "가족", "삶의 흐름"]).map((label, index) => <div key={label}><span aria-hidden="true">{["緣", "財", "業", "合", "貴", "運"][index]}</span><p>{label}</p></div>)}</div>
+    <SalesChapter title="다가올 선택의 갈림길" />
+    <SalesSay>{say("다만,", "근데 너,")}<br />{say("이 부분은", "이 부분은")}<br /><em>{say("한 번 더 살펴봐야 해요", "꼭 짚고 가야겠어")}</em></SalesSay>
+    <SalesCard seal="轉機" title={<SalesMosaic wide />}>
+      <FortuneGraph context={context} />
+      <LockedRows labels={["기회가 겹치는 시기", "신중하게 볼 선택", "같은 실수를 줄이는 기준"]} />
+      <p>{say("좋은 때라는 이유로 서두르거나, 부담스러운 때라는 이유로 포기하지 않도록. 무엇을 살피고 어떻게 움직이면 좋을지까지 이어서 읽어요.", "좋은 때라고 서두르고, 부담스러운 때라고 다 포기하면 안 돼. 뭘 살피고 어떻게 움직일지까지 짚어줄게.")}</p>
+    </SalesCard>
+    {context.concern && <SalesCard seal="問" title={say("남겨 주신 그 질문도", "네가 남긴 그 질문도")}><blockquote>“{context.concern.slice(0, 300)}”</blockquote><p>{say("전체 사주 안에서 이 질문에 대한 답도 함께 짚어요.", "네 사주 전체를 읽고, 이 질문에 대한 답도 같이 짚을게.")}</p><SalesMosaic wide /></SalesCard>}
+    <SalesSay>{say("여기까지 읽으며", "여기까지 읽으면서")}<br />{say("떠오른 내 모습이 있나요?", "떠오른 네 모습이 있지?")}<br /><em>{say("이제, 다음 선택을 볼 차례예요", "이제 네 다음 차례를 볼게")}</em></SalesSay>
+    <SalesScene guide={guide.id} shot="sales-finale" fallback="report-cover" className="ds-finale" />
+    <SalesSay>{person}{blunt ? ", 네" : "의"} 운명,<br /><em>{say("하나씩 펼쳐 드릴게요", "내가 낱낱이 펼쳐줄게")}</em></SalesSay>
+    <SalesSay className="ds-say-small">{say("누구에게 마음을 쓰고,", "누구에게 마음을 쓰고,")}<br />{say("어디에서 내 힘을 펼치고,", "어디에서 네 힘을 펼치고,")}<br /><em>{say("언제 손을 뻗으면 좋을지까지", "언제 손을 뻗으면 좋을지까지")}</em></SalesSay>
+    <SalesAssurance />
+    <SalesChapter title="전체 풀이에서 확인할 이야기" />
+    <div className="ds-toc">{chapters.map(title => <SalesReveal className="ds-toc-item" key={title}><h3><span aria-hidden="true">◆</span>{title}</h3><ul>{chapterPreview(title).map(item => <li key={item}>{item}</li>)}</ul></SalesReveal>)}</div>
+    {topics.length > 0 && <p className="ds-footnote">{topics.map(topic => topic.title).join(" · ")}까지 함께 읽어요.</p>}
+    <a href={purchaseHref} className="ds-main-cta">내 전체 풀이 확인하기<Icon name="arrow_forward" className="text-[20px]" /></a>
+    <p className="ds-footnote">한 번 결제로 보관함에서 12개월 열람 · PDF 내려받기</p>
+    <p className="ds-font-credit">이 화면은 가평군의 가평한석봉 큰붓B 서체를 사용합니다.</p>
+  </section>;
 }

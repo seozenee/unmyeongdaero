@@ -8,6 +8,7 @@ import { GuideAvatar } from "@/components/story/GuideAvatar";
 import { GlossaryText } from "@/components/report/GlossaryText";
 import { Reveal } from "@/components/report/Reveal";
 import { Icon } from "@/components/ui/Icon";
+import { ReadingProse } from "./ReadingProse";
 import { ReadingProgress } from "./ReadingProgress";
 import { WebtoonMedia } from "@/components/webtoon/WebtoonMedia";
 import { getWebtoonAsset } from "@/components/webtoon/assets";
@@ -63,7 +64,7 @@ export function ReportDocument(props: ReportDocumentProps) {
   const usedPanels = new Set(report.sections.map((section) => section.panel));
 
   return (
-    <article className="flex w-full flex-col gap-space-xl pb-space-xl">
+    <article className="reading-document flex w-full flex-col gap-space-xl pb-space-xl">
       <ReadingProgress />
       {/* 인쇄 표지 — 종이에서는 어두운 장면 대신 활자 표지 한 장을 쓴다 */}
       <header className="hidden print:flex print:h-[220mm] print:break-after-page print:flex-col print:justify-center print:gap-space-lg">
@@ -132,7 +133,7 @@ export function ReportDocument(props: ReportDocumentProps) {
         <p className="text-[1.75rem] font-extrabold leading-[1.3] tracking-[-0.03em] text-on-surface">
           {report.headline}
         </p>
-        <p className="font-body-lg text-body-lg leading-relaxed text-on-surface-variant">{report.summary}</p>
+        <ReadingProse text={report.summary} />
         <div className="flex flex-wrap gap-space-xs">
           {report.keywords.map((keyword) => (
             <span
@@ -188,9 +189,7 @@ export function ReportDocument(props: ReportDocumentProps) {
             {section.lead}
           </p>
           {section.body.map((paragraph, paragraphIndex) => (
-            <p key={paragraphIndex} className="font-body-lg text-body-lg leading-[1.85] text-on-surface">
-              {paragraph}
-            </p>
+            <ReadingProse key={paragraphIndex} text={paragraph} opening={paragraphIndex === 0} />
           ))}
           <Panel panel={section.panel} panels={panels} />
           {section.evidence.length > 0 && (

@@ -17,7 +17,7 @@ import {
 } from "@/lib/saju/modules";
 import { isSampleReading, mergedGlossary, mergedModules } from "@/lib/sazu/readings";
 import { isCompleteReport } from "@/lib/story/report";
-import { needsCalendarRepair } from "@/lib/readings/calculation";
+import { needsCalendarRepair, needsScopeRepair } from "@/lib/readings/calculation";
 import { buildManseTopics } from "@/lib/manse";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +38,7 @@ export default async function ReportReadPage({ params }: { params: { slug: strin
   if (!purchase || !reading) redirect(`/reports/${report.slug}`);
 
   const calendarRepair = needsCalendarRepair(reading);
+  const scopeRepair = needsScopeRepair(reading);
   const sazu = calendarRepair ? buildManseTopics(report.topics, reading.subject, reading.partner) : reading.sazu ?? {};
   const modules = mergedModules(sazu);
   const decade = parseDecadeFortune(modules);
@@ -48,7 +49,7 @@ export default async function ReportReadPage({ params }: { params: { slug: strin
     { year: reading.subject.birthYear, month: reading.subject.birthMonth, day: reading.subject.birthDay },
     { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() },
   );
-  const readyReport = !calendarRepair && reading.status === "ready" && isCompleteReport(reading.script) ? reading.script : null;
+  const readyReport = !calendarRepair && !scopeRepair && reading.status === "ready" && isCompleteReport(reading.script) ? reading.script : null;
 
   return (
     <ReadingExperience
@@ -66,6 +67,7 @@ export default async function ReportReadPage({ params }: { params: { slug: strin
       initialError={reading.error}
       hasNotifyPhone={Boolean(reading.notifyPhone)}
       calendarRepair={calendarRepair}
+      scopeRepair={scopeRepair}
       panels={{
         pillars: parseFourPillars(modules),
         counts: parseElementCounts(modules),

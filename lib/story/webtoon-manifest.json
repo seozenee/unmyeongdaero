@@ -257,6 +257,22 @@
     "report-cover": {
       "image": "/webtoon/gangho/report-cover.webp",
       "video": "/webtoon/gangho/report-cover.mp4"
+    },
+    "sales-love": {
+      "image": "/webtoon/gangho/sales-love.webp",
+      "video": "/webtoon/gangho/sales-love.mp4"
+    },
+    "sales-hero": {
+      "image": "/webtoon/gangho/sales-hero.webp",
+      "video": "/webtoon/gangho/sales-hero.mp4"
+    },
+    "sales-eye": {
+      "image": "/webtoon/gangho/sales-eye.webp",
+      "video": "/webtoon/gangho/sales-eye.mp4"
+    },
+    "sales-finale": {
+      "image": "/webtoon/gangho/sales-finale.webp",
+      "video": "/webtoon/gangho/sales-finale.mp4"
     }
   }
 }

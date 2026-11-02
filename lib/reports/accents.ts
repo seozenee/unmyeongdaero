@@ -26,6 +26,7 @@ export const PRODUCT_ACCENT: Record<string, string> = {
 
   // 인생·운세
   "destiny-full": "212 160 23",
+  factbomb: "180 92 98",
   life: "79 124 224",
   health: "79 178 134",
 

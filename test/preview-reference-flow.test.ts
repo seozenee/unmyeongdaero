@@ -40,10 +40,10 @@ describe("참고 파일을 옮긴 개인 미리보기", () => {
       chapters: product.chapters, productTitle: product.title, teaser: buildReadingTeaser(modules, profile.name), chart: null,
       purchaseHref: "/checkout/destiny-full?reading=sample-reading",
     }));
-    expect(html).toContain("날짜·숫자는 구성 예시예요");
-    expect(html).toContain("직접 남긴 질문");
+    expect(html).toContain("ds-mosaic");
+    expect(html).toContain("남겨 주신 그 질문도");
     expect(html).toContain("&lt;script&gt;질문&lt;/script&gt;");
-    expect(html).toContain("앞으로 여섯 달의 상세 풀이 미리보기");
+    expect(html).toContain("계산한 앞으로의 월별 흐름");
     expect(html).not.toMatch(/\d+억|20\d{2}년 \d+월 \d+일에/);
   });
 });
