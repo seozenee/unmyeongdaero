@@ -1,5 +1,8 @@
 "use client";
 
+import { ReadingSample } from "./ReadingSample";
+import type { WritingSample } from "@/lib/reports/writing-sample";
+import { ProductLink } from "@/components/ui/ProductLink";
 import { getGuide } from "@/lib/story/guides";
 import { getPoster } from "@/components/home/posters";
 import { chapterPreview } from "@/lib/reports/preview-topics";
@@ -7,7 +10,8 @@ import type { ReportProduct } from "@/lib/reports/catalog";
 import { SalesAssurance, SalesCard, SalesChapter, SalesLockNote, SalesMosaic, SalesReveal, SalesSay, SalesScene } from "@/components/manse/CinematicSales";
 
 /** 아직 생일을 입력하지 않은 손님에게는 자신의 결과처럼 보이는 임의 값을 넣지 않는다. */
-export function CinematicProductIntro({ report, onStart, onWatchIntro, resuming = false }: {
+export function CinematicProductIntro({ report, onStart, onWatchIntro, resuming = false, writingSample, related = [] }: {
+  writingSample?: WritingSample | null; related?: ReportProduct[];
   report: ReportProduct; onStart: () => void; onWatchIntro?: () => void; resuming?: boolean;
 }) {
   const guide = getGuide(report.guide);
@@ -45,9 +49,20 @@ export function CinematicProductIntro({ report, onStart, onWatchIntro, resuming 
     <SalesSay>{say("좋은 말만 듣고 끝내기엔,", "좋은 말만 듣고 끝내기엔,")}<br /><em>{say("당신 이야기는 더 깊어요", "네 이야기는 더 깊어")}</em></SalesSay>
     <SalesScene guide={guide.id} shot="sales-finale" fallback="report-cover" className="ds-finale" />
     <SalesSay>{say("타고난 모습부터", "타고난 네 모습부터")}<br />{say("지나온 시간과 앞으로의 선택까지", "지나온 시간과 앞으로의 선택까지")}<br /><em>{say("한 사람의 이야기로 읽어 드려요", "한 사람의 이야기로 읽어줄게")}</em></SalesSay>
+    {writingSample && <ReadingSample sample={writingSample} />}
     <SalesAssurance />
     <SalesChapter title="어떤 이야기가 이어질까요" />
     <div className="ds-toc">{report.chapters.map(title => <SalesReveal key={title} className="ds-toc-item"><h3><span aria-hidden="true">◆</span>{title}</h3><ul>{chapterPreview(title).map(item => <li key={item}>{item}</li>)}</ul></SalesReveal>)}</div>
+    <section className="reading-delivery" aria-label="구매 후 이용 안내">
+      <h2>한 번 읽고 끝나지 않도록</h2>
+      <dl><div><dt>전체 이야기</dt><dd>{report.chapters.length}개 주제의 풀이와 근거, 시기와 선택을 한 권에 담아요.</dd></div>
+      <div><dt>다시 읽기</dt><dd>결제일부터 12개월 동안 보관함에서 열어 볼 수 있어요.</dd></div>
+      <div><dt>PDF 소장</dt><dd>완성된 풀이를 내려받아 필요할 때 다시 읽어요.</dd></div>
+      <div><dt>단건 결제</dt><dd>명식과 첫 풀이를 확인한 다음, 전체 풀이를 원할 때 결제해요.</dd></div></dl>
+    </section>
+    {related.some(item => item.slug !== report.slug) && <section className="reading-related" aria-label="함께 살펴볼 풀이"><h2>다른 고민도 깊이 읽고 싶다면</h2><p>지금 궁금한 주제부터 골라 보세요.</p>
+      {related.filter(item => item.slug !== report.slug).slice(0, 3).map(item => <ProductLink key={item.slug} href={`/reports/${item.slug}`}><span>{item.categoryLabel}</span><strong>{item.title}</strong><p>{item.tagline}</p><b aria-hidden="true">↗</b></ProductLink>)}
+    </section>}
     <p className="ds-preview-label">아직 개인 풀이가 작성되기 전이에요.<br />이름과 생년월일시를 입력하면 내 사주로 이어집니다.</p>
     <div className="ds-sticky-cta"><button className="ds-main-cta" onClick={onStart}>{resuming ? "입력하던 이야기 이어가기" : "내 사주 먼저 펼쳐 보기"}</button><p className="ds-footnote">명식과 첫 풀이까지 무료 · 전체 풀이를 원할 때 결제</p></div>
     <p className="ds-font-credit">이 화면은 가평군의 가평한석봉 큰붓B 서체를 사용합니다.</p>

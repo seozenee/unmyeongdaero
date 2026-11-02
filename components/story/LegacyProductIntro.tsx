@@ -1,5 +1,6 @@
 "use client";
 
+import { ReadingSample } from "./ReadingSample";
 import { ProductLink } from "@/components/ui/ProductLink";
 import { useEffect, useRef, useState } from "react";
 import { STITCH_ASSETS } from "@/components/home/assets";
@@ -393,21 +394,7 @@ export function LegacyProductIntro({ writingSample = null, report, soldCount, re
         </section>
       </Reveal>
 
-      {writingSample ? <Reveal className="mt-space-lg">
-        <section className="rounded-3xl bg-surface-container-lowest p-space-lg ring-1 ring-outline-variant/40">
-          <span className="font-label-sm text-label-sm tracking-[0.14em] text-[rgb(var(--accent))]">03 · 실제 글의 모양</span>
-          <h2 className="mt-space-sm text-[1.45rem] font-bold leading-snug text-on-surface">{writingSample.title}</h2>
-          <p className="mt-space-lg text-[1.15rem] font-semibold leading-relaxed text-[rgb(var(--accent))]">{writingSample.lead}</p>
-          <div className="mt-space-md flex flex-col gap-space-md">
-            {writingSample.paragraphs.slice(0, 2).map((paragraph, index) => <p key={index} className="font-body-md text-body-md leading-[1.9] text-on-surface-variant">{paragraph}</p>)}
-          </div>
-          <div className="mt-space-md rounded-xl bg-surface-container p-space-md">
-            <p className="font-body-sm text-body-sm leading-relaxed text-on-surface">같은 성향이 강점이 되는 때와, 반복되는 어려움으로 바뀌는 때는 언제일까요? 그 시기와 나에게 맞는 대응은 전체 풀이에서 이어집니다.</p>
-            <button type="button" onClick={onStart} className="mt-space-sm flex w-full items-center justify-center gap-space-xs rounded-lg bg-[rgb(var(--accent))] py-3 font-label-md text-label-md text-surface">내 사주로 먼저 확인하기<Icon name="arrow_forward" className="text-[18px]" /></button>
-          </div>
-          <p className="mt-space-lg border-t border-outline-variant/40 pt-space-md font-body-sm text-body-sm leading-relaxed text-outline">{writingSample.caption}</p>
-        </section>
-      </Reveal> : <>
+      {writingSample ? <Reveal className="mt-space-lg"><ReadingSample sample={writingSample} /></Reveal> : <>
       {/* ─ 펼치면 어떻게 나오는지. 글은 가리고 모양만 보여 준다 ─ */}
       <Reveal className="mt-space-lg">
         <section className="relative overflow-hidden rounded-3xl bg-surface-container-lowest p-space-lg ring-1 ring-outline-variant/40">

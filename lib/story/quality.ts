@@ -40,3 +40,23 @@ export function assertReportContent(report: StoryReport, product: Pick<ReportPro
   }
   if (errors.length) throw new Error(`[report-quality] ${errors.join(", ")}`);
 }
+
+/** 저장 직전 편집 검사. 분량을 반복 문장으로 채우거나 임시 문구를 남긴 결과는 재검수한다. */
+export function assertReportEditorialQuality(report: StoryReport): void {
+  const errors: string[] = [];
+  const punctuation = new RegExp("[\\s\\p{P}\\p{S}]", "gu");
+  const normalize = (value: string) => value.normalize("NFKC").replace(punctuation, "");
+  const leads = new Set<string>();
+  report.sections.forEach((section, index) => {
+    const label = `설명 ${index + 1}`;
+    const paragraphs = section.body.map(normalize).filter(Boolean);
+    if (paragraphs.join("").length < 180) errors.push(`${label} 깊이 부족: 근거와 생활 예시를 구체적으로 설명`);
+    const meaningful = paragraphs.filter(text => text.length >= 40);
+    if (new Set(meaningful).size !== meaningful.length) errors.push(`${label} 문단 반복`);
+    const lead = normalize(section.lead);
+    if (lead.length >= 15 && leads.has(lead)) errors.push(`${label} 다른 장과 결론 중복`);
+    leads.add(lead);
+    if (/\[(?:TODO|TBD|작성\s*예정|내용\s*추가)\]|<\/?(?:draft|chapter_plan|sazu|modules)>/i.test([section.lead, ...section.body].join("\n"))) errors.push(`${label} 미완성 문구`);
+  });
+  if (errors.length) throw new Error(`[report-quality] ${errors.join(", ")}`);
+}

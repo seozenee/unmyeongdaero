@@ -42,13 +42,13 @@ export default async function HomePage() {
       <HeroCarousel products={products} />
       {/* 생일을 적은 적이 있으면 목록 대신 자기 원국부터 펼친다 */}
       <MyChart />
+      <QuickNeeds />
       <MostReadSection products={products} />
       {/* 주제별 가로 줄 — 세로로는 주제만 훑고, 관심 있는 줄에서만 옆으로 민다 */}
       <section className="mt-space-xl">
         <CategoryRails products={products} />
       </section>
-      {/* 자기 고민을 손으로 짚고 바로 그 줄로 내려가는 길 */}
-      <QuickNeeds />
+
       <FreeInsightSection />
       <FaqSection />
     </div>

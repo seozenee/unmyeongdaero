@@ -22,7 +22,8 @@
     "pdf:preview": "PDF_PREVIEW=1 vitest run lib/pdf/__tests__/render.test.ts",
     "pdf:trace:check": "node scripts/check-pdf-trace.mjs",
     "account:review": "tsx --env-file=.env.local scripts/create-review-account.mts",
-    "notify:status": "tsx --env-file=.env.local scripts/notify-status.mts"
+    "notify:status": "tsx --env-file=.env.local scripts/notify-status.mts",
+    "launch:check": "node --env-file=.env.local scripts/check-launch.mjs"
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.100",

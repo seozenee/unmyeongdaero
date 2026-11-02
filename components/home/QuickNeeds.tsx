@@ -17,14 +17,14 @@ import type { ReportCategory } from "@/lib/reports/catalog";
  */
 const NEEDS: ReadonlyArray<{ id: ReportCategory; icon: string; label: string; question: string }> = [
   { id: "child", icon: "child_care", label: "우리 아이", question: "입시 · 공부 · 진로" },
-  { id: "reunion", icon: "link_off", label: "재회", question: "그 사람 속마음" },
+  { id: "reunion", icon: "link_off", label: "재회", question: "엇갈림과 대화" },
   { id: "romance", icon: "favorite", label: "연애", question: "인연이 드는 때" },
   { id: "chemistry", icon: "handshake", label: "궁합", question: "우리 둘의 결" },
   { id: "destiny", icon: "timeline", label: "평생", question: "인생의 큰 흐름" },
   { id: "year", icon: "calendar_month", label: "신년", question: "달마다의 운" },
   { id: "wealth", icon: "savings", label: "재물", question: "돈의 길목" },
   { id: "work", icon: "work", label: "일 · 사업", question: "적성과 때" },
-  { id: "study", icon: "menu_book", label: "공부", question: "붙는 시기" },
+  { id: "study", icon: "menu_book", label: "공부", question: "공부 방식과 흐름" },
 ];
 
 export function QuickNeeds() {

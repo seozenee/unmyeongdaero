@@ -13,6 +13,7 @@ export interface ReportPanels {
 }
 
 export interface ReportDocumentProps {
+  readingId?: string;
   report: StoryReport;
   guide: Guide;
   categoryLabel: string;

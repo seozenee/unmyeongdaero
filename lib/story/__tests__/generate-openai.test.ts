@@ -11,7 +11,13 @@ vi.mock("../../ai/openai", () => ({ callOpenAi: call, openAiText: (response: { t
 const product = getReport("career")!;
 const reading = { subject: SAZU_SAMPLE_PROFILES[0]!.profile, partner: null, answers: {} } as Reading;
 const sazu = buildManseTopics(product.topics, reading.subject, null, new Date("2026-11-01"));
-const draft = buildTemplateReport(product, reading, sazu);
+// 개발용 짧은 템플릿 대신 유료 생성의 편집 기준을 충족하는 초안을 모의 응답으로 쓴다.
+function detailedDraft(report: ReturnType<typeof buildTemplateReport>) {
+  return { ...report, sections: report.sections.map(section => ({ ...section, body: [...section.body,
+    `${section.title}에서는 앞서 설명한 특징이 어떤 환경에서 도움이 되는지 함께 살펴봅니다. 같은 힘이라도 혼자 결정할 수 있는 상황과 다른 사람의 의견을 함께 들어야 하는 상황에서 쓰임이 달라질 수 있어요. 예를 들어 새로운 일을 맡는다면, 처음부터 모든 일을 정하기보다 내가 결정할 부분과 함께 의논할 부분을 구분하는 방식으로 확인할 수 있습니다. 이 설명은 실제 경험을 대신 판단하는 것이 아니라 생활 속에서 비교할 수 있는 예시입니다.`,
+  ] })) };
+}
+const draft = detailedDraft(buildTemplateReport(product, reading, sazu));
 type Call = { instructions: string; input: string; schema: { properties: { overview?: unknown; sections?: { items: { properties: { chapterId: { enum?: string[]; const?: string } } } } } }; signal: AbortSignal };
 const reply = (value: unknown) => ({ text: JSON.stringify(value) });
 
@@ -65,7 +71,7 @@ describe("분할 작성 후 전체 검수", () => {
 
   it("긴 종합 풀이도 최대 세 요청으로 본문을 동시에 쓰고 모두 모인 뒤 검수한다", async () => {
     const full = getReport("destiny-full")!;
-    const fullDraft = buildTemplateReport(full, reading, buildManseTopics(full.topics, reading.subject, null));
+    const fullDraft = detailedDraft(buildTemplateReport(full, reading, buildManseTopics(full.topics, reading.subject, null)));
     const respond = responder(fullDraft);
     let active = 0;
     let peak = 0;

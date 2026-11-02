@@ -17,16 +17,34 @@ import type { ReportDocumentProps } from "./ReportDocument";
 export function CardReportReader(props: ReportDocumentProps) {
   const report = readableSourceNames(props.report);
   const [position, setPosition] = useState(0);
+  const [largeText, setLargeText] = useState(false);
+  const storageKey = props.readingId ? `reading-position:v1:${props.readingId}` : null;
+  const pageCount = useRef(0);
+  const restored = useRef<string | null>(null);
   const cards = buildBookPages(report.sections, {
     chart: Boolean(props.panels.pillars || props.panels.counts),
     benefactor: Boolean(props.timingWindows?.benefactor.length),
     partnership: Boolean(props.timingWindows?.partnership.length),
   });
+  pageCount.current = cards.length;
+  useEffect(() => {
+    setPosition(0);
+    restored.current = storageKey;
+    if (!storageKey) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey) ?? "null");
+      if (Number.isInteger(saved?.page) && saved.page >= 0 && saved.page < pageCount.current) setPosition(saved.page);
+    } catch { /* 저장 공간을 쓸 수 없어도 읽기는 계속한다. */ }
+  }, [storageKey]);
   const active = cards[Math.min(position, cards.length - 1)]!;
   const section = active.sectionIndex === undefined ? null : report.sections[active.sectionIndex];
   const touch = useRef<{ x: number; y: number } | null>(null);
   const move = (next: number) => {
-    setPosition(Math.max(0, Math.min(next, cards.length - 1)));
+    const page = Math.max(0, Math.min(next, cards.length - 1));
+    setPosition(page);
+    if (storageKey && restored.current === storageKey) {
+      try { localStorage.setItem(storageKey, JSON.stringify({ page })); } catch { /* 읽기 유지 */ }
+    }
   };
   useEffect(() => { window.scrollTo({ top: 0, behavior: "instant" }); }, [position]);
   const timingWindows = section && /귀인/.test(section.title) ? props.timingWindows?.benefactor
@@ -37,7 +55,11 @@ export function CardReportReader(props: ReportDocumentProps) {
     <select value={position} onChange={event => move(Number(event.target.value))}>{cards.map((card, index) => <option key={card.id} value={index}>{card.label}{card.kind === "chapter" ? " · 장 표지" : ""}</option>)}</select>
   </label>;
 
-  return <article className="reading-document reading-card-reader reading-book-reader"
+  return <article className={`reading-document reading-card-reader reading-book-reader${largeText ? " reading-large-text" : ""}`}
+    onKeyDown={event => {
+      if ((event.target as Element).closest("input,select,textarea,button,a,summary") || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.key === "ArrowRight" || event.key === "ArrowLeft") { event.preventDefault(); move(position + (event.key === "ArrowRight" ? 1 : -1)); }
+    }} tabIndex={0}
     onTouchStart={event => {
       touch.current = null;
       if (event.touches.length !== 1 || (event.target as Element).closest("button,a,input,select,textarea,summary,[data-book-ignore-swipe]")) return;
@@ -55,6 +77,11 @@ export function CardReportReader(props: ReportDocumentProps) {
       <div className="min-w-0 flex-1"><h1 className="text-lg font-bold text-on-surface">{props.title}</h1><p className="text-xs leading-relaxed text-on-surface-variant">{props.subjectName}님{props.partnerName ? ` · ${props.partnerName}님` : ""}의 풀이 · {props.issuedAt}</p></div>
       {menu}
     </header>}
+    <div className="reading-reader-tools" data-book-ignore-swipe>
+      <span>{position > 0 ? `${Math.round(position / (cards.length - 1) * 100)}% 읽었어요` : "한 장씩, 나를 알아가는 시간"}</span>
+      <button type="button" aria-pressed={largeText} onClick={() => setLargeText(value => !value)}>가 {largeText ? "기본 글씨" : "큰 글씨"}</button>
+    </div>
+    <div className="reading-reader-progress" role="progressbar" aria-label="풀이 읽기 진행률" aria-valuemin={0} aria-valuemax={cards.length - 1} aria-valuenow={position}><span style={{ width: `${position / (cards.length - 1) * 100}%` }} /></div>
     <div key={active.id} className="motion-safe:animate-fade-up" role="region" aria-label={active.label}>
       {active.kind === "cover" ? <section className="reading-book-cover" aria-label="이름 표지"><h1>{props.subjectName}</h1></section>
       : active.kind === "chapter" ? <section className="reading-book-chapter"><Icon name={active.icon} className="book-chapter-symbol" /><span>CHAPTER</span><h2>{active.label}</h2></section>
@@ -78,6 +105,7 @@ export function CardReportReader(props: ReportDocumentProps) {
         </>}
         {active.id === "timing" && <>
           <h2 className="reading-card-title">언제 힘을 쓰고, 언제 쉬어 갈까요?</h2>
+          {upcoming.length === 0 && <p className="text-sm leading-relaxed text-on-surface-variant">현재 이후로 확인된 시기 정보가 없어요. 각 장의 해석과 선택 기준을 중심으로 읽어 주세요.</p>}
           <ol className="flex flex-col gap-4">{upcoming.map(item => <li key={`${item.period}-${item.title}`} className="reading-card-paragraph"><strong className="reading-timing-label">{item.period}</strong><p className="mt-2 text-base font-semibold text-on-surface">{item.title}</p><ReadingProse text={item.note} /></li>)}</ol>
         </>}
         {(active.id === "benefactor" || active.id === "partnership") && <>

@@ -5,7 +5,7 @@ import { callOpenAi, openAiText } from "@/lib/ai/openai";
 import type { Reading, StoredSazu } from "@/lib/db/types";
 import type { ReportProduct } from "@/lib/reports/catalog";
 import { buildReportSystemPrompt, buildReportUserPrompt } from "./prompts";
-import { assertReportContent, removePastActions } from "./quality";
+import { assertReportEditorialQuality, assertReportContent, removePastActions } from "./quality";
 import { READING_WRITING_STYLE } from "./writing-style";
 import { softenDeep } from "./sanitize";
 import { chapterPlan, resolveGeneratedReport } from "./generation-schema";
@@ -163,6 +163,7 @@ export async function generateOpenAiReport(
     const finish = (text: string) => {
       const report = removePastActions(softenDeep(applyReview(draft, JSON.parse(text), product)), today);
       assertReportContent(report, product);
+      assertReportEditorialQuality(report);
       return report;
     };
     const reviewedText = openAiText(reviewed);

@@ -249,6 +249,7 @@ export function ReadingExperience(props: ReadingExperienceProps) {
         {props.calendarRepair && <CalendarRepairNotice done />}
         {props.scopeRepair && <ScopeRepairNotice done />}
         <ReportDocument
+          readingId={props.readingId === "preview" ? `preview:${props.title}` : props.readingId}
           report={finalReport}
           guide={guide}
           categoryLabel={props.categoryLabel}

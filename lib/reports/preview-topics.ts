@@ -35,6 +35,11 @@ export function lockedTopicsFor(context: PreviewContext): LockedTopic[] {
 
 /** 실제 판매 목차의 내용을 쉽게 읽을 세 항목으로 펼친다. */
 export function chapterPreview(title: string): readonly string[] {
+  if (/그릇/.test(title)) return ["타고난 기질이 드러나는 모습", "계절과 여덟 글자가 함께 만드는 특징", "편한 환경과 부담이 되는 환경"];
+  if (/움직이는 힘|막는 힘/.test(title)) return ["결심할 때 힘을 보태는 것", "잘하는 일이 부담으로 바뀌는 순간", "막힌 상황에서 달리 해 볼 선택"];
+  if (/살리는 기운/.test(title)) return ["나를 돕는 기운을 읽는 이유", "혼자 할 일과 도움받을 일", "내 장점을 살릴 환경의 조건"];
+  if (/한가운데/.test(title)) return ["현재 대운에서 두드러지는 주제", "원국과 지금의 흐름이 만나는 지점", "다음 시기로 가져갈 것과 정리할 것"];
+  if (/말년/.test(title)) return ["삶의 후반기에 중요해지는 관계", "오래 이어 갈 일과 생활의 방식", "지금부터 쌓아 둘 기반"];
   if (/귀인/.test(title)) return ["내 편이 되는 사람의 역할과 특징", "조언과 소개가 힘이 되는 시기", "도움을 알아보고 관계를 이어 가는 법"];
   if (/지나온|과거/.test(title)) return ["최근의 변화가 겹쳤던 해", "그때 마음과 선택이 달라진 이유", "지금까지 이어지는 반복과 전환점"];
   if (/표현|말과/.test(title)) return ["내 말을 듣게 만드는 타고난 강점", "설명과 설득이 잘 맞는 자리", "같은 말이 오해로 바뀌는 순간"];

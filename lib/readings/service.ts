@@ -17,7 +17,7 @@ import { buildReportSystemPrompt, buildReportUserPrompt } from "@/lib/story/prom
 import { isCompleteReport, type StoryReport } from "@/lib/story/report";
 import { auditReport, softenDeep } from "@/lib/story/sanitize";
 import { buildTemplateReport } from "@/lib/story/report-template";
-import { assertReportContent } from "@/lib/story/quality";
+import { assertReportContent, assertReportEditorialQuality } from "@/lib/story/quality";
 import { generateOpenAiReport } from "@/lib/story/generate-openai";
 import { generationSchema, resolveGeneratedReport } from "@/lib/story/generation-schema";
 import { withCalculatedPeopleTiming } from "@/lib/story/report-timing";
@@ -247,6 +247,7 @@ async function runGeneration(reading: Reading, report: ReportProduct, live: Retu
     result = withCalculatedPeopleTiming(result, report, sazu, reading.answers.detail ?? "", today());
     // 모든 제공자와 개발용 생성기에 같은 기준을 적용한다. JSON 검증만으로는 빈 보고서를 막지 못한다.
     assertReportContent(result, report);
+    if (modes.ai() !== "template") assertReportEditorialQuality(result);
     auditReport(result, report.slug);
     const completed = { ...result, contentVersion: REPORT_CONTENT_VERSION };
     const generatedAt = new Date().toISOString();
