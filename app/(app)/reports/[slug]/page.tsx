@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getRepository } from "@/lib/db";
 import { buildDetailWritingSample } from "@/lib/reports/writing-sample";
 import { loadReport, loadReports } from "@/lib/reports/store";
+import { productThemeStyle } from "@/lib/reports/accents";
 
 export const dynamic = "force-dynamic";
 
@@ -33,5 +34,5 @@ export default async function ReportStoryPage({ params }: { params: { slug: stri
     ...products.filter((item) => item.category !== report.category),
   ];
 
-  return <StoryFunnel report={report} related={related} owned={owned} authenticated={Boolean(user)} writingSample={buildDetailWritingSample(report)} />;
+  return <div className="product-theme w-full" style={productThemeStyle(report.slug)}><StoryFunnel report={report} related={related} owned={owned} authenticated={Boolean(user)} writingSample={buildDetailWritingSample(report)} /></div>;
 }

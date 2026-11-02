@@ -286,7 +286,7 @@ export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice 
         type="button"
         onClick={pay}
         disabled={busy !== null}
-        className="mt-space-xs flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-secondary-container to-secondary py-3.5 font-label-md text-label-md text-on-secondary shadow-lg shadow-secondary-container/30 transition-transform active:scale-[0.98] disabled:opacity-60"
+        className="product-button mt-space-xs flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-label-md text-label-md transition-transform active:scale-[0.98] disabled:opacity-60"
       >
         <span>{busy ? busyLabel[busy] : `${formatKRW(price)} · ${selected.label}로 ${ctaLabel}`}</span>
         {!busy && <Icon name="arrow_forward" className="text-[18px]" />}

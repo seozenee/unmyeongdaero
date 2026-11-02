@@ -1,5 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": {
+      "codex/card-readings-product-themes": false
+    }
+  },
   "regions": ["icn1"],
   "buildCommand": "pnpm build",
   "installCommand": "pnpm install --frozen-lockfile"

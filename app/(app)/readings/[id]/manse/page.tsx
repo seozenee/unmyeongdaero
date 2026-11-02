@@ -17,6 +17,7 @@ import { loadReport } from "@/lib/reports/store";
 import { findCurrentDecadeIndex, internationalAge, parseDecadeFortune, parseElementCounts, parseFourPillars, resolveCurrentAge } from "@/lib/saju/modules";
 import { mergedModules } from "@/lib/sazu/readings";
 import { describeBirth } from "@/lib/story/format";
+import { productThemeStyle } from "@/lib/reports/accents";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 90;
@@ -125,7 +126,7 @@ export default async function MansePage({
   ].filter((line): line is string => Boolean(line));
 
   return (
-    <div className="flex w-full flex-col gap-space-lg py-space-md">
+    <div className="product-theme flex w-full flex-col gap-space-lg py-space-md" style={productThemeStyle(report.slug)}>
       <ProductLink
         href={`/reports/${report.slug}`}
         className="flex items-center gap-1 font-label-md text-label-md text-on-surface-variant transition-colors hover:text-on-surface"

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { ReadingExperience } from "@/components/story/ReadingExperience";
-import { productAccent } from "@/lib/reports/accents";
+import { productAccent, productThemeStyle } from "@/lib/reports/accents";
 import { getReport } from "@/lib/reports/catalog";
 import { buildManseTopics } from "@/lib/manse";
 import { buildBasisFacts } from "@/lib/saju/basis";
@@ -15,11 +15,15 @@ import {
 import { mergedGlossary, mergedModules } from "@/lib/sazu/readings";
 import { buildTemplateReport } from "@/lib/story/report-template";
 import type { BirthProfile, Reading } from "@/lib/db";
+import { readingCardWindows } from "@/lib/story/cards";
+import { storyReportSchema } from "@/lib/story/report";
+import factbombBookPreview from "@/lib/story/__fixtures__/factbomb-book-preview.json";
+import destinyBookPreview from "@/lib/story/__fixtures__/destiny-book-preview.json";
 
 // 개발 환경 전용: 완성된 풀이 화면을 템플릿 보고서로 확인한다. (?slug=... 로 상품을 바꾼다)
 export const dynamic = "force-dynamic";
 
-const SUBJECT: BirthProfile = {
+const DEFAULT_SUBJECT: BirthProfile = {
   name: "서하",
   birthYear: 1998,
   birthMonth: 5,
@@ -37,13 +41,15 @@ export default function ReadingPreviewPage({ searchParams }: { searchParams: { s
   const report = getReport(searchParams.slug ?? "destiny-full");
   if (!report || report.kind !== "report") notFound();
 
-  const now = new Date();
-  const sazu = buildManseTopics(report.topics, SUBJECT, null, now);
+  const sample = report.slug === "factbomb" ? factbombBookPreview : report.slug === "destiny-full" ? destinyBookPreview : null;
+  const subject: BirthProfile = sample?.subject ?? DEFAULT_SUBJECT;
+  const now = sample ? new Date(sample.referenceDate) : new Date();
+  const sazu = buildManseTopics(report.topics, subject, null, now);
   const reading = {
     id: "preview",
     userId: "preview",
     reportSlug: report.slug,
-    subject: SUBJECT,
+    subject,
     partner: null,
     answers: {},
     status: "ready",
@@ -64,24 +70,26 @@ export default function ReadingPreviewPage({ searchParams }: { searchParams: { s
   const yearRun = parseYearRun(modules);
   const age = resolveCurrentAge(
     modules,
-    { year: SUBJECT.birthYear, month: SUBJECT.birthMonth, day: SUBJECT.birthDay },
+    { year: subject.birthYear, month: subject.birthMonth, day: subject.birthDay },
     { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() },
   );
 
   return (
-    <ReadingExperience
+    <div className="product-theme w-full" style={productThemeStyle(report.slug)}><p className="mb-3 text-xs text-on-surface-variant">가상 인물로 만든 미리보기예요.</p><ReadingExperience
+      key={report.slug}
       readingId={reading.id}
       accent={productAccent(report.slug)}
       guideId={report.guide}
       categoryLabel={report.categoryLabel}
       title={report.title}
       chapters={report.chapters}
-      subjectName={SUBJECT.name}
+      subjectName={subject.name}
       partnerName={null}
-      issuedAt="2026년 10월 24일"
+      issuedAt={new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long", day: "numeric" }).format(now)}
       initialStatus="ready"
-      initialReport={buildTemplateReport(report, reading, sazu, now)}
+      initialReport={sample ? storyReportSchema.parse(sample.report) : buildTemplateReport(report, reading, sazu, now)}
       initialError={null}
+      timingWindows={readingCardWindows(modules, new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(now), report)}
       panels={{
         pillars: parseFourPillars(modules),
         counts: parseElementCounts(modules),
@@ -92,7 +100,7 @@ export default function ReadingPreviewPage({ searchParams }: { searchParams: { s
       glossary={mergedGlossary(sazu)}
       disclaimer={report.disclaimer}
       sample={false}
-      templateMode
-    />
+      templateMode={!sample}
+    /></div>
   );
 }

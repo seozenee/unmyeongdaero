@@ -77,7 +77,7 @@ export function ManseConfirm({
             setMoving(true);
             router.push(`/checkout/${slug}?reading=${readingId}`);
           }}
-          className="group flex w-full items-center justify-center gap-2 rounded-lg bg-on-surface py-3.5 font-label-md text-label-md text-surface shadow-lg transition-[transform,opacity] active:scale-[0.99] disabled:opacity-60"
+          className="product-button group flex w-full items-center justify-center gap-2 rounded-lg py-3.5 font-label-md text-label-md transition-[transform,opacity] active:scale-[0.99] disabled:opacity-60"
         >
           {moving ? "결제 화면으로 가는 중…" : "내 전체 풀이 열어보기"}
           {!moving && (

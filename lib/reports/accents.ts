@@ -11,6 +11,8 @@
  * 값은 "R G B" 세 숫자다 — rgb(var(--accent)/0.3) 처럼 투명도를 섞어 쓰기 위해서다.
  * 등록되지 않은 상품(운영 화면에서 새로 만든 것)은 기본 보라를 쓴다.
  */
+import type { CSSProperties } from "react";
+
 export const PRODUCT_ACCENT: Record<string, string> = {
   // 재회·연애 — 붉은 계열
   "reunion-deep": "226 62 87",
@@ -46,3 +48,23 @@ export const PRODUCT_ACCENT: Record<string, string> = {
 export const DEFAULT_ACCENT = "240 82 46";
 
 export const productAccent = (slug: string) => PRODUCT_ACCENT[slug] ?? DEFAULT_ACCENT;
+
+/** 포스터의 색에서 버튼·글자·배경을 함께 만든다. 버튼 글자는 명암 대비가 높은 쪽을 쓴다. */
+export function productThemeStyle(slug: string): CSSProperties {
+  const accent = productAccent(slug);
+  const rgb = accent.split(" ").map(Number);
+  const mix = (toward: number, amount: number) => rgb.map(channel => Math.round(channel * (1 - amount) + toward * amount)).join(" ");
+  const luminance = rgb.map(channel => {
+    const value = channel / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  }).reduce((sum, value, index) => sum + value * [0.2126, 0.7152, 0.0722][index]!, 0);
+  const darkText = (luminance + 0.05) / 0.05 >= 1.05 / (luminance + 0.05);
+  return {
+    "--accent": accent,
+    "--accent-ink": mix(255, 0.5),
+    "--accent-deep": mix(0, 0.93),
+    "--accent-button": accent,
+    "--accent-button-end": darkText ? mix(255, 0.14) : mix(0, 0.14),
+    "--accent-on": darkText ? "#000000" : "#ffffff",
+  } as CSSProperties;
+}

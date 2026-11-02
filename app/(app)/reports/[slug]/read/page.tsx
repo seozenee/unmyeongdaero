@@ -4,7 +4,7 @@ import { ReadingExperience } from "@/components/story/ReadingExperience";
 import { getCurrentUser, loginUrl } from "@/lib/auth/session";
 import { getRepository } from "@/lib/db";
 import { modes } from "@/lib/env";
-import { productAccent } from "@/lib/reports/accents";
+import { productAccent, productThemeStyle } from "@/lib/reports/accents";
 import { loadReport } from "@/lib/reports/store";
 import { buildBasisFacts } from "@/lib/saju/basis";
 import {
@@ -19,6 +19,7 @@ import { isSampleReading, mergedGlossary, mergedModules } from "@/lib/sazu/readi
 import { isCompleteReport } from "@/lib/story/report";
 import { needsCalendarRepair, needsScopeRepair } from "@/lib/readings/calculation";
 import { buildManseTopics } from "@/lib/manse";
+import { readingCardWindows } from "@/lib/story/cards";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false } };
@@ -52,7 +53,8 @@ export default async function ReportReadPage({ params }: { params: { slug: strin
   const readyReport = !calendarRepair && !scopeRepair && reading.status === "ready" && isCompleteReport(reading.script) ? reading.script : null;
 
   return (
-    <ReadingExperience
+    <div className="product-theme w-full" style={productThemeStyle(report.slug)}><ReadingExperience
+      key={reading.id}
       readingId={reading.id}
       accent={productAccent(report.slug)}
       guideId={report.guide}
@@ -68,6 +70,7 @@ export default async function ReportReadPage({ params }: { params: { slug: strin
       hasNotifyPhone={Boolean(reading.notifyPhone)}
       calendarRepair={calendarRepair}
       scopeRepair={scopeRepair}
+      timingWindows={readingCardWindows(modules, new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(now), report)}
       panels={{
         pillars: parseFourPillars(modules),
         counts: parseElementCounts(modules),
@@ -79,6 +82,6 @@ export default async function ReportReadPage({ params }: { params: { slug: strin
       disclaimer={report.disclaimer}
       sample={isSampleReading(sazu)}
       templateMode={modes.ai() === "template"}
-    />
+    /></div>
   );
 }

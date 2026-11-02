@@ -270,6 +270,29 @@ function swap(text: string, pattern: RegExp, replacement: string) {
 
 const JOSA_TAILS = new Set(JOSA_PAIRS.flat());
 
+const SOURCE_LABELS: Array<[RegExp, string]> = [
+  [/\breadingFocus\.benefactor\b/g, "귀인 시기 분석"],
+  [/\breadingFocus\.partnership\b/g, "인연 시기 분석"],
+  [/\breadingFocus\.business\b/g, "일과 사업 분석"],
+  [/\breadingFocus\.expression\b/g, "말과 표현 분석"],
+  [/\bromance\.charm\b/g, "관계 성향"],
+  [/\bwealth\.natalWealth\b/g, "타고난 재물 자리"],
+  [/\bpartnerStar\b/g, "짝을 나타내는 기운"],
+  [/\blifeTimeline\b/g, "삶의 시기표"],
+  [/\bcurrentDecade\b/g, "현재의 큰 흐름"],
+  [/\bretrospective\b/g, "지나온 해의 흐름"],
+  [/\breadableBasis\b/g, "명식의 근거"],
+  [/\breadingFocus\b/g, "분야별 분석"],
+];
+
+/** 이미 저장된 풀이도 원자료의 코드 이름 대신 읽을 수 있는 명칭으로 보여 준다. */
+export function readableSourceNames<T>(value: T): T {
+  if (typeof value === "string") return SOURCE_LABELS.reduce<string>((text, [pattern, name]) => swap(text, pattern, name), value) as T;
+  if (Array.isArray(value)) return value.map(item => readableSourceNames(item)) as T;
+  if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, readableSourceNames(item)])) as T;
+  return value;
+}
+
 /** 한 문장에서 용어와 뜻 없는 비유를 손님의 말로 바꾼다 */
 export function plain(text: string) {
   const swapped = [...PLAIN_EMPTY, ...PLAIN].reduce(
@@ -349,8 +372,8 @@ export function findEmptyTalk(text: string): string[] {
  */
 function stripGanziTail(text: string) {
   return text
-    .replace(/\s*·\s*[가-힣]{2}\s*(대운|세운|월운|일운)/g, "")
-    .replace(/\s*[가-힣]{2}\s*(대운|세운|월운|일운)\s*/g, " ")
+    .replace(new RegExp(`\\s*·\\s*${GANJI_CHAR}\\s*(대운|세운|월운|일운)`, "g"), "")
+    .replace(new RegExp(`\\s*${GANJI_CHAR}\\s*(대운|세운|월운|일운)\\s*`, "g"), " ")
     .replace(/\s{2,}/g, " ")
     .trim();
 }
@@ -361,7 +384,7 @@ export function soften(text: string) {
 }
 
 function softenValue(text: string, keepTimingLabel: boolean) {
-  const softened = SOFTEN.reduce((current, [pattern, replacement]) => current.replace(pattern, replacement), text);
+  const softened = SOFTEN.reduce((current, [pattern, replacement]) => current.replace(pattern, replacement), readableSourceNames(text));
   return (keepTimingLabel ? softened : stripGanziTail(softened)).replace(/\s{2,}/g, " ").trim();
 }
 

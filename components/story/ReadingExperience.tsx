@@ -15,6 +15,7 @@ import { getGuide, type GuideId } from "@/lib/story/guides";
 import { isCompleteReport, storyReportSchema, type PartialStoryReport, type StoryReport } from "@/lib/story/report";
 import { josa } from "@/lib/text/josa";
 import { ReadingNotificationForm } from "./ReadingNotificationForm";
+import type { ReadingCardWindows } from "@/lib/story/cards";
 
 interface ReadingExperienceProps {
   readingId: string;
@@ -39,6 +40,7 @@ interface ReadingExperienceProps {
   hasNotifyPhone?: boolean;
   calendarRepair?: boolean;
   scopeRepair?: boolean;
+  timingWindows?: ReadingCardWindows;
 }
 
 function CalendarRepairNotice({ done }: { done: boolean }) {
@@ -246,7 +248,6 @@ export function ReadingExperience(props: ReadingExperienceProps) {
         {(props.sample || props.templateMode) && <DevNotice sample={props.sample} templateMode={props.templateMode} />}
         {props.calendarRepair && <CalendarRepairNotice done />}
         {props.scopeRepair && <ScopeRepairNotice done />}
-        <ReadingNotificationForm readingId={props.readingId} hasPhone={props.hasNotifyPhone} />
         <ReportDocument
           report={finalReport}
           guide={guide}
@@ -259,7 +260,15 @@ export function ReadingExperience(props: ReadingExperienceProps) {
           basisFacts={props.basisFacts}
           glossary={props.glossary}
           disclaimer={props.disclaimer}
+          timingWindows={props.timingWindows}
         />
+        <details className="mb-28 rounded-xl border border-outline-variant/40 px-4 print:hidden">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 text-sm text-on-surface-variant">
+            <span className="flex items-center gap-2"><Icon name="notifications" className="text-[18px]" />카카오톡으로 풀이와 PDF 받기</span>
+            <Icon name="expand_more" className="text-[20px]" />
+          </summary>
+          <div className="pb-4"><ReadingNotificationForm readingId={props.readingId} hasPhone={props.hasNotifyPhone} /></div>
+        </details>
       </div>
     );
   }

@@ -13,6 +13,7 @@ import { CONSULT_TURN_LIMIT } from "@/lib/reports/catalog";
 import { loadReport } from "@/lib/reports/store";
 import { describeBirth } from "@/lib/story/format";
 import { getGuide } from "@/lib/story/guides";
+import { productThemeStyle } from "@/lib/reports/accents";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "결제", robots: { index: false } };
@@ -46,7 +47,7 @@ export default async function CheckoutPage({
   const cover = STITCH_ASSETS[report.cover];
 
   return (
-    <div className="flex w-full flex-col gap-space-md py-space-md">
+    <div className="product-theme flex w-full flex-col gap-space-md py-space-md" style={productThemeStyle(report.slug)}>
       <Link href={inputPath} className="flex items-center gap-1 font-label-md text-label-md text-on-surface-variant">
         <Icon name="chevron_left" className="text-[18px]" /> 입력 정보 수정
       </Link>

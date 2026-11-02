@@ -92,7 +92,6 @@ function CinematicReadingWebtoon({ name, guide, poster, narrative, context, chap
     <SalesSay>{say("오호라, 잠시만요…", "오호라, 잠시만…")}</SalesSay>
     <SalesScene guide={guide.id} shot="sales-eye" className="ds-eye" />
     <SalesSay>{say("좋은 모습만으로는", "좋은 말만으로는")}<br /><em>{say("설명되지 않는 사주예요", "다 설명 안 되는 사주야")}</em></SalesSay>
-    <SalesSay className="ds-say-small">{say("방금 본 건", "방금 본 건")}<br />{say("당신 이야기의 극히 일부예요", "네 이야기의 극히 일부일 뿐")}</SalesSay>
     <SalesScene guide={guide.id} shot="intro-4" className="ds-turn" />
     <SalesSay>{say("잘하는 것부터", "네가 잘하는 것부터")}<br />{say("자꾸 같은 데서 막히는 이유까지,", "자꾸 같은 데서 막히는 이유까지,")}<br /><em>{say("이제 하나씩 짚어 볼게요", "이제 제대로 짚어줄게")}</em></SalesSay>
 

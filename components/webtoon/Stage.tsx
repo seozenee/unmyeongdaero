@@ -216,7 +216,7 @@ export function StageAction({
       className={cn(
         // 누를 때 살짝 들어가고, 손가락을 떼면 돌아온다. 화면이 어두워 버튼이 떠 있어야
         // 눌리는 것임을 알 수 있으므로 그림자를 넉넉히 준다.
-        "group flex w-full items-center justify-center gap-2 rounded-xl py-4 font-label-md text-label-md",
+        "product-button group flex w-full items-center justify-center gap-2 rounded-xl py-4 font-label-md text-label-md",
         "shadow-[0_8px_24px_rgba(0,0,0,0.45)] transition-[transform,box-shadow,background-color] duration-200",
         "active:translate-y-[1px] active:shadow-[0_4px_14px_rgba(0,0,0,0.5)] disabled:opacity-60",
         tone === "story"

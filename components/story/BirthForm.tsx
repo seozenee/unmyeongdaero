@@ -505,7 +505,7 @@ export function BirthForm({
         )}
         {!(cinematic && step === 2) && <button
           type="submit"
-          className="flex-[2] rounded-xl bg-on-surface py-3 font-label-md text-label-md text-surface transition-transform active:scale-[0.98]"
+          className="product-button flex-[2] rounded-xl bg-on-surface py-3 font-label-md text-label-md text-surface transition-transform active:scale-[0.98]"
         >
           {step < lastStep ? "다음" : submitLabel}
         </button>}
