@@ -27,4 +27,11 @@ describe("생성 실패 분류", () => {
   it("모르는 오류는 재시도를 막지 않는다", () => {
     expect(describeFailure(new Error("???")).retryable).toBe(true);
   });
+
+  it("작성 시간 초과를 알 수 없는 오류로 숨기지 않는다", () => {
+    const result = describeFailure(new DOMException("The operation was aborted due to timeout", "TimeoutError"));
+    expect(result.tag).toBe("timeout");
+    expect(result.retryable).toBe(true);
+    expect(result.message).toContain("추가 결제는 없어요");
+  });
 });

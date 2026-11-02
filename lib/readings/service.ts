@@ -53,6 +53,9 @@ export function describeFailure(error: unknown): { message: string; retryable: b
   if (status === 429 || (typeof status === "number" && status >= 500)) {
     return { message: "지금 요청이 몰려 있어요. 잠시 뒤 다시 시도해 주세요.", retryable: true, tag: "busy" };
   }
+  if (name === "TimeoutError" || name === "AbortError" || status === 408) {
+    return { message: "풀이 작성이 평소보다 오래 걸려 중단됐어요. 열람권은 그대로이며, 다시 작성해도 추가 결제는 없어요.", retryable: true, tag: "timeout" };
+  }
   return { message: "풀이를 쓰는 중 문제가 생겼어요. 다시 시도해 주세요.", retryable: true, tag: "unknown" };
 }
 
