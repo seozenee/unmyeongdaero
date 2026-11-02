@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 import { soften, softenDeep } from "../sanitize";
 
 describe("soften · 고객이 읽을 문장에서 걷어내야 하는 것", () => {
+  it.each(["정미 세운", "경신 대운", "을사 월운", "갑자 일운"])("근거 제목 %s를 통째로 지우지 않는다", label => {
+    const cleaned = softenDeep({ evidence: [{ label, detail: "해당 시기의 글자와 원국의 관계를 설명해요." }] });
+    expect(cleaned.evidence[0]!.label).toBe(label);
+    expect(cleaned.evidence[0]!.detail).toContain("관계");
+  });
   it("내부 점수를 지운다", () => {
     expect(soften("득령·득지·득세를 모두 갖춘 신강 79점 구조예요.")).not.toMatch(/\d+점/);
     expect(soften("신약(11점) 구조라 기대는 편이에요.")).not.toMatch(/\d+점/);

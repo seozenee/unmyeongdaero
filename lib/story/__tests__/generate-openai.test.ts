@@ -101,6 +101,15 @@ describe("분할 작성 후 전체 검수", () => {
     await expect(generate()).rejects.toThrow("검수 연결 실패");
   });
 
+  it("짧은 시기 근거 제목이 있어도 첫 요청에서 검증을 마치고 완성한다", async () => {
+    const source = structuredClone(draft);
+    source.sections[2]!.evidence = [{ label: "정미 세운", detail: "2027년의 글자와 태어난 자리의 관계를 함께 읽었어요." }];
+    call.mockImplementation(responder(source));
+    const result = await generate();
+    expect(result.sections[2]!.evidence[0]!.label).toBe("정미 세운");
+    expect(call).toHaveBeenCalledTimes(4);
+  });
+
   it("검수에서 근거를 빈 배열로 지워도 같은 작성 요청 안에서 한 번 보완한다", async () => {
     const respond = responder();
     let reviews = 0;

@@ -357,8 +357,12 @@ function stripGanziTail(text: string) {
 
 /** 한 문장(또는 짧은 텍스트)에서 점수·위협 표현을 걷어낸다 */
 export function soften(text: string) {
+  return softenValue(text, false);
+}
+
+function softenValue(text: string, keepTimingLabel: boolean) {
   const softened = SOFTEN.reduce((current, [pattern, replacement]) => current.replace(pattern, replacement), text);
-  return stripGanziTail(softened).replace(/\s{2,}/g, " ").trim();
+  return (keepTimingLabel ? softened : stripGanziTail(softened)).replace(/\s{2,}/g, " ").trim();
 }
 
 /**
@@ -371,7 +375,11 @@ export function softenDeep<T>(value: T): T {
   if (Array.isArray(value)) return value.map((item) => softenDeep(item)) as T;
   if (value && typeof value === "object") {
     const result: Record<string, unknown> = {};
-    for (const [key, item] of Object.entries(value)) result[key] = softenDeep(item);
+    for (const [key, item] of Object.entries(value)) {
+      // 근거 제목에는 원자료의 명칭이 필요하다. "정미 세운"을 본문의 간지 꼬리처럼
+      // 지우면 빈 label이 되어, 완성된 풀이 전체가 저장 전 검증에서 실패한다.
+      result[key] = key === "label" && typeof item === "string" ? softenValue(item, true) : softenDeep(item);
+    }
     return result as T;
   }
   return value;

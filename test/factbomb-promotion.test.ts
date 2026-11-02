@@ -18,10 +18,10 @@ describe("팩폭사주 영상과 메인 노출", () => {
   it("홈 첫 추천이 팩폭사주이며 전용 포스터 영상을 연결한다", () => {
     const html = renderToStaticMarkup(createElement(HeroCarousel, { products: [...REPORTS] }));
     expect(html.match(/href="([^"]+)"/)?.[1]).toBe("/reports/factbomb");
-    expect(html).toContain("/webtoon/gangho/poster-factbomb.mp4");
+    expect(html).toContain("/webtoon/gangho/sales-hero.mp4");
     expect(html).toContain("지금 추천");
     expect(html).not.toContain("1위");
-    expect(getPoster(product.slug, product.guide)?.video).toBe("/webtoon/gangho/poster-factbomb.mp4");
+    expect(getPoster(product.slug, product.guide)?.video).toBe("/webtoon/gangho/sales-hero.mp4");
     expect(RAILS.find(rail => rail.id === "destiny")?.slugs[0]).toBe("factbomb");
     expect(RAILS.flatMap(rail => rail.slugs).filter(slug => slug === "factbomb")).toHaveLength(1);
   });
