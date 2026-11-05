@@ -82,5 +82,5 @@ export function useAmbientSound() {
 
   useEffect(() => () => void contextRef.current?.close(), []);
 
-  return { on, toggle, chime };
+  return { on, toggle, chime, stop };
 }

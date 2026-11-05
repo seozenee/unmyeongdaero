@@ -1,4 +1,5 @@
-import type { SazuModules } from "../saju/modules";
+import { parseFourPillars, type SazuModules } from "../saju/modules";
+import { buildRenzulliReading } from "./renzulli";
 
 /** 계산 분포를 글쓰기 참고 틀로 옮긴다. 실제 성격·능력의 측정값이 아니다. */
 export type Level = "높은 쪽" | "보통" | "낮은 쪽";
@@ -232,14 +233,18 @@ export function buildLens(modules: SazuModules, category: string): Lens | null {
     `(고르게 나뉘면 각 20%). 월지·일지를 무겁게 세고, 지지 속에 숨은 글자까지 넣었다.`;
 
   if (category === "child" || category === "study") {
+    const pillars = parseFourPillars(modules);
+    const reading = pillars ? buildRenzulliReading(pillars) : null;
+    if (!reading) return null;
     return {
-      해석범위,
-      틀: "학습을 관찰할 세 관점 — 이해하는 방식·끝맺는 방식·표현하는 방식을 실제 활동에서 비교한다",
-      차원: [
-        dimension("배우는힘", read("인성", "수"), why("인성", "수")),
-        dimension("과제집착력", read("관성", "토"), why("관성", "토")),
-        dimension("창의성", read("식상", "화"), why("식상", "화")),
-      ],
+      해석범위: `${해석범위} ${reading.scope}`,
+      틀: reading.framework,
+      차원: reading.dimensions.map(axis => ({
+        이름: axis.label,
+        수준: axis.index >= 27 ? "높은 쪽" : axis.index <= 13 ? "낮은 쪽" : "보통",
+        왜: `${axis.basis.join(" · ") || "연결된 근거가 적음"}. ${reading.method}`,
+        이런모습으로: [axis.question, axis.activity],
+      })),
     };
   }
 

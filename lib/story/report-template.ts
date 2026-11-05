@@ -1,6 +1,9 @@
 // ANTHROPIC_API_KEY 가 없을 때 쓰는 규칙 기반 보고서 생성기.
 // sazu 응답에 이미 들어 있는 판정 문장·명칭만 엮는다(새 사실을 만들지 않음). 점수 숫자는 지우고, 겁주는 전통 표현은 순화한다.
 import type { BirthProfile, Reading, StoredSazu } from "../db/types";
+import { buildManseTopics } from "../manse";
+import { buildRenzulliReading } from "../manse/renzulli";
+import { parseFourPillars } from "../saju/modules";
 import { getReport, type ReportProduct } from "../reports/catalog";
 import { ELEMENT_LABEL, FIVE_ELEMENTS, parseGanji, toFiveElement, type FiveElement } from "../saju/ganji";
 import { findCurrentDecadeIndex, parseElementCounts, resolveCurrentAge } from "../saju/modules";
@@ -1115,6 +1118,52 @@ const loveSeat: Builder = ({ me, reading }, title) => {
   );
 };
 
+/**
+ * 앞으로 열 해, 해마다.
+ *
+ * "평생사주인데 왜 앞으로 십 년이 뭉뚱그려 한 줄이냐" 는 말을 들었다. 계산은 이미
+ * 해마다 나와 있다(actionableOutlook.annual — 그 해에 들어오는 글자, 재물·인연·일의
+ * 주제, 할 일, 조심할 일). 뭉뚱그리지 않고 해마다 적는다.
+ *
+ * 화면은 열 해를 모두 표로 보여 주므로, 본문에서는 가까운 네 해를 짚고 나머지는
+ * 표로 넘긴다. 없는 해를 만들지 않는다.
+ */
+const annualOutlook: Builder = ({ me }, title) => {
+  const rows = list(at(me.modules, "actionableOutlook.annual"))
+    .map(row => ({
+      period: str(at(row, "period")) ?? "",
+      year: num(at(row, "year")),
+      money: str(at(row, "money")) ?? "",
+      relationship: str(at(row, "relationship")) ?? "",
+      work: str(at(row, "work")) ?? "",
+      todo: str(at(row, "do")) ?? "",
+      caution: str(at(row, "caution")) ?? "",
+    }))
+    .filter(row => row.period && row.todo);
+  const near = rows.slice(0, 4);
+  return section(
+    title,
+    rows.length
+      ? `${rows[0]!.period.split(" · ")[0] ?? "올해"}부터 ${rows.length}해를 해마다 나눠 보면, 돈이 움직이는 해와 사람이 움직이는 해가 따로 있어요`
+      : "해마다 들어오는 기운이 달라, 밀어붙일 해와 다지는 해를 나눠 봐야 해요",
+    [
+      "열 해를 한 덩어리로 보면 '그때 가서 보자'가 되기 쉬워요. 해마다 어느 쪽이 움직이는지를 먼저 갈라 두면, 미리 준비할 일과 미뤄도 되는 일이 나뉘어요.",
+      ...near.map(row => join(
+        `${row.period} — ${row.money}`,
+        row.relationship,
+        row.todo ? `이 해에 해 볼 일: ${row.todo}` : null,
+        row.caution ? `조심할 선택: ${row.caution}` : null,
+      )),
+      rows.length > near.length
+        ? `남은 ${rows.length - near.length}해는 연도별 표에 같은 기준으로 정리해 두었어요. 해마다 재물·인연·일 가운데 어느 쪽이 움직이는지, 그때 할 일과 조심할 선택을 함께 적어 두었습니다.`
+        : null,
+      "연도는 입춘 이후를 기준으로 봐요. 나이는 세는나이이고, 어느 해를 좋고 나쁨으로 가르는 것이 아니라 그 해에 무엇이 움직이는지를 적은 거예요.",
+    ],
+    near.map(row => row.work ? { label: `${row.year ?? row.period} 일·생활의 주제`, detail: row.work } : null),
+    "years",
+  );
+};
+
 /** 말년의 결 — 시주와 마지막 대운 */
 const lateYears: Builder = ({ me }, title) => {
   const hour = me.pillar("hour");
@@ -1341,6 +1390,45 @@ const peopleTiming = (kind: "benefactor" | "partnership"): Builder => ({ me }, t
   ], [pillarEvidence(me, helper ? "month" : "day")]);
 };
 
+const renzulliSection = (axisIndex: number): Builder => (ctx, title) => {
+  const pillars = parseFourPillars(ctx.me.modules);
+  const reading = pillars ? buildRenzulliReading(pillars) : null;
+  if (!reading) return talentDirection(ctx, title);
+  const axis = reading.dimensions[axisIndex]!;
+  const name = ctx.me.name;
+  const resource = reading.positions.filter(p => p.group === "resource");
+  const output = reading.positions.filter(p => p.group === "output");
+  const lead = axisIndex === 0 ? `${name}의 배움은 ${reading.learningStyle}으로 읽어요`
+    : axisIndex === 1 ? resource.length >= 2 && output.length ? "배운 원리를 연결해 새로운 방법으로 바꾸는 창의성을 살펴보세요" : "생각을 직접 꺼내고 바꿔 보는 과정에서 창의성을 살펴보세요"
+    : resource.length >= 2 ? "납득한 주제를 깊이 파고드는 힘과, 완벽하게 하려는 부담을 함께 읽어요" : "아이가 스스로 고른 목표를 어떻게 끝맺는지 살펴보세요";
+  const bodies = axisIndex === 0 ? [
+    `${name}의 사주에서 먼저 살펴볼 것은 배움을 받아들이는 자리와 밖으로 표현하는 자리의 연결이에요. ${reading.synthesis} 단순히 글자가 많다는 말로 끝내지 않고, 어떤 순서로 익힐 때 배움이 이어지는지를 읽는 이유입니다.`,
+    `구체적으로 ${axis.basis.join(", ") || "드러난 십성의 분포"}를 함께 봅니다. 인성은 나를 채우는 관계로, 식상은 익힌 것을 밖으로 꺼내는 관계로 풀이해요. 이해한 내용을 자기 말로 설명하고 새 문제에 적용하는 과정에서 두 관계가 어떻게 이어지는지 살펴볼 수 있어요.`,
+    resource.length >= 2 ? "예를 들어 공식을 배울 때 답을 빨리 외우라고 재촉하기보다, 왜 이 순서로 계산하는지를 먼저 설명해 주는 방식이에요. 설명을 이해한 뒤에는 숫자나 조건이 다른 문제를 건네 보세요. 익힌 원리를 옮겨 쓸 수 있는지가 단순한 반복보다 중요한 관찰 지점입니다." : "예를 들어 설명을 오래 듣기 전에 작은 결과물을 만들어 보게 하는 방식이에요. 먼저 해 본 과정에서 막힌 부분을 질문으로 바꾸면, 필요한 지식을 받아들이는 이유가 분명해집니다. 설명을 듣는 시간과 직접 해 보는 시간의 순서도 달리해 보세요.",
+    "다만 학습의 방식과 학습의 수준은 같은 말이 아니에요. 렌줄리 모형의 '평균 이상의 능력'은 실제 활동과 성취에서 확인하는 영역입니다. 사주에서 읽은 방향을 아이의 지능이나 성적으로 단정하지 않고, 아이가 만든 설명과 결과물을 함께 보아야 해요.",
+    axis.activity,
+    "이해한 것을 다르게 써 보고, 그 결과를 끝까지 완성하는 활동을 이어 주세요. 렌줄리의 세 고리는 어느 하나만 높다고 결론 내리는 방식이 아니라, 학습·창의성·과제 집착력이 같은 활동 안에서 만나는 과정을 살펴보는 틀입니다.",
+  ] : axisIndex === 1 ? [
+    `${reading.synthesis} 창의성을 전혀 새로운 것을 떠올리는 모습에만 한정하지 않으면, 이미 배운 지식을 다른 문제에 연결하는 모습도 함께 보입니다. ${name}에게 어떤 출발점이 편한지 읽는 것이 이번 장의 핵심이에요.`,
+    `이 해석에 연결되는 자리는 ${axis.basis.join(", ") || "드러난 표현의 기운"}입니다. 나를 채우는 힘과 밖으로 드러내는 힘이 어떤 비중으로 함께 있는지를 봅니다. 식상이 적다는 이유만으로 창의성이 없다고 판정하는 것은 아니에요.`,
+    resource.length >= 2 ? "예를 들어 블록의 설명서를 따라 만든 뒤, 기둥 하나를 옮기면 더 튼튼해질지 실험하는 장면을 생각해 보세요. 처음부터 무엇이든 만들라고 맡길 때보다 원리를 충분히 익힌 뒤 변형할 때 자기 생각이 더 잘 드러날 수 있어요. 이것은 실제 활동으로 비교해 볼 예시입니다." : "예를 들어 같은 재료로 서로 다른 두 가지 물건을 만들어 보는 장면을 생각해 보세요. 처음 결과물을 정답처럼 평가하지 않고 두 방법의 차이를 물으면, 아이가 어떤 부분을 바꾸고 싶어 하는지 들을 수 있어요. 완성도와 시도의 다양성은 나누어 보세요.",
+    "생각을 충분히 정리한 뒤 말하려는 모습은 섣불리 소극성으로 읽지 않는 편이 좋아요. 반대로 새로운 아이디어를 연달아 내더라도, 그것을 설명하거나 다듬을 시간이 필요한 경우가 있습니다. 말이 빠른지보다 시도한 방법이 어떻게 달라졌는지를 살펴보세요.",
+    axis.activity,
+    "부모님이 건넬 질문은 '정답이 뭐야?'에서 한 걸음 더 나아가면 좋아요. '이 방법 말고 또 어떤 길이 있을까?', '지금 만든 것에서 하나만 바꾸면 무엇을 바꾸고 싶어?'처럼 아이가 선택한 이유를 말할 자리를 만들어 주세요.",
+  ] : [
+    `이번에는 시작한 일을 붙들고 가는 방식을 살펴볼게요. ${axis.basis.join(", ") || "원국의 규칙과 지원 관계"}를 연결해 읽습니다. 인성은 이해하고 축적하는 과정, 관성은 기준과 책임, 비겁은 스스로 선택한 방향을 지키는 과정에 비추어 설명해요.`,
+    resource.length >= 2 ? "이해하고 쌓는 자리가 반복될 때는, 납득한 문제를 충분히 파고드는 방향을 먼저 읽어요. 다만 관심 없는 모든 일까지 오래 버틴다는 뜻은 아닙니다. 좋아서 계속하는 일과 어른의 평가 때문에 그만두지 못하는 일을 나누어 보아야 해요." : "정해진 계획이 있을 때 끝맺기 쉬운지, 스스로 목표를 골랐을 때 더 오래 이어 가는지를 비교해 보세요. 겉으로 드러난 자리의 분포만으로 끈기의 높고 낮음을 정하기보다, 목표를 받아들이는 방식에 초점을 맞추는 해석입니다.",
+    "예를 들어 어려운 문제에서 멈췄을 때, 다른 풀이를 찾는지 같은 방법만 반복하는지를 살펴볼 수 있어요. 오래 앉아 있었다는 사실만으로 과제 집착력이 좋다고 보기는 어렵습니다. 필요한 도움을 구하고 방법을 고쳐 가는 것도 끝맺는 힘의 일부예요.",
+    "잘하고 싶은 마음이 강하면 작은 실수를 고치느라 다음 단계로 넘어가기 어려울 수 있어요. 이런 모습이 실제로 보인다면 '왜 아직도 못 끝냈어?'보다 '지금까지 알아낸 것은 뭐야?'라고 물어 주세요. 결과와 과정을 나누어 말하면 다음 시도를 정하기 쉬워집니다.",
+    axis.activity,
+    "끝까지 한다는 것은 쉬지 않는다는 뜻이 아니에요. 쉬었다 돌아와 이어 할 수 있는 크기로 목표를 나누고, 완성한 뒤에는 무엇을 바꾸어 해결했는지 함께 돌아보세요. 아이가 스스로 고른 과제가 다음 탐구로 이어지도록 돕는 것이 중요합니다.",
+  ];
+  return section(title, lead, bodies, [
+    { label: axis.ring, detail: `${axis.basis.join(" · ") || "해당 단서가 적어 실제 활동 관찰이 필요합니다"}. ${axis.question}` },
+    { label: "세 영역의 연결", detail: reading.synthesis },
+  ], axisIndex === 0 ? "elements" : null);
+};
+
 const BUILDERS: Record<string, Builder[]> = {
   study: [natal, studyStyle, timing, cautionSection],
   "child-study": [natal, studyStyle, timing, careerDirection, parentTalk],
@@ -1349,7 +1437,7 @@ const BUILDERS: Record<string, Builder[]> = {
   reunion: [crossRelations, partnerHeart, timing, cautionSection],
   love: [natal, natalRelations, timing, actionSection],
   compatibility: [crossRelations, cautionSection, elementsAndYongsin, actionSection],
-  life: [natal, natalRelations, elementsAndYongsin, timing, actionSection],
+  life: [natal, natalRelations, elementsAndYongsin, decadeMap, annualOutlook, lateYears, actionSection],
   yearly: [yearCore, yearMonths, timing],
   money: [wealthStructure, wealthTiming, wealthHabit],
   career: [natal, timing, wealthTiming],
@@ -1357,12 +1445,30 @@ const BUILDERS: Record<string, Builder[]> = {
   business: [bizCapital, bizShape, wealthStructure, decadeMap, yearCore, cautionSection],
   "child-admission": [natal, studyStyle, admissionYears, decadeMap, yearMonths, admissionChoice, parentTalk],
   "child-dream": [natal, talentDirection, careerDirection, decadeMap, talentFit, parentTalk],
-  "child-talent": [natal, talentDirection, decadeMap, parentTalk],
+  "child-talent": [renzulliSection(0), renzulliSection(1), renzulliSection(2), timing, (ctx, title) => {
+      const base = careerDirection(ctx, title);
+      return { ...base, lead: `${ctx.me.name}의 진학 방향은 관심 있는 문제를 어떤 방식으로 푸는지부터 좁혀 보세요.`, body: [
+        "전공 이름을 먼저 정하기보다 아이가 좋아하는 활동에서 공통점을 찾아보는 것이 출발점이에요. 탐구가 즐거운지, 결과물을 만드는 일이 좋은지, 사람에게 설명할 때 생기가 도는지를 서로 다른 활동에서 비교해 보세요.",
+        ...base.body,
+        "같은 과학에 관심이 있어도 실험을 설계하는 일, 자료를 정리하는 일, 원리를 다른 사람에게 설명하는 일은 서로 다릅니다. 실제 활동의 어느 과정에서 흥미가 이어지는지 확인하면 전공의 이름보다 구체적인 선택 기준이 생겨요.",
+        "사주로 특정 대학의 합격률을 계산하지는 않습니다. 현재 성취와 관심, 준비할 시간과 실제 입시 조건을 함께 놓고 후보를 좁혀 가세요. 아이가 아직 해 보지 않은 분야는 가능성을 닫기보다 짧은 경험의 기회를 먼저 주는 편이 좋아요.",
+      ] };
+    }, studyStyle,
+    careerDirection, expressionGift, talentDirection, talentFit,
+    wealthStructure, peopleTiming("benefactor"), (ctx, title) => {
+      const base = parentTalk(ctx, title);
+      return { ...base, lead: "배운 것을 설명하고, 다른 방법을 받아들이고, 작은 약속을 끝맺는 경험을 연결해 주세요.", body: [
+        `${ctx.me.name}의 강점을 키울 때는 잘하는 활동의 양만 늘리기보다 다음 단계로 넘어가는 경험을 붙여 주는 것이 좋아요. 이해한 것을 설명해 보고, 설명한 것을 실제 결과물로 완성해 보는 식입니다.`,
+        ...base.body,
+        "다른 답을 만났을 때 바로 맞고 틀림을 가르기보다, 각 방법이 편한 조건을 비교해 보세요. 자기 생각을 지키는 힘과 다른 방법을 받아들이는 유연성은 함께 자랄 수 있어요.",
+        "돈을 다루는 경험도 작은 선택에서 시작할 수 있습니다. 용돈으로 사고 싶은 것 두 가지를 비교하고, 고른 이유와 남겨 둘 몫을 아이의 말로 설명하게 해 주세요. 미래의 수입을 정해 놓기보다 선택과 결과를 연결하는 경험이 목적이에요.",
+      ] };
+    }, decadeMap, parentTalk],
   // 성격·과거·인연·귀인·직업·표현·선택·재물·시기를 각각 읽는다.
   factbomb: [natal, pastChanges, loveSeat, peopleTiming("benefactor"), bizShape, expressionGift, cautionSection, wealthStructure, timing],
   "destiny-full": [
     natal, natalRelations, elementsAndYongsin, decadeMap, timing,
-    yearCore, wealthStructure, loveSeat, peopleTiming("partnership"), peopleTiming("benefactor"), healthBalance, lateYears, actionSection,
+    annualOutlook, wealthStructure, loveSeat, peopleTiming("partnership"), peopleTiming("benefactor"), healthBalance, lateYears, actionSection,
   ],
 };
 
@@ -1435,6 +1541,22 @@ function ensureMin<T>(items: T[], min: number, filler: () => T) {
 }
 
 export function buildTemplateReport(report: ReportProduct, reading: Reading, sazu: StoredSazu, today = new Date()): StoryReport {
+  if (report.bundle) {
+    const parts = report.bundle.items.map(slug => {
+      const product = getReport(slug)!;
+      const subject = report.roles?.partner === "child" && product.roles?.subject === "child" && reading.partner ? reading.partner : reading.subject;
+      const partner = product.partner === "none" ? null : reading.partner;
+      const partReading = { ...reading, reportSlug:slug, subject, partner };
+      return buildTemplateReport(product, partReading, buildManseTopics(product.topics,subject,partner,today), today);
+    });
+    const first = parts[0]!;
+    return { ...first, headline:`${reading.subject.name}님의 ${report.title}`, summary:parts.map((part,index)=>`${getReport(report.bundle!.items[index]!)!.title}: ${part.summary}`).join("\n\n"),
+      sections:parts.flatMap((part,index)=>part.sections.map(section=>({...section,title:`${getReport(report.bundle!.items[index]!)!.title} · ${section.title}`}))),
+      keywords:Array.from(new Set(parts.flatMap(part=>part.keywords))).slice(0,5),
+      timeline:parts.flatMap(part=>part.timeline),
+      actions:{do:Array.from(new Set(parts.flatMap(part=>part.actions.do))).slice(0,5),avoid:Array.from(new Set(parts.flatMap(part=>part.actions.avoid))).slice(0,5)},
+    };
+  }
   const guide = getGuide(report.guide);
   const modules = mergedTopicModules(sazu);
   const partnerData = firstPartner(sazu);
@@ -1502,7 +1624,9 @@ export function buildTemplateReport(report: ReportProduct, reading: Reading, saz
   const decadeKeyword = str(at(me.decade.current, "twelveFortune.keyword"));
   const studyGroup = sipseongGroups(me)[0];
   const goodPeriod = timelineFor(me).find((item) => item.tone === "good")?.period;
-  const headline =
+  const headline = report.slug === "child-talent"
+    ? `${name}, ${str(at(me.modules, "character.핵심풀이.0.결론")) ?? "타고난 배움의 방식부터 살펴볼게요"}`
+    :
     report.roles?.partner === "child" && ctx.cross
       ? `${partnerName}와 나, ${ctx.cross.hap > ctx.cross.clash ? "닮은 기운이 많아 통하는 사이" : "다른 기운이라 부딪히지만 서로를 채우는 사이"}`
       : report.category === "study" && studyGroup && STUDY_STYLE[studyGroup[0]]
@@ -1519,7 +1643,11 @@ export function buildTemplateReport(report: ReportProduct, reading: Reading, saz
               ? `곁에 사람이 있을 때 멀리 가는 사람, ${decadeKeyword ? `지금은 "${decadeKeyword}"의 열 해를 지나는 중` : "지금의 흐름을 읽을 때"}`
               : `${name}님의 결과 지금 지나는 흐름${decadeKeyword ? ` — "${decadeKeyword}"의 때` : ""}`;
 
-  const summary = [
+  const summary = report.slug === "child-talent" && list(at(me.modules, "character.핵심풀이")).length ? [
+    `${name}의 성격에서 먼저 눈에 띄는 점을 짚어 드릴게요.`,
+    ...list(at(me.modules, "character.핵심풀이")).slice(0, 4).map(item => `${str(at(item, "결론")) ?? ""} ${str(at(item, "모습")) ?? ""} ${str(at(item, "이면")) ?? ""}`),
+    "이제 이 성향을 배움과 창의성, 끝맺는 힘으로 나누어 살펴보고, 진로와 큰 시기의 흐름, 부모님이 건넬 말까지 구체적으로 이어 가겠습니다.",
+  ].join("\n\n") : [
     sections[0]?.lead,
     sections[1]?.lead,
     timeline.find((item) => item.tone === "good") ? `가장 가까이 힘이 실리는 때는 ${timeline.find((item) => item.tone === "good")!.period}이에요.` : null,

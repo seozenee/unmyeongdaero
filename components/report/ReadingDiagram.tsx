@@ -1,3 +1,4 @@
+import { RenzulliChart } from "./ReferenceCharts";
 import { DecadeTimeline } from "@/components/saju/DecadeTimeline";
 import { YearFlowTable } from "@/components/saju/YearFlowTable";
 import type { ReadingCardWindow } from "@/lib/story/cards";
@@ -14,6 +15,7 @@ const ELEMENTS = [
 
 /** 수치와 날짜는 저장된 계산값만 그린다. 능력·수익·만남 확률로 바꾸지 않는다. */
 export function ReadingDiagram({ section, panels, windows }: { section: ReportSection; panels: ReportPanels; windows?: ReadingCardWindow[] }) {
+  if (panels.pillars && /렌줄리의 세 고리/.test(section.title)) return <RenzulliChart pillars={panels.pillars} />;
   if (windows?.length) return <figure className="reading-book-figure" data-book-ignore-swipe>
     <figcaption>{/귀인/.test(section.title) ? "사람의 도움을 살펴볼 시기" : "인연의 단서가 겹치는 시기"}</figcaption>
     <ol className="book-people-timeline">{windows.map(window => <li key={window.period}><span aria-hidden className="book-timeline-dot" /><strong>{window.period}</strong><span>{window.monthly ? "그달의 절기가 시작된 뒤" : "그해 입춘 이후의 흐름"}</span></li>)}</ol>

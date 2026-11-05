@@ -18,6 +18,7 @@ import { readRomance } from "./romance";
 import { buildReadingFocus } from "./reading-focus";
 import { readWealth } from "./wealth";
 import { computePastYears } from "./past";
+import { buildActionableOutlook } from "./outlook";
 import { buildLifeTimeline } from "./life";
 import { computeCrossRelations, computeNatalRelations } from "./relations";
 import { computeSinsal } from "./sinsal";
@@ -256,6 +257,7 @@ export function computeManse(profile: BirthProfile, now = new Date()) {
       // 원국만 던져 주면 "성실하시네요" 로 돌아간다.
       character: readCharacter(pillars, strength.strength),
       lifeTimeline: life,
+      actionableOutlook: buildActionableOutlook(pillars, life, profile.isFemale),
       retrospective: computePastYears(pillars, birthYear, now.getFullYear()),
       wealth,
       healthBalance: health,

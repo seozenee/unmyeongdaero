@@ -1,4 +1,5 @@
 import "server-only";
+import { COMMERCE_RESET_AT } from "../commerce-reset";
 
 import { getReport } from "@/lib/reports/catalog";
 import { modes } from "@/lib/env";
@@ -53,13 +54,13 @@ export async function loadSummary(now = new Date()): Promise<AdminSummary> {
   if (modes.data() !== "supabase") return EMPTY;
   const db = getSupabaseAdmin();
 
-  const since = { today: startOfTodayKst(now), week: daysAgo(7, now) };
+  const since = { today: [startOfTodayKst(now),COMMERCE_RESET_AT].sort().at(-1)!, week: [daysAgo(7, now),COMMERCE_RESET_AT].sort().at(-1)! };
 
   const [todayRows, weekRows, readingRows, pending, users] = await Promise.all([
     db.from("payments").select("amount").eq("status", "paid").gte("paid_at", since.today),
     db.from("payments").select("amount").eq("status", "paid").gte("paid_at", since.week),
-    db.from("readings").select("status"),
-    db.from("payments").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    db.from("readings").select("status").gte("created_at",COMMERCE_RESET_AT),
+    db.from("payments").select("id", { count: "exact", head: true }).eq("status", "pending").gte("created_at",COMMERCE_RESET_AT),
     db.from("purchases").select("user_id"),
   ]);
 
@@ -94,7 +95,7 @@ export interface AdminReadingRow {
   hasPdf: boolean;
 }
 
-export async function listReadings(options: { status?: string; limit?: number } = {}): Promise<AdminReadingRow[]> {
+export async function listReadings(options: { status?: string; limit?: number; includeHistory?: boolean } = {}): Promise<AdminReadingRow[]> {
   if (modes.data() !== "supabase") return [];
   const db = getSupabaseAdmin();
 
@@ -103,6 +104,7 @@ export async function listReadings(options: { status?: string; limit?: number } 
     .select("id, created_at, status, report_slug, subject, error, notified_kind, pdf_token")
     .order("created_at", { ascending: false })
     .limit(options.limit ?? 50);
+  if (!options.includeHistory) query = query.gte("created_at",COMMERCE_RESET_AT);
   if (options.status) query = query.eq("status", options.status);
 
   const { data, error } = await query;
@@ -132,7 +134,7 @@ export interface AdminPaymentRow {
   pgTransactionId: string | null;
 }
 
-export async function listPayments(options: { status?: string; limit?: number } = {}): Promise<AdminPaymentRow[]> {
+export async function listPayments(options: { status?: string; limit?: number; includeHistory?: boolean } = {}): Promise<AdminPaymentRow[]> {
   if (modes.data() !== "supabase") return [];
   const db = getSupabaseAdmin();
 
@@ -141,6 +143,7 @@ export async function listPayments(options: { status?: string; limit?: number } 
     .select("payment_id, created_at, paid_at, status, provider, amount, report_slug, failure_reason, pg_transaction_id")
     .order("created_at", { ascending: false })
     .limit(options.limit ?? 50);
+  if (!options.includeHistory) query = query.gte("created_at",COMMERCE_RESET_AT);
   if (options.status) query = query.eq("status", options.status);
 
   const { data, error } = await query;
@@ -165,7 +168,7 @@ export async function listProductSales(): Promise<Array<{ title: string; count: 
   const { data, error } = await getSupabaseAdmin()
     .from("payments")
     .select("report_slug, amount")
-    .eq("status", "paid");
+    .eq("status", "paid").gte("created_at",COMMERCE_RESET_AT);
   if (error) throw new Error(`[admin] 상품별 판매를 읽지 못했습니다: ${error.message}`);
 
   const tally = new Map<string, { count: number; revenue: number }>();

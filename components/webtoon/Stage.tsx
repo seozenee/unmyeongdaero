@@ -33,13 +33,15 @@ interface StageProps {
   onClose?: () => void;
   /** 몇 걸음 중 몇 번째인가. 끝이 보이면 사람은 끝까지 간다 */
   progress?: { current: number; total: number };
+  active?: boolean;
 }
 
-export function Stage({ guide, place, camera, figure, assetKey, still, sfx, children, footer, onBack, onTap, sound, onClose, progress }: StageProps) {
+export function Stage({ guide, place, camera, figure, assetKey, still, sfx, children, footer, onBack, onTap, sound, onClose, progress, active = true }: StageProps) {
   const asset = getWebtoonAsset(guide.id, assetKey);
   const [viewport, setViewport] = useState<{ height: number; top: number } | null>(null);
 
   useEffect(() => {
+    if (!active) return;
     const visible = window.visualViewport;
     if (!visible) return;
     const sync = () => setViewport({ height: visible.height, top: visible.offsetTop });
@@ -47,11 +49,12 @@ export function Stage({ guide, place, camera, figure, assetKey, still, sfx, chil
     visible.addEventListener("resize", sync);
     visible.addEventListener("scroll", sync);
     return () => { visible.removeEventListener("resize", sync); visible.removeEventListener("scroll", sync); };
-  }, []);
+  }, [active]);
 
   // 스테이지가 떠 있는 동안 뒤쪽 페이지 스크롤을 잠그고, 아래 내비게이션을 숨긴다.
   // (내비는 반투명이라 덮어 두기만 하면 스테이지 버튼 뒤로 비쳐 보인다)
   useEffect(() => {
+    if (!active) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     document.body.dataset.stageOpen = "true";
@@ -59,7 +62,9 @@ export function Stage({ guide, place, camera, figure, assetKey, still, sfx, chil
       document.body.style.overflow = previousOverflow;
       delete document.body.dataset.stageOpen;
     };
-  }, []);
+  }, [active]);
+
+  if (!active) return null;
 
   return (
     <div style={viewport ? { height: viewport.height, top: viewport.top, "--stage-height": `${viewport.height}px` } as React.CSSProperties : undefined}

@@ -57,6 +57,7 @@ function toProduct(row: Row): ReportProduct | null {
 
   return normalizeReportIdentity({
     slug,
+    bundle: base?.bundle,
     kind: ((str(row.kind) ?? base?.kind) ?? "report") as ProductKind,
     category,
     categoryLabel: own(str(row.category_label)) ?? base?.categoryLabel ?? category,
@@ -115,7 +116,7 @@ export async function loadReports(
   }
 
   return Array.from(merged.values())
-    .filter((report) => report.kind === kind && (options.includeHidden || !hidden.has(report.slug)))
+    .filter((report) => !report.bundle && report.kind === kind && (options.includeHidden || !hidden.has(report.slug)))
     .sort((a, b) => b.price - a.price);
 }
 

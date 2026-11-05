@@ -3,11 +3,13 @@ import "server-only";
 import type { BirthProfile, ConsultSession, Reading, StoredSazu } from "@/lib/db/types";
 import type { ReportProduct } from "@/lib/reports/catalog";
 import { parseDecadeFortune, parseElementCounts, parseFourPillars } from "@/lib/saju/modules";
+import { buildRenzulliReading } from "@/lib/manse/renzulli";
 import { buildLens } from "@/lib/manse/lens";
 import { currentDecadeFrom } from "@/lib/manse/current-decade";
 import { mergedModules } from "@/lib/sazu/readings";
 import { getGuide, type Guide } from "./guides";
 import { buildManseExplanation } from "@/lib/manse/explanation";
+import { outlookSchema } from "@/lib/manse/outlook";
 import { READING_WRITING_STYLE } from "./writing-style";
 import { intakeContext } from "./intake";
 import type { StoryPanel } from "./report";
@@ -79,6 +81,9 @@ function roleInstruction(report: ReportProduct) {
 <customer> 명식의 주인은 자녀이고, 결과를 읽는 사람은 부모다. 자녀는 이름으로 부르고 부모에게 설명하듯 쓴다.
 아이를 성적으로 서열화하거나 한계를 단정하지 말고, 기질·가능성·환경의 언어로 쓴다. actions 는 부모가 할 수 있는 행동으로 쓴다.
 공부 방식은 원국 십성 분포(인성=이해·흡수, 식상=출력·표현, 관성=계획·규칙, 비겁=경쟁·동료, 재성=목표·보상)를 근거로 삼는다.
+renzulliReading이 있으면 렌줄리의 세 고리(평균 이상의 능력·창의성·과제 집착력)를 해석의 목차로 사용한다. 세 영역의 상호작용까지 설명한다. learningStyle·synthesis와 각 축 basis를 실제 원국과 대조한다. 인성이 반복되는 사람의 이해·몰입과 식상이 반복되는 사람의 표현·시도를 같은 성격으로 쓰지 않는다.
+렌줄리가 사주 산식을 검증한 것으로 쓰지 않는다. index는 서비스 자체의 명리 근거 비중이며 능력 점수가 아니다. 숫자는 화면의 계산 차트가 표시하므로 본문에서 재산출하지 않는다. 평균 이상·영재 여부·SKY 합격률은 실제 수행 자료 없이 판정하지 않는다.
+
 `;
   }
   if (report.roles?.partner === "child") {
@@ -102,6 +107,8 @@ export function buildReportSystemPrompt(report: ReportProduct) {
   const guide = getGuide(report.guide);
   return `${personaBlock(guide)}
 
+${report.bundle ? `## 묶음 리포트
+포함 상품: ${report.bundle.items.join(", ")}. 각 상품의 제목이 붙은 장을 빠짐없이 설명한다. 모든 주제를 한 권으로 전달한다. 부모·자녀 상품의 자녀 학습·재능 장은 <partners>의 자녀 명식을 읽고, 부모 명식으로 아이의 재능을 판정하지 않는다. 다른 두 사람 상품의 본인 연애 장은 <customer>를 중심으로 읽는다.` : ""}
 ## 맡은 일
 구매한 리포트 「${report.title}」의 briefing과 보고서를 쓴다.
 독자가 궁금한 것은 "나는 어떤 사람인지, 왜 이런 선택을 반복하는지, 앞으로 언제 어떤 흐름을 살펴봐야 하는지"다.
@@ -111,7 +118,7 @@ ${SHARED_PRINCIPLES}
 
 ${READING_WRITING_STYLE}
 
-${["factbomb", "destiny-full"].includes(report.slug) ? `## 종합 풀이의 범위 — 질문 하나에 전체를 몰아주지 않는다
+${(["factbomb", "destiny-full"].includes(report.slug) || report.bundle?.items.some(slug => ["factbomb", "destiny-full"].includes(slug))) ? `## 종합 풀이의 범위 — 질문 하나에 전체를 몰아주지 않는다
 이 상품은 직업 상담이 아니라 한 사람의 전반적인 사주다. 사용자가 이직·창업만 물어도 다른 장을 직장 이야기로 바꾸지 않는다.
 성격과 속마음 / 지나온 변화 / 연애·배우자 / 귀인과 인간관계 / 직업·사업 / 재물 / 앞으로의 시기를 각각 독립된 질문으로 읽는다.
 성격 장의 사례는 일·친한 사이·혼자 있을 때를 고르게 쓴다. 인연 장은 가까워지는 방식·맞는 상대 성향·관계가 깊어질 시기, 귀인 장은 도움의 역할·시기·관계의 주의점을 읽는다. 이 장들을 상사·이직·업무 조언으로 채우지 않는다.
@@ -121,7 +128,7 @@ briefing과 summary에도 성격·인연·사람·일·돈·시기가 고르게 
 
 ## 쓰기 전에 정리할 것 (출력하지 않는다)
 1. <life_context>는 사용자가 직접 선택한 관계·일·학습 상황이다. 해당 장의 생활 예시와 선택 기준에 반영하되, 사주로 알아낸 사실처럼 말하지 않는다. 비어 있는 항목은 짐작하지 않는다. <asked>가 있으면 핵심 질문과 실제 제약을 찾는다. 없으면 상품의 주제에서 가장 중요한 선택을 잡는다. 직업·연애 상태·경제 사정은 짐작하지 않는다.
-2. 장마다 관련된 근거를 고른다. 성격은 character와 강약·분포·관계를 함께, 돈은 wealth와 readingFocus.business를, 말·표현은 readingFocus.expression을, 관계는 romance와 두 사람의 비교를 본다. 시기는 lifeTimeline·seun·weolun과 readingFocus의 기간별 근거를 우선한다. 전문 모듈이 없으면 다른 모듈로 해당 분야를 안다고 꾸미지 않는다.
+2. character.핵심풀이가 있으면 그 결론·근거·모습·이면을 개인별 풀이의 중심으로 사용한다. 자료에 있는 "납득해야 움직임", "응용형 창의성", "몰입과 완벽주의", "겉은 차분하지만 속의 기준은 확고함"을 일반적인 위로나 시간 관리 조언으로 지우지 않는다. 근거가 다른 사람에게 이 결론을 복사하지 않는다. 장마다 관련된 근거를 고른다. 성격은 character와 강약·분포·관계를 함께, 돈은 wealth와 readingFocus.business를, 말·표현은 readingFocus.expression을, 관계는 romance와 두 사람의 비교를 본다. 시기는 lifeTimeline·seun·weolun과 readingFocus의 기간별 근거를 우선한다. 전문 모듈이 없으면 다른 모듈로 해당 분야를 안다고 꾸미지 않는다.
 3. 과거는 retrospective에 실제 계산된 지난 해부터 고른다. 중요한 해 1~2개를 짚고, 그 시기 압박이나 변화가 어떤 생활 장면으로 드러났을지를 해석한다. 확인하지 않은 사건을 확정하지 않되, 조언으로 건너뛰지 말고 지나온 경험의 결을 먼저 구체적으로 읽는다.
 4. 타고난 경향과 현재 시기의 해석을 분리한다. 평생의 특성을 올해 사건으로, 한 해의 해석을 평생의 결론으로 확대하지 않는다.
 5. 장마다 다른 질문에 답한다. 같은 성격을 모든 장의 원인으로 반복하지 않는다. 앞의 해석과 뒤의 해석이 다르면 조건 차이를 설명한다.
@@ -143,7 +150,7 @@ briefing과 summary에도 성격·인연·사람·일·돈·시기가 고르게 
 
 ### headline·summary·keywords
 - headline: 20~50자, 이 명식의 핵심 특징과 삶에서 드러나는 모습을 담은 완결된 한 문장. 모든 상품을 "~부터 해 보세요"라는 숙제로 시작하지 않는다. "때가 옵니다" 같은 빈 예고로 끝내지 않는다.
-- summary: 5~7문장. 이 사람의 특징과 질문에 대한 답 → 서로 다른 핵심 근거 두 가지 → 유리한 조건과 부담 조건 → 계산된 관련 시기 또는 방향. 자료에 없는 과거나 미래를 채우지 않는다.
+- summary: 4~6문단, 전체 12~18문장. 첫 인사에서 원국의 계절과 일간을 한 가지 비유로 연결하고, 가장 눈에 띄는 자리 두 곳을 짚어 한 편의 편지처럼 쓴다. 이 사람의 특징과 질문에 대한 답 → 서로 다른 핵심 근거 두 가지 → 유리한 조건과 부담 조건 → 계산된 관련 시기 또는 방향. 자료에 없는 과거나 미래를 채우지 않는다.
 - keywords: 3~5개, 각 2~8자. 전문용어 대신 독자가 기억할 생활의 말.
 
 ### sections
@@ -151,7 +158,7 @@ briefing과 summary에도 성격·인연·사람·일·돈·시기가 고르게 
 ${report.chapters.map((title, index) => `  ${index + 1}. ${title}`).join("\n")}
 - 각 장은 <chapter_plan>의 id를 sections[].chapterId에 정확히 한 번씩 쓴다. title 필드는 생성하지 않는다. 화면에 보일 장 제목은 서버가 상품 목차로 붙인다. chapterId의 본문은 반드시 그 ID의 제목에 답해야 한다.
 - lead: 그 장의 질문에 답하는 결론 한 문장. 다른 장의 lead와 겹치지 않는다.
-- body: 장마다 5~7문단, 문단당 2~3문장, 대체로 80~180자. 한 문단에 여러 주제를 몰아넣지 않는다. 짧게 짚는 문장과 이유를 설명하는 문장을 번갈아 쓰며, 설명이 필요한 장은 더 써도 되지만 반복과 분량 채우기는 금지한다. 다음 흐름을 자연스러운 글로 연결한다:
+- body: 장마다 6~8문단, 문단당 2~3문장. 각 문단은 질문에 답하거나 이유·장면·시기·할 일·주의점을 하나 더해야 한다. 같은 설명, 인사, 원칙 고지로 분량을 늘리지 않는다. 한 문단에 여러 주제를 몰아넣지 않는다. 짧게 짚는 문장과 이유를 설명하는 문장을 번갈아 쓰며, 설명이 필요한 장은 더 써도 되지만 반복과 분량 채우기는 금지한다. 다음 흐름을 자연스러운 글로 연결한다:
   ① 결론과 해석 근거: 왜 그렇게 읽는지 서로 다른 단서 두 가지를 생활의 말로 설명한다. 근거가 하나뿐이면 그 이상으로 결론을 키우지 않는다.
   ② 강점이 도움이 되는 조건과, 같은 강점이 부담이 되는 조건: 성격을 결함으로 몰지 않는다. "의지가 약해서"처럼 탓하지 않는다.
   ③ 확인할 생활 장면: 사람·말·물건이 보이는 예시 한 가지. 사용자가 제공한 사실 외에는 가정임을 분명히 한다. 직업을 모르면 상사·회의실·성과급을 가정하지 않는다.
@@ -172,6 +179,20 @@ ${report.chapters.map((title, index) => `  ${index + 1}. ${title}`).join("\n")}
 - 재능·학업: 관찰할 학습 방식과 작은 시도를 제안한다. 성적·지능·집중력 수준을 검사한 것처럼 판정하지 않는다. 자녀 상품의 행동은 부모가 할 수 있는 것으로 쓰고 아이의 선택권을 남긴다.
 - 일·돈: 운을 이유로 퇴사·창업·계약·투자를 결정시키지 않는다. 실제 시간·생활비·조건을 확인하고 작게 시험할 기준으로 연결한다.
 - 건강: 증상을 모르면 증상을 만들지 않는다. 사용자가 증상을 적었다면 사주로 원인을 설명하지 않고, 일상 기록과 필요한 진료 확인으로 연결한다.
+
+### 성격을 먼저, 그다음에 시기
+- 어느 상품이든 성격을 먼저 짧고 선명하게 짚는다. character의 바탕·힘·안에서·밖에서·드러나는쪽·그늘·핵심풀이를 묶어, 납득할 성향 3~4개와 그 이면을 말한다. 추상적인 인사나 이론 설명으로 시작하지 않는다.
+- 상품의 첫 장이 성격 장이 아니어도, 그 장의 답을 말하기 전에 이 사람이 어떤 사람인지 한 문단으로 세운 뒤 주제로 들어간다. 읽는 사람이 "내 이야기다"를 확인하지 못하면 뒤의 시기 이야기는 읽히지 않는다.
+- 평생·전반의 흐름을 다루는 장은 lifeTimeline.열해와 yearly_and_lifetime_outlook.lifetime의 70대·80대 구간까지 반드시 쓴다. 마지막 구간을 사망 시점이나 수명으로 읽지 않는다. 젊은 나이만 다루거나 앞으로 십 년만으로 평생을 끝내지 않는다.
+- yearly_and_lifetime_outlook.annual은 올해부터 앞으로 10년이다. basis가 그해에 들어오는 글자와 원국에서 만나는 자리다. 화면이 열 해를 모두 표로 보여 주므로, 본문에서는 그 가운데 중요한 전환 연도 2~4개를 골라 ① 몇 년에 ② 어느 분야가 움직이고(재물·인연·일 중 어느 쪽인지 분명히) ③ 그때 무엇을 하면 되고 ④ 무엇을 조심할지를 네 가지 다 쓴다.
+- 지나온 10년은 retrospective로 참고하며 사용자가 겪은 사건을 지어내지 않는다. 앞으로의 10년과 과거 10년을 혼동하지 않는다.
+- "잘 풀릴 수 있어요", "조심하세요"로 끝내지 않는다. 어떤 제안·돈·관계·업무를 어떻게 판단하고 무엇을 피할지 한 문장으로 답한다. 재물은 수입·거래·지출을 나누고, 연애는 만남·관계의 구체화·마찰의 조율을 구분한다.
+- 명확하게 말하되 해석을 확인된 미래 사실로 표현하지 않는다. 설명은 간단히, 실행할 말은 구체적으로 쓴다. 독자가 궁금한 것을 이미 답했다면 같은 경고나 한계 문장을 반복하지 않는다.
+
+### 군말을 쓰지 않는다
+- 한 문단은 새 정보를 하나 더한다. 앞 문단을 다른 말로 다시 적거나, 인사·보고서 예고·같은 한계 문구를 반복해 분량을 채우지 않는다.
+- 내부 사정을 손님 글에 적지 않는다: "계산 결과에는", "제공된 자료에 따르면", "가설로 생각하세요", "이 해석을 ~으로 바꾸어 말하지는 않아요".
+- 한계 고지는 꼭 필요한 장에서 한 번만 짧게 쓴다. 장마다 같은 면책 문장을 붙이지 않는다.
 
 ### timeline
 - 제공된 시기 중 주제에 관련된 3~6개. 미래를 우선하고 과거는 retrospective에서 1~2개를 골라 먼저 비교한다. 자료가 적으면 있는 것만 쓴다.
@@ -236,9 +257,11 @@ function reportModules(modules: Record<string, unknown>, today: string) {
     // 오행만으로 특정 장기·기초 체력을 단정한 참고 문구가 본문으로 복사되지 않게 한다.
     // 건강 장도 실제 증상은 사용자가 적은 내용으로만 다룬다.
     healthBalance: undefined,
+    actionableOutlook: undefined,
     readableBasis: buildManseExplanation(modules),
     seun: seun ? { currentSeun: compactLuck(seun.currentSeun), years: Array.isArray(seun.years) ? seun.years.map(compactLuck) : [] } : undefined,
     weolun: weolun ? { months: Array.from(months.values()) } : undefined,
+    retrospective: Array.isArray(modules.retrospective) ? modules.retrospective.map(compactLuck) : undefined,
     dailyInteraction: undefined,
     currentDecade: currentDecadeFrom(modules),
   };
@@ -260,9 +283,42 @@ function sazuBlocks(sazu: StoredSazu, today: string) {
  */
 function lensBlock(report: ReportProduct, sazu: StoredSazu) {
   // 종합 풀이는 성격·능력의 높고 낮음으로 요약하지 않는다. 실제 글자와 관계를 각 분야에서 읽는다.
-  if (["factbomb", "destiny-full"].includes(report.slug)) return "";
+  if ((["factbomb", "destiny-full"].includes(report.slug) || report.bundle?.items.some(slug => ["factbomb", "destiny-full"].includes(slug)))) return "";
   const lens = buildLens(mergedModules(sazu), report.category);
   return lens ? `<틀로본결>\n${JSON.stringify(lens)}\n</틀로본결>\n` : "";
+}
+
+/**
+ * 연도별·평생 시기표.
+ *
+ * 전에는 평생·종합·팩폭 세 상품에만 넘겼다. 그런데 "어느 해에 무엇이 오고 무엇을
+ * 조심할지"는 어느 상품을 산 사람이든 가장 먼저 찾는 자리다. 모든 상품에 넘긴다.
+ *
+ * 대신 통째로 넘기지 않는다. money·relationship·work·do·caution 은 계산에서 나온
+ * 안내 문구이고, 화면이 모든 해를 그대로 보여 준다. 그걸 프롬프트에 또 넣으면 모델이
+ * 베껴 쓰고 토큰만 두 배가 된다. 모델에게 필요한 것은 "그 해에 무슨 글자가 들어와
+ * 어느 자리와 만나는가" — basis 다. 그걸로 중요한 해를 골라 제 말로 쓰게 한다.
+ */
+function outlookBlock(_report: ReportProduct, sazu: StoredSazu) {
+  const outlook = outlookSchema.safeParse(mergedModules(sazu).actionableOutlook).data;
+  if (!outlook) return "";
+  const row = (item: { period: string; year: number; age: number; basis: string[] }) =>
+    ({ period: item.period, year: item.year, age: item.age, basis: item.basis });
+  const compact = {
+    scope: outlook.scope,
+    annual: outlook.annual.map(row),
+    lifetime: outlook.lifetime.map(item => ({ period: item.period, age: item.age, basis: item.basis })),
+  };
+  return `<yearly_and_lifetime_outlook>${JSON.stringify(compact)}</yearly_and_lifetime_outlook>\n`;
+}
+
+function renzulliBlock(report: ReportProduct, sazu: StoredSazu) {
+  if (report.category !== "child" && report.category !== "study") return "";
+  const partner = report.roles?.partner === "child" ? Object.values(sazu).flatMap(topic => topic?.partners ?? [])[0] : null;
+  const partnerModules = partner && typeof partner === "object" ? (partner as { modules?: Record<string, unknown> }).modules : undefined;
+  const pillars = parseFourPillars(partnerModules ?? mergedModules(sazu));
+  const reading = pillars ? buildRenzulliReading(pillars) : null;
+  return reading ? `<renzulliReading>${JSON.stringify(reading)}</renzulliReading>\n` : "";
 }
 
 export function buildReportUserPrompt(report: ReportProduct, reading: Pick<Reading, "subject" | "partner" | "answers">, sazu: StoredSazu, today: string) {
@@ -273,12 +329,12 @@ export function buildReportUserPrompt(report: ReportProduct, reading: Pick<Readi
 <customer role="${ROLE_LABEL[report.roles?.subject ?? "self"]}">${describeProfile(reading.subject)}</customer>
 ${reading.partner ? `<partner role="${ROLE_LABEL[report.roles?.partner ?? "lover"]}">${describeProfile(reading.partner)}</partner>\n` : ""}<life_context source="사용자가 직접 알려 준 현재 상황">${JSON.stringify(lifeContext).replace(/</g, "\\u003c")}</life_context>\n${
     story ? `<asked>\n${JSON.stringify(story).replace(/</g, "\\u003c")}\n</asked>\n` : ""
-  }${lensBlock(report, sazu)}<today>${today}</today>
+  }${lensBlock(report, sazu)}${renzulliBlock(report, sazu)}${outlookBlock(report, sazu)}<today>${today}</today>
 <available_panels>${availablePanels(sazu).join(", ") || "없음"}</available_panels>
 ${sazuBlocks(sazu, today)}
 
 위 자료만 근거로 「${report.title}」의 브리핑과 보고서를 써 주세요.
-최종 출력에서는 readableBasis의 실제 근거를 확인한 뒤 본문은 쉬운 생활의 말로 설명하세요. 한자와 이론 이름의 나열은 evidence로 옮기고, 본문에서는 왜 그런 모습이 나오는지와 어느 상황에서 달라지는지를 설명하세요.
+최종 출력에서는 readableBasis의 실제 근거를 확인한 뒤 본문은 쉬운 생활의 말로 설명하세요. 실제 자리와 글자를 본문에서도 짚고 용어의 뜻을 바로 풀어 주세요. 예를 들어 일지와 시지의 인성이 함께 드러나는지 확인한 뒤, 왜 원리를 이해하고 쌓는 방식으로 읽는지와 어떤 환경에서 달라지는지를 설명하세요. 같은 예시를 모든 원국에 복사하지 마세요.
 currentDecade가 현재 구간입니다. lifeTimeline의 나이는 세는 나이이며, 나이를 다시 계산하지 마세요.
 일간 자신이 비견으로 표시되는 것은 누구나 같은 기준값입니다. 이것 하나를 자기주장·자립심이 강하다는 개인 근거로 쓰지 마세요. 다른 자리의 분포와 계절·강약을 함께 확인하세요.
 사용자의 고민에 직접 답하고, 그 사람의 특징과 이유를 먼저 충분히 읽어 주세요. 현재 직업이나 연애 상태를 알려주지 않았다면 회사를 다니거나 만나고 있는 사람이 있다고 가정하지 마세요.

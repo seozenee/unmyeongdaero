@@ -363,29 +363,15 @@ export function findEmptyTalk(text: string): string[] {
   return EMPTY_TALK.filter((phrase) => text.includes(phrase));
 }
 
-/**
- * 시기 칸에 붙는 간지 꼬리를 뗀다.
- *
- * "36~45세 · 경신 대운", "2027 정미 세운" 처럼 우리끼리 쓰는 이름이 뒤에 붙어 나온다.
- * 모양이 늘 같아서 이것만은 기계로 떼도 문장이 망가지지 않는다. 손님에게 필요한 것은
- * 달력에서 찾을 수 있는 앞쪽뿐이다.
- */
-function stripGanziTail(text: string) {
-  return text
-    .replace(new RegExp(`\\s*·\\s*${GANJI_CHAR}\\s*(대운|세운|월운|일운)`, "g"), "")
-    .replace(new RegExp(`\\s*${GANJI_CHAR}\\s*(대운|세운|월운|일운)\\s*`, "g"), " ")
-    .replace(/\s{2,}/g, " ")
-    .trim();
-}
-
 /** 한 문장(또는 짧은 텍스트)에서 점수·위협 표현을 걷어낸다 */
 export function soften(text: string) {
   return softenValue(text, false);
 }
 
-function softenValue(text: string, keepTimingLabel: boolean) {
+function softenValue(text: string, _keepTimingLabel: boolean) {
   const softened = SOFTEN.reduce((current, [pattern, replacement]) => current.replace(pattern, replacement), readableSourceNames(text));
-  return (keepTimingLabel ? softened : stripGanziTail(softened)).replace(/\s{2,}/g, " ").trim();
+  // 본문에서 설명한 간지까지 지우면 "2029년부터는 으로"처럼 근거와 문법이 함께 사라진다.
+  return softened.replace(/[^\S\n]+/g, " ").trim();
 }
 
 /**

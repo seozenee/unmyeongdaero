@@ -1,21 +1,20 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { PersonalizedSales } from "@/components/story/PersonalizedSales";
+import { PurchaseSheet } from "@/components/checkout/PurchaseSheet";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { BirthForm, CINEMATIC_BIRTH_STEPS } from "@/components/story/BirthForm";
+import { BirthForm, CINEMATIC_BIRTH_STEPS, type BirthSubject } from "@/components/story/BirthForm";
 import { useTypewriter } from "@/components/story/useTypewriter";
 import { STITCH_ASSETS } from "@/components/home/assets";
-import { ProductIntro } from "@/components/story/ProductIntro";
 import { Icon } from "@/components/ui/Icon";
 import { SpeechBalloon, WhisperLines } from "@/components/webtoon/ComicText";
 import { Stage, StageAction } from "@/components/webtoon/Stage";
 import { useAmbientSound } from "@/components/webtoon/useAmbientSound";
 import { WebtoonIntro } from "@/components/webtoon/WebtoonIntro";
 import { cn } from "@/lib/cn";
-import type { BirthProfile } from "@/lib/db/types";
+import type { BirthProfile, Reading } from "@/lib/db/types";
 import { readLocalProfile } from "@/lib/me/local-profile";
-import type { WritingSample } from "@/lib/reports/writing-sample";
 import { normalizeReportIdentity } from "@/lib/reports/identity";
 import type { ReportProduct } from "@/lib/reports/catalog";
 import { describeBirth, fillName } from "@/lib/story/format";
@@ -30,6 +29,7 @@ interface SavedState {
   partner: BirthProfile | null;
   answers: Record<string, string>;
   notifyPhone?: string;
+  offerSlug?: string;
 }
 
 interface Scene {
@@ -43,11 +43,19 @@ interface Scene {
 const storageKey = (slug: string) => `sazudaero:funnel2:${slug}`;
 const BASE_SCENE: Scene = { place: "room", camera: "close", figure: "close", asset: "intro-5" };
 
-function birthTitle(report: ReportProduct, target: "subject" | "partner") {
+/** 양식이 누구의 생일을 묻는지 — 묻는 문장과 안내가 여기서 갈린다 */
+function birthSubject(report: ReportProduct, target: "subject" | "partner"): BirthSubject {
   const role = target === "subject" ? (report.roles?.subject ?? "self") : (report.roles?.partner ?? "lover");
-  if (role === "child") return "아이의 정보";
-  if (role === "parent") return "부모님(나)의 정보";
-  return target === "subject" ? "나의 정보" : "그 사람의 정보";
+  if (role === "child") return "child";
+  if (role === "parent") return "parent";
+  return target === "subject" ? "self" : "partner";
+}
+
+function birthTitle(report: ReportProduct, target: "subject" | "partner") {
+  const subject = birthSubject(report, target);
+  if (subject === "child") return "아이의 정보";
+  if (subject === "parent") return "부모님(나)의 정보";
+  return subject === "self" ? "나의 정보" : "그 사람의 정보";
 }
 
 /** 장면 위에 뜨는 안내자 말풍선. 한 글자씩 찍히고, 다 찍히면 다음 단계로 넘긴다. */
@@ -117,23 +125,25 @@ function SheetCard({ children }: { children: React.ReactNode }) {
 
 export function StoryFunnel({
   report: incomingReport,
-  related: incomingRelated = [],
+  related = [],
   owned = false,
-  writingSample = null,
   rememberProfile = true,
-  authenticated = false,
+  initialReading = null,
+  customerName = null,
+  freeIssue = false,
 }: {
   report: ReportProduct;
   related?: ReportProduct[];
+  /** 운영자 계정 — 결제 없이 0원으로 발급한다 */
+  freeIssue?: boolean;
   /** 이미 이 풀이를 산 적이 있는가 — 다시 보러 온 사람에게 지름길을 준다 */
   owned?: boolean;
-  writingSample?: WritingSample | null;
   /** 로컬 검토 화면에서는 기존 내 프로필을 바꾸지 않는다. */
   rememberProfile?: boolean;
-  authenticated?: boolean;
+  customerName?: string | null;
+  initialReading?: Pick<Reading, "id" | "reportSlug" | "subject" | "partner" | "answers"> | null;
 }) {
   const report = useMemo(() => normalizeReportIdentity(incomingReport), [incomingReport]);
-  const related = useMemo(() => incomingRelated.map(normalizeReportIdentity), [incomingRelated]);
   const router = useRouter();
   // 이전 화면을 복원한 경우에도 브라우저 탭과 본문의 이름이 같아야 한다.
   useEffect(() => {
@@ -144,34 +154,36 @@ export function StoryFunnel({
   const sound = useAmbientSound();
 
   // 처음 열면 상품 소개. 손님이 무엇을 받는지 보고 들어가게 한다.
-  // (로그인하고 돌아온 경우에는 아래 복원 훅이 "chat" 으로 되돌린다)
-  const [phase, setPhase] = useState<"intro" | "chat" | "closed" | "resuming">("closed");
+  const [phase, setPhase] = useState<"story" | "chat" | "closed">("story");
   const [cursor, setCursor] = useState(0);
   const [scene, setScene] = useState<Scene>(BASE_SCENE);
   const [echo, setEcho] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [typing, setTyping] = useState(false);
   const [skipSignal, setSkipSignal] = useState(0);
-  const [subject, setSubject] = useState<BirthProfile | null>(null);
-  const [partner, setPartner] = useState<BirthProfile | null>(null);
+  const [subject, setSubject] = useState<BirthProfile | null>(initialReading?.subject ?? null);
+  const [partner, setPartner] = useState<BirthProfile | null>(initialReading?.partner ?? null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [detail, setDetail] = useState("");
   // 알림톡 받을 번호. 적지 않아도 되고, 적으면 다 쓴 뒤 카톡으로 알려 준다.
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [offerSlug, setOfferSlug] = useState(initialReading?.reportSlug ?? report.slug);
+  const [checkoutReadingId, setCheckoutReadingId] = useState<string | null>(initialReading?.id ?? null);
+  const [preparedSlug, setPreparedSlug] = useState<string | null>(initialReading?.reportSlug ?? null);
   const [birthStep, setBirthStep] = useState(0);
-  const resumedSubmission = useRef<string | null>(null);
+  const checkoutIntent = useRef(false);
+  const detailEndReached = useRef(false);
 
   const step: FunnelStep | undefined = steps[cursor];
   const name = subject?.name;
 
-  // 로그인하고 돌아왔으면 입력 내용을 복원
+  // 저장된 입력만 복원한다. 로그인 복귀·재방문도 반드시 상세페이지에서 시작한다.
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(storageKey(report.slug));
       if (!raw) return;
-      const resumeKey = `${report.slug}:${raw}`;
-      if (resumedSubmission.current === resumeKey) return;
       const saved = JSON.parse(raw) as SavedState;
       // 로그인 전에 제출을 마친 상태다. 질문 추가로 순서가 바뀌어도 마지막 확인 칸을 복원한다.
       const detailIndex = steps.findIndex(item => item.kind === "detail");
@@ -181,38 +193,30 @@ export function StoryFunnel({
       setAnswers(saved.answers);
       setDetail(saved.answers.detail ?? "");
       setPhone(saved.notifyPhone ?? "");
-      setPhase("chat");
-      // 이 저장본은 제출 후 로그인하러 갈 때만 남는다. 인증 뒤에는 다시 입력시키지 않는다.
-      if (authenticated && saved.subject) {
-        resumedSubmission.current = resumeKey;
-        setPhase("resuming");
-        setSubmitting(true);
-        void (async () => {
-          try {
-            const response = await fetch("/api/readings", { method: "POST", headers: { "content-type": "application/json" },
-              body: JSON.stringify({ slug: report.slug, subject: saved.subject, partner: saved.partner,
-                answers: saved.answers, notifyPhone: saved.notifyPhone?.trim() || null }) });
-            const body = await response.json();
-            if (!response.ok) {
-              const target = body.error?.target;
-              const index = steps.findIndex(item => item.kind === "birth" && item.target === target);
-              if (index >= 0) setCursor(index);
-              setNotice(body.error?.message ?? "입력 정보를 불러오지 못했어요. 다시 시도해 주세요.");
-              setPhase("chat");
-              return;
-            }
-            sessionStorage.removeItem(storageKey(report.slug));
-            router.replace(body.redirect);
-          } catch {
-            setNotice("네트워크가 불안정해요. 입력 정보는 그대로 남아 있어요. 다시 시도해 주세요.");
-            setPhase("chat");
-          } finally { setSubmitting(false); }
-        })();
-      }
+      setOfferSlug(saved.offerSlug ?? report.slug);
+      setPhase("story");
+      setCheckoutOpen(false);
     } catch {
       // 저장소 접근 불가 → 처음부터
     }
-  }, [report.slug, steps, authenticated, router]);
+  }, [report.slug, steps]);
+
+  useEffect(() => {
+    // 뒤로 가기에서 브라우저가 결제 직전 DOM을 그대로 복구한 경우에도 자동 노출하지 않는다.
+    const returnToDetail = () => {
+      checkoutIntent.current = false;
+      detailEndReached.current = false;
+      setCheckoutOpen(false); setPhase("story");
+      window.scrollTo(0,0);
+    };
+    returnToDetail();
+    window.addEventListener("pageshow", returnToDetail);
+    window.addEventListener("pagehide", returnToDetail);
+    return () => {
+      window.removeEventListener("pageshow", returnToDetail);
+      window.removeEventListener("pagehide", returnToDetail);
+    };
+  }, []);
 
   const advance = useCallback(() => setCursor((value) => value + 1), []);
 
@@ -256,7 +260,7 @@ export function StoryFunnel({
 
   const startInput = () => {
     if (cursor === 0) {
-      if (rememberProfile && (report.roles?.subject ?? "self") === "self") setSubject(readLocalProfile());
+      if (rememberProfile && (report.roles?.subject ?? "self") === "self") setSubject(previous => previous ?? readLocalProfile());
       const firstBirth = steps.findIndex(item => item.kind === "birth");
       if (firstBirth >= 0) setCursor(firstBirth);
     }
@@ -294,12 +298,12 @@ export function StoryFunnel({
     if (index >= 0) setCursor(index);
   };
 
-  const submit = async () => {
+  const submit = async (selectedSlug = offerSlug, reopenCheckout = false) => {
     if (!subject || submitting) return;
     setSubmitting(true);
     setNotice(null);
     const payload = {
-      slug: report.slug,
+      slug: selectedSlug,
       subject,
       partner,
       answers: { ...answers, ...(detail.trim() ? { detail: detail.trim() } : {}) },
@@ -315,7 +319,7 @@ export function StoryFunnel({
       const body = await response.json();
 
       if (response.status === 401 && body.error?.loginUrl) {
-        const saved: SavedState = { cursor, subject, partner, answers: payload.answers, notifyPhone: phone };
+        const saved: SavedState = { cursor, subject, partner, answers: payload.answers, notifyPhone: phone, offerSlug: selectedSlug };
         sessionStorage.setItem(storageKey(report.slug), JSON.stringify(saved));
         window.location.href = body.error.loginUrl;
         return;
@@ -331,7 +335,9 @@ export function StoryFunnel({
       }
 
       sessionStorage.removeItem(storageKey(report.slug));
-      router.push(body.redirect);
+      setCheckoutReadingId(body.readingId); setPreparedSlug(selectedSlug);
+      setPhase("closed"); setCheckoutOpen(reopenCheckout && checkoutIntent.current && detailEndReached.current);
+      if (!reopenCheckout) window.scrollTo(0,0);
     } catch {
       setNotice("네트워크가 불안정해요. 다시 시도해 주세요.");
     } finally {
@@ -339,55 +345,25 @@ export function StoryFunnel({
     }
   };
 
-  // ─ 상품 소개 (스테이지를 닫았을 때 보이는 화면) ─
-  // 상품 소개는 ProductIntro 가 그린다 — 상품마다 다른 포스터·문구·서체를 쓴다
-  const detailPage = (
-    <>
-      {/*
-        이미 산 사람에게는 지름길을 준다. 전에는 이 화면에 들어오면 곧장 결과로
-        돌려보냈는데, 그러면 다시 사려는 사람은 들어올 수조차 없었다. 길을 막는 대신
-        길을 하나 더 놓는다 — 보러 온 사람은 누르고, 또 사러 온 사람은 그냥 내려간다.
-      */}
-      {owned && (
-        <Link
-          href={`/reports/${report.slug}/read`}
-          className="fixed inset-x-0 top-16 z-30 mx-auto flex w-full max-w-md items-center gap-space-sm border-b border-outline-variant/40 bg-surface-container/95 px-margin py-space-sm backdrop-blur"
-        >
-          <Icon name="auto_stories" className="text-[18px] text-secondary" />
-          <span className="flex-1 font-label-md text-label-md text-on-surface">이미 받으신 풀이가 있어요</span>
-          <span className="flex items-center gap-0.5 font-label-sm text-label-sm text-secondary">
-            바로 읽기
-            <Icon name="chevron_right" className="text-[16px]" />
-          </span>
-        </Link>
-      )}
-      <ProductIntro
-        report={report}
-        related={related}
-        onStart={cursor > 0 ? startInput : () => setPhase("intro")}
-        onWatchIntro={() => setPhase("intro")}
-        resuming={cursor > 0}
-        writingSample={writingSample}
-      />
-    </>
-  );
+  if (phase === "story") return <WebtoonIntro report={report} owned={owned}
+    onClose={() => router.push("/")} onStart={() => {
+      checkoutIntent.current = false; detailEndReached.current = false; setCheckoutOpen(false);
+      if (checkoutReadingId) setPhase("closed"); else startInput();
+    }} />;
 
-  if (phase === "closed") return detailPage;
+  const detailPage = phase === "closed" && checkoutReadingId ? <PersonalizedSales
+    readingId={checkoutReadingId} report={report} onPurchase={() => {
+      detailEndReached.current = true;
+      checkoutIntent.current = true;
+      setCheckoutOpen(true);
+    }} /> : null;
 
-  if (phase === "resuming") return <div role="status" className="flex min-h-[70dvh] flex-col items-center justify-center gap-space-md px-margin text-center">
-    <Icon name="progress_activity" className="animate-spin text-[32px] text-secondary" />
-    <p className="text-lg font-semibold text-on-surface">입력하신 사주를 펼치고 있어요</p>
-    <p className="text-sm text-on-surface-variant">로그인이 확인됐어요. 입력한 정보로 바로 이어갈게요.</p>
-  </div>;
-
-  if (phase === "intro") {
-    return (
-      <>
-        {detailPage}
-        <WebtoonIntro report={report} onStart={startInput} onClose={() => setPhase("closed")} />
-      </>
-    );
-  }
+  if (phase === "closed") return <>{detailPage}{checkoutOpen && detailEndReached.current && checkoutIntent.current && <PurchaseSheet
+    baseSlug={report.slug} selectedSlug={offerSlug} name={subject?.name ?? (customerName?.includes("@") ? undefined : customerName ?? undefined)}
+    readingId={checkoutReadingId} preparedSlug={preparedSlug} busy={submitting} freeIssue={freeIssue}
+    onSelect={setOfferSlug} onClose={() => { checkoutIntent.current = false; setCheckoutOpen(false); }}
+    onPrepare={slug => { setOfferSlug(slug); if (subject) void submit(slug, true); else { setCheckoutOpen(false); startInput(); } }}
+  />}</>;
 
   // ─ 대화 스테이지 ─
   const notificationField = <div className="border-t border-white/15 pt-space-md text-sm text-white/70">
@@ -413,6 +389,7 @@ export function StoryFunnel({
             onStepChange={setBirthStep}
             key={`${step.target}-${cursor}`}
             title={birthTitle(report, step.target)}
+            subject={birthSubject(report, step.target)}
             initial={(step.target === "subject" ? subject : partner) ?? undefined}
             // 아이·상대의 생일을 기억해 두면 다음에 홈에서 그 원국이 내 것인 양 펼쳐진다
             remember={rememberProfile && step.target === "subject" && (report.roles?.subject ?? "self") === "self"}
@@ -464,11 +441,11 @@ export function StoryFunnel({
           </div>
         </div>
             <div className="shrink-0 bg-[#050403] pt-2">
-            <StageAction tone="confirm" disabled={submitting} onClick={submit}>
-              {submitting ? "내 사주를 펼치는 중…" : "내 사주 먼저 보기"}
+            <StageAction tone="confirm" disabled={submitting} onClick={() => void submit()}>
+              {submitting ? "구매 정보를 준비하는 중…" : "내 사주 확인하기"}
               {!submitting && <Icon name="arrow_forward" className="text-[18px]" />}
             </StageAction>
-            <p className="text-center font-label-sm text-label-sm text-outline">여기까지는 무료예요. 먼저 읽고 결정하세요.</p>
+            <p className="text-center font-label-sm text-label-sm text-outline">다음 화면에서 상품과 결제 금액을 확인해요.</p>
             </div>
         </div>
       );
@@ -478,7 +455,7 @@ export function StoryFunnel({
       return (
         <div className="flex flex-col gap-space-sm rounded-xl bg-surface-container-lowest/92 p-space-md shadow-2xl ring-1 ring-outline-variant/40 backdrop-blur-xl motion-safe:animate-fade-up">
           {notificationField}
-          <StageAction tone="confirm" disabled={submitting} onClick={submit}>
+          <StageAction tone="confirm" disabled={submitting} onClick={() => void submit()}>
             {submitting ? "명식을 확인하고 있어요…" : step.label}
             {!submitting && <Icon name="arrow_forward" className="text-[18px]" />}
           </StageAction>
@@ -530,7 +507,7 @@ export function StoryFunnel({
         sfx={scene.sfx}
         sound={sound}
         onBack={step?.kind === "birth" && birthStep > 0 ? undefined : goBack}
-        onClose={() => setPhase("closed")}
+        onClose={() => { checkoutIntent.current = false; setPhase(checkoutReadingId ? "closed" : "story"); }}
         onTap={() => {
           // 찍히는 중이면 한 번에 다 보여 주고, 다 찍혔으면 다음으로 — 손가락 하나로 끝난다
           if (typing) setSkipSignal((value) => value + 1);

@@ -56,6 +56,7 @@ export const env = {
   // 토스페이먼츠 직접 연동
   tossClientKey: read("NEXT_PUBLIC_TOSS_CLIENT_KEY"),
   tossSecretKey: read("TOSS_SECRET_KEY"),
+  tossSecurityKey: read("TOSS_SECURITY_KEY"),
   devSessionSecret: read("DEV_SESSION_SECRET") ?? "sazudaero-local-dev-only",
   // 알림톡 — 솔라피 계정과 카카오 비즈니스 채널·템플릿
   solapiApiKey: read("SOLAPI_API_KEY"),

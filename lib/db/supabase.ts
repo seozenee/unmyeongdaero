@@ -1,8 +1,9 @@
 import "server-only";
+import { COMMERCE_RESET_AT } from "../commerce-reset";
 
 import type { PostgrestError } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-import { getReport } from "@/lib/reports/catalog";
+import { coveredReportSlugs, getReport } from "@/lib/reports/catalog";
 import {
   UUID_PATTERN,
   type ConsultMessage,
@@ -230,7 +231,7 @@ export function createSupabaseRepository(): Repository {
           .from("purchases")
           .select()
           .eq("user_id", userId)
-          .eq("report_slug", reportSlug)
+          .in("report_slug", coveredReportSlugs(reportSlug))
           .order("purchased_at", { ascending: false })
           .limit(1),
         "getPurchase",
@@ -309,7 +310,7 @@ export function createSupabaseRepository(): Repository {
 
     async getConsultSession(id) {
       if (!UUID_PATTERN.test(id)) return null;
-      const row = unwrap(await db().from("consult_sessions").select().eq("id", id).maybeSingle(), "getConsultSession");
+      const row = unwrap(await db().from("consult_sessions").select().gte("created_at",COMMERCE_RESET_AT).eq("id", id).maybeSingle(), "getConsultSession");
       return row ? toSession(row) : null;
     },
 
@@ -323,7 +324,7 @@ export function createSupabaseRepository(): Repository {
 
     async listConsultSessions(userId) {
       const rows = unwrap(
-        await db().from("consult_sessions").select().eq("user_id", userId).order("created_at", { ascending: false }),
+        await db().from("consult_sessions").select().gte("created_at",COMMERCE_RESET_AT).eq("user_id", userId).order("created_at", { ascending: false }),
         "listConsultSessions",
       );
       return (rows ?? []).map(toSession);

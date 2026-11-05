@@ -48,7 +48,8 @@ describe("참고 틀의 해석 범위", () => {
   });
   it("학습 참고 틀을 능력 검사로 포장하지 않는다", () => {
     const lens = buildLens(modules, "study")!;
-    expect(lens.틀).not.toContain("렌줄리");
+    expect(lens.틀).toContain("렌줄리");
+    expect(lens.해석범위).toContain("렌줄리 검사 점수");
     expect(lens.해석범위).toContain("측정한 결과가 아니다");
   });
 });

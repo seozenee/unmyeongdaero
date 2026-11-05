@@ -21,12 +21,12 @@ const when = (iso: string) =>
     timeZone: "Asia/Seoul", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit",
   }).format(new Date(iso));
 
-export default async function AdminPayments({ searchParams }: { searchParams: { status?: string } }) {
+export default async function AdminPayments({ searchParams }: { searchParams: { status?: string; history?: string } }) {
   const status = FILTERS.some((filter) => filter.value === searchParams.status) ? searchParams.status : "";
-  const rows = await listPayments({ status: status || undefined, limit: 100 });
+  const rows = await listPayments({ status: status || undefined, limit: 100, includeHistory: searchParams.history === "1" });
 
   return (
-    <div className="flex flex-col gap-space-lg">
+    <div className="flex flex-col gap-space-lg"><Link href="/admin/payments?history=1" className="text-sm text-outline underline">초기화 이전 보관 내역 보기</Link>
       <div className="flex items-baseline gap-space-md">
         <h1 className="font-headline-md text-headline-md">결제</h1>
         <nav className="flex gap-space-sm">

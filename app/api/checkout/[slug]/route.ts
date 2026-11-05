@@ -11,7 +11,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
   const body = (await request.json().catch(() => ({}))) as { readingId?: string };
   const user = await getCurrentUser();
   if (!user) {
-    const next = `/checkout/${params.slug}${body.readingId ? `?reading=${body.readingId}` : ""}`;
+    const next = `/reports/${params.slug}${body.readingId ? `?reading=${body.readingId}` : ""}`;
     return jsonError(401, "LOGIN_REQUIRED", "로그인이 필요해요.", { loginUrl: loginUrl(next) });
   }
 

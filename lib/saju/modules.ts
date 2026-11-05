@@ -162,3 +162,58 @@ export function parseYearRun(modules: SazuModules): YearItem[] | null {
     note: item.interpretation,
   }));
 }
+
+// ─── 타고난 성격 ─────────────────────────────────────────────────────────────
+
+/**
+ * 성격을 풀이의 맨 앞에 두기 위한 파서.
+ *
+ * "읽기 전에 내 성격부터 말해 줘야 하지 않나" 는 말을 들었다. 본문의 성격 장은 AI 가
+ * 쓰지만, 그건 첫 장이 아닐 수도 있고 상품마다 자리가 다르다. 계산에서 바로 나오는
+ * 성격 값(lib/manse/character.ts)을 따로 꺼내, 어떤 상품이든 표지 다음에 같은 자리로 둔다.
+ */
+export interface CharacterPanel {
+  base: string;
+  force: string;
+  strong: { name: string; note: string } | null;
+  weak: { name: string; note: string } | null;
+  inside: string;
+  outside: string;
+  shadow: string | null;
+  missing: string | null;
+  core: Array<{ topic: string; conclusion: string; scene: string; flip: string; basis: string[] }>;
+}
+
+const groupSchema = z.object({ 이름: z.string(), 모습: z.string() });
+const characterSchema = z.object({
+  바탕: z.string(),
+  힘: z.string(),
+  드러나는쪽: groupSchema.nullish(),
+  모자란쪽: groupSchema.nullish(),
+  안에서: z.string(),
+  밖에서: z.string(),
+  그늘: z.string().nullish(),
+  비는기운: z.string().nullish(),
+  핵심풀이: z.array(z.object({
+    주제: z.string(), 결론: z.string(), 모습: z.string(), 이면: z.string(), 근거: z.array(z.string()).optional(),
+  })).optional(),
+}).passthrough();
+
+export function parseCharacter(modules: SazuModules): CharacterPanel | null {
+  const parsed = characterSchema.safeParse(modules.character);
+  if (!parsed.success) return null;
+  const value = parsed.data;
+  return {
+    base: value.바탕,
+    force: value.힘,
+    strong: value.드러나는쪽 ? { name: value.드러나는쪽.이름, note: value.드러나는쪽.모습 } : null,
+    weak: value.모자란쪽 ? { name: value.모자란쪽.이름, note: value.모자란쪽.모습 } : null,
+    inside: value.안에서,
+    outside: value.밖에서,
+    shadow: value.그늘 ?? null,
+    missing: value.비는기운 ?? null,
+    core: (value.핵심풀이 ?? []).map(item => ({
+      topic: item.주제, conclusion: item.결론, scene: item.모습, flip: item.이면, basis: item.근거 ?? [],
+    })),
+  };
+}

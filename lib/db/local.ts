@@ -1,4 +1,6 @@
 import "server-only";
+import { COMMERCE_RESET_AT } from "../commerce-reset";
+import { coveredReportSlugs } from "../reports/catalog";
 
 // 개발 대체 저장소: .data/local-db.json 한 파일에 전부 저장한다. 프로덕션에서는 선택되지 않는다(lib/env.ts).
 import { randomUUID } from "node:crypto";
@@ -141,7 +143,7 @@ export function createLocalRepository(): Repository {
       read(
         (data) =>
           data.purchases
-            .filter((purchase) => purchase.userId === userId && purchase.reportSlug === reportSlug)
+            .filter((purchase) => purchase.userId === userId && coveredReportSlugs(reportSlug).includes(purchase.reportSlug))
             .sort((a, b) => b.purchasedAt.localeCompare(a.purchasedAt))[0] ?? null,
       ),
 
@@ -179,7 +181,7 @@ export function createLocalRepository(): Repository {
         return session;
       }),
 
-    getConsultSession: (id) => read((data) => data.consultSessions.find((session) => session.id === id) ?? null),
+    getConsultSession: (id) => read((data) => data.consultSessions.find((session) => session.id === id && session.createdAt >= COMMERCE_RESET_AT) ?? null),
 
     getConsultSessionByPayment: (paymentRowId) =>
       read((data) => data.consultSessions.find((session) => session.paymentRowId === paymentRowId) ?? null),
@@ -187,7 +189,7 @@ export function createLocalRepository(): Repository {
     listConsultSessions: (userId) =>
       read((data) =>
         data.consultSessions
-          .filter((session) => session.userId === userId)
+          .filter((session) => session.userId === userId && session.createdAt >= COMMERCE_RESET_AT)
           .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
       ),
 

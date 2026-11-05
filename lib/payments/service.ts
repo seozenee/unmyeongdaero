@@ -1,6 +1,8 @@
 import "server-only";
+import { COMMERCE_RESET_AT } from "@/lib/commerce-reset";
 
 import { randomUUID } from "node:crypto";
+import { isAdmin } from "@/lib/admin/access";
 import type { AppUser } from "@/lib/auth/session";
 import { getRepository, type Payment } from "@/lib/db";
 import { env, isFreeAccess, isProduction, modes } from "@/lib/env";
@@ -10,6 +12,8 @@ import { cancelTossPayment, confirmTossPayment, getTossPaymentState } from "./to
 
 export type CheckoutStart =
   | { kind: "already-purchased"; redirect: string }
+  /** 운영자 계정: 결제창 없이 0원으로 발급한다 */
+  | { kind: "free"; paymentId: string; redirect: string; reason: string }
   | {
       kind: "toss";
       /** 우리 주문번호이자 토스의 orderId */
@@ -50,6 +54,47 @@ export async function startCheckout(user: AppUser, slug: string, readingId: stri
   const reading = await repo.getReading(readingId);
   if (!reading || reading.userId !== user.id || reading.reportSlug !== report.slug) {
     throw new AppError(404, "READING_NOT_FOUND", "입력하신 풀이 정보를 찾을 수 없어요. 다시 입력해 주세요.");
+  }
+
+  /*
+    운영자 계정은 모든 상품을 0원으로 발급한다.
+
+    출시 전 검수에서 열여덟 개 상품을 실제로 끝까지 읽어 봐야 하는데, 그때마다 결제를
+    하거나 FREE_ACCESS 를 켜는 것은 둘 다 나쁘다. 앞의 것은 돈이 들고, 뒤의 것은 손님에게도
+    공짜가 된다. 운영자 판별은 배포하는 사람만 바꿀 수 있는 ADMIN_EMAILS 로만 하므로,
+    이 길이 권한 상승의 입구가 되지는 않는다.
+
+    결제창을 거치지 않고 여기서 바로 승인·권한 부여까지 끝낸다. 기록은 남긴다 —
+    금액 0원, 수단 admin 으로 남아 매출 집계에서 바로 걸러진다.
+  */
+  if (isAdmin(user)) {
+    const paymentId = `admin_${Date.now().toString(36)}_${randomUUID().replaceAll("-", "").slice(0, 10)}`;
+    // 0원 주문은 payments.amount 의 체크 제약을 푼 뒤에야 들어간다(0009_admin_free_payment.sql).
+    // 안 풀렸을 때 "잠시 문제가 생겼어요"로 끝내면 무엇을 해야 하는지 알 길이 없다.
+    const payment = await repo.createPayment({
+      paymentId,
+      provider: "mock",
+      userId: user.id,
+      reportSlug: report.slug,
+      readingId: reading.id,
+      amount: 0,
+    }).catch((error) => {
+      console.error("[payments] 운영자 0원 주문 생성 실패", error);
+      throw new AppError(500, "ADMIN_FREE_UNAVAILABLE",
+        "운영자 무료 발급을 쓰려면 supabase/migrations/0009_admin_free_payment.sql 을 먼저 실행해 주세요. (payments.amount 가 아직 0원을 막고 있어요)");
+    });
+    await repo.updatePayment(paymentId, {
+      status: "paid",
+      pgTransactionId: `admin_free_${paymentId}`,
+      paidAt: new Date().toISOString(),
+      failureReason: null,
+    });
+    return {
+      kind: "free",
+      paymentId,
+      redirect: await fulfill({ ...payment, status: "paid" }, report),
+      reason: "운영자 계정이라 결제 없이 전체 풀이를 열었어요.",
+    };
   }
 
   const paymentId = newPaymentId();
@@ -126,8 +171,9 @@ export async function confirmPayment(
   if (!payment || (options.userId && payment.userId !== options.userId)) {
     throw new AppError(404, "PAYMENT_NOT_FOUND", "결제 정보를 찾을 수 없어요.");
   }
+  if (payment.createdAt < COMMERCE_RESET_AT) throw new AppError(410, "PURCHASE_RESET", "초기화 이전 주문입니다. 새로 구매 정보를 입력해 주세요.");
   const report = getReport(payment.reportSlug)!;
-  const retryUrl = `/checkout/${report.slug}${payment.readingId ? `?reading=${payment.readingId}` : ""}`;
+  const retryUrl = `/reports/${report.slug}${payment.readingId ? `?reading=${payment.readingId}` : ""}`;
 
   if (payment.status === "paid") return { status: "paid", redirect: await fulfill(payment, report) };
   if (payment.status === "failed" || payment.status === "cancelled") {

@@ -1,3 +1,4 @@
+import { outlookSchema } from "@/lib/manse/outlook";
 import { notFound } from "next/navigation";
 import { ReadingExperience } from "@/components/story/ReadingExperience";
 import { productAccent, productThemeStyle } from "@/lib/reports/accents";
@@ -8,6 +9,7 @@ import {
   findCurrentDecadeIndex,
   parseDecadeFortune,
   parseElementCounts,
+  parseCharacter,
   parseFourPillars,
   parseYearRun,
   resolveCurrentAge,
@@ -35,14 +37,17 @@ const DEFAULT_SUBJECT: BirthProfile = {
   birthCity: "서울",
 };
 
-export default function ReadingPreviewPage({ searchParams }: { searchParams: { slug?: string } }) {
+export default function ReadingPreviewPage({ searchParams }: { searchParams: { slug?: string; reference?: string } }) {
   if (process.env.NODE_ENV === "production") notFound();
 
   const report = getReport(searchParams.slug ?? "destiny-full");
   if (!report || report.kind !== "report") notFound();
 
   const sample = report.slug === "factbomb" ? factbombBookPreview : report.slug === "destiny-full" ? destinyBookPreview : null;
-  const subject: BirthProfile = sample?.subject ?? DEFAULT_SUBJECT;
+  const subject: BirthProfile = searchParams.reference === "sarang" ? {
+    name: "김사랑", birthYear: 2015, birthMonth: 6, birthDay: 26, birthHour: 16, birthMinute: 10,
+    isFemale: true, isLunar: false, birthCity: "서울",
+  } : sample?.subject ?? DEFAULT_SUBJECT;
   const now = sample ? new Date(sample.referenceDate) : new Date();
   const sazu = buildManseTopics(report.topics, subject, null, now);
   const reading = {
@@ -75,9 +80,9 @@ export default function ReadingPreviewPage({ searchParams }: { searchParams: { s
   );
 
   return (
-    <div className="product-theme w-full" style={productThemeStyle(report.slug)}><p className="mb-3 text-xs text-on-surface-variant">가상 인물로 만든 미리보기예요.</p><ReadingExperience
+    <div className="product-theme w-full" style={productThemeStyle(report.slug)}><p className="mb-3 text-xs text-on-surface-variant">{searchParams.reference === "sarang" ? "사용자 제공 사례 · 양력·서울·여성 가정 · 16:10 기준" : "가상 인물로 만든 미리보기예요."}</p><ReadingExperience
       key={report.slug}
-      readingId={reading.id}
+      readingId={`preview-${report.slug}-${searchParams.reference ?? "default"}`}
       accent={productAccent(report.slug)}
       guideId={report.guide}
       categoryLabel={report.categoryLabel}
@@ -91,6 +96,9 @@ export default function ReadingPreviewPage({ searchParams }: { searchParams: { s
       initialError={null}
       timingWindows={readingCardWindows(modules, new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(now), report)}
       panels={{
+        birthLabel: `${subject.birthYear}.${String(subject.birthMonth).padStart(2, "0")}.${String(subject.birthDay).padStart(2, "0")} ${subject.birthHour === null ? "시각 모름" : `${String(subject.birthHour).padStart(2, "0")}:${String(subject.birthMinute ?? 0).padStart(2, "0")}`}`,
+        outlook: outlookSchema.safeParse(modules.actionableOutlook).data,
+        character: parseCharacter(modules),
         pillars: parseFourPillars(modules),
         counts: parseElementCounts(modules),
         decade: decade ? { ...decade, currentIndex: findCurrentDecadeIndex(decade.items, age) } : null,

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { StoryFunnel } from "@/components/story/StoryFunnel";
+import { isAdmin } from "@/lib/admin/access";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getRepository } from "@/lib/db";
-import { buildDetailWritingSample } from "@/lib/reports/writing-sample";
 import { loadReport, loadReports } from "@/lib/reports/store";
 import { productThemeStyle } from "@/lib/reports/accents";
 
@@ -14,8 +14,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   return report ? { title: report.title, description: report.description } : {};
 }
 
-export default async function ReportStoryPage({ params }: { params: { slug: string } }) {
-  const report = await loadReport(params.slug);
+export default async function ReportStoryPage({ params, searchParams }: { params: { slug: string }; searchParams: { reading?: string } }) {
+  const requested = await loadReport(params.slug);
+  const report = requested?.bundle ? await loadReport(requested.bundle.baseSlug) : requested;
   if (!report || report.kind !== "report") notFound();
 
   // 이미 산 사람을 결과 화면으로 돌려보내고 있었다. 그러면 다시 사려는 사람은 상세
@@ -24,15 +25,11 @@ export default async function ReportStoryPage({ params }: { params: { slug: stri
   // 대신 가지고 있다는 것을 알려 주고 바로 읽을 수 있는 길을 위에 둔다. 다시 보러 온
   // 사람은 한 번 누르면 되고, 다시 사러 온 사람은 그대로 내려가면 된다.
   const user = await getCurrentUser();
+  const candidate = user && searchParams.reading ? await getRepository().getReading(searchParams.reading) : null;
+  const initialReading = candidate && candidate.userId === user?.id && (candidate.reportSlug === report.slug || (await loadReport(candidate.reportSlug))?.bundle?.baseSlug === report.slug) ? candidate : null;
   const owned = Boolean(user && (await getRepository().getPurchase(user.id, report.slug)));
 
-  // 상세 화면 아래의 "이것도 함께 봐요". 같은 고민을 먼저 세우고, 모자라면 다른 주제로 채운다 —
-  // 재회를 보던 사람에게 건강사주를 먼저 들이밀지 않는다.
   const products = await loadReports("report");
-  const related = [
-    ...products.filter((item) => item.category === report.category),
-    ...products.filter((item) => item.category !== report.category),
-  ];
-
-  return <div className="product-theme w-full" style={productThemeStyle(report.slug)}><StoryFunnel report={report} related={related} owned={owned} authenticated={Boolean(user)} writingSample={buildDetailWritingSample(report)} /></div>;
+  const related = [...products.filter(item => item.category === report.category), ...products.filter(item => item.category !== report.category)];
+  return <div className="product-theme w-full" style={productThemeStyle(report.slug)}><StoryFunnel key={report.slug} report={report} related={related} owned={owned} customerName={user?.displayName} initialReading={initialReading} freeIssue={isAdmin(user)} /></div>;
 }

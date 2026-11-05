@@ -1,7 +1,7 @@
 import "server-only";
 
 import { z } from "zod";
-import { callOpenAi, openAiText } from "@/lib/ai/openai";
+import { callOpenAi, OPENAI_MODEL, OpenAiError, openAiText } from "@/lib/ai/openai";
 import type { Reading, StoredSazu } from "@/lib/db/types";
 import type { ReportProduct } from "@/lib/reports/catalog";
 import { buildReportSystemPrompt, buildReportUserPrompt } from "./prompts";
@@ -15,13 +15,29 @@ import { env } from "@/lib/env";
 // 문체·근거 대조를 실제 가상 고객 풀이로 검증한 스냅샷. 다른 채팅 작업의 모델은 유지한다.
 const WRITING_MODEL = env.openaiReportModel ?? "gpt-5.5-2026-04-23";
 
+/*
+  쓰기 모델이 그 계정에서 열려 있지 않을 때.
+
+  풀이 모델은 채팅 모델과 따로 둔다(품질 차이가 크다). 그런데 계정에 그 모델이 열려
+  있지 않으면 OpenAI 는 400/404 로 거절하고, 손님은 돈을 낸 뒤 "풀이를 만들지 못했어요"
+  를 본다 — 가장 나쁜 실패다.
+  
+  한 번만, 일반 모델로 내려서 다시 쓴다. 품질은 조금 떨어져도 손님은 풀이를 받는다.
+  로그에 남기므로 배포하는 사람은 OPENAI_REPORT_MODEL 을 고칠 수 있다.
+*/
+function isModelUnavailable(error: unknown) {
+  if (!(error instanceof OpenAiError)) return false;
+  return (error.status === 400 || error.status === 403 || error.status === 404)
+    && /model/i.test(error.body);
+}
+
 const REVIEW = `${READING_WRITING_STYLE}
 
 너는 운명대로의 최종 풀이 편집자다. 모든 장의 초안을 원자료와 대조한다. 정확하고 자연스러운 문장은 유지하고, 문제가 있는 문장만 고친다.
 출력은 주어진 JSON 스키마를 따른다. 본문 전체를 재출력하지 않는다. 사용자에게 검수 과정은 설명하지 않는다.
 1. 생년월일은 측정된 능력이나 실제 사건의 증거가 아니다. 다만 readingFocus의 실제 근거를 묶어 전통 명리에서 읽는 사업 방식·표현의 강점은 분명하게 설명한다. "설명·기획처럼 배운 것을 자기 말로 풀어내는 역할과 잘 맞는 사주"와 "말을 잘하므로 영업하면 성공한다"를 구별한다. 앞의 해석을 지우고 일반적인 조언으로 바꾸지 않는다. 사용자에게 받은 상황은 그 출처를 밝힌다.
 2. 성격으로 사용자를 탓하지 않는다. 버티기와 이동 사이, 생활비와 준비 시간 사이처럼 상황에서 생기는 부담을 구체적으로 이해한다. 희망을 주려고 성공·수익·재회·상대 마음을 지어내지 않는다.
-3. 실제 글자·자리·관계는 원자료로 확인하되, 본문에서는 쉬운 이유와 생활 장면을 설명한다. 세부 명리 이름은 evidence로 옮긴다. 본문에 용어가 꼭 필요하면 한 장에 한 개까지만 뜻과 함께 남긴다. 단어만 치환해 "나를 뜻하는 글자가 약해서" 같은 문장을 만들지 않는다. 독자가 실제로 확인할 행동·조건을 설명한다.
+3. 실제 글자·자리·관계는 원자료로 확인하되, 본문에서는 쉬운 이유와 생활 장면을 설명한다. 세부 계산은 evidence에서 확인하게 하되 본문에도 해석의 근거를 남긴다. 본문의 중요한 글자·자리·관계는 지우지 말고 용어 2~3개를 쉬운 뜻과 함께 남긴다. 단어만 치환해 "나를 뜻하는 글자가 약해서" 같은 문장을 만들지 않는다. 독자가 실제로 확인할 행동·조건을 설명한다.
 4. 기준일 이전의 월·계절을 미래 계획에서 뺀다. 제공된 월별 자료에 없는 유불리는 삭제한다. 현재 구간은 currentDecade와 대조하고 나이·연도를 새로 계산하지 않는다. 반대 근거가 있는 때를 무조건 좋은 때로 설명하지 않는다.
 5. 목차의 질문에 먼저 답했는지 확인한다. 장마다 기록·거절·시간 관리 숙제로 끝내지 않는다. 성향의 장은 강점과 이면의 부담, 시기의 장은 계산된 기간과 이유, 선택의 장은 실제 기준으로 맺는다. 귀인·인연의 시기를 물었는데 행동 조언으로만 답하지 않는다. actions는 앞의 풀이를 짧게 정리하며 각 항목 180자 이내로 쓴다. 임의의 저축액·준비 기간을 누구나 충족해야 할 조건으로 만들지 않는다.
 6. 오탈자·비속어·어색한 조사·문체 혼용을 교정한다. 존댓말 상품의 모든 행동 항목은 "~해 보세요"처럼 제안하고, 반말 상품은 존댓말을 섞지 않는다.
@@ -32,7 +48,7 @@ const REVIEW = `${READING_WRITING_STYLE}
 const filledText = z.string().min(1).regex(/\S/);
 const filledEvidence = evidenceSchema.extend({ label: filledText, detail: filledText });
 const generatedSectionSchema = reportSectionSchema.omit({ title: true }).extend({
-  chapterId: z.string(), lead: filledText, body: z.array(filledText).min(2), evidence: z.array(filledEvidence).min(1),
+  chapterId: z.string(), lead: filledText, body: z.array(filledText).min(6), evidence: z.array(filledEvidence).min(1),
 });
 type GeneratedSection = z.infer<typeof generatedSectionSchema>;
 
@@ -62,10 +78,10 @@ function reviewSchema(ids: string[], broad: boolean) {
 
 /** 재출력 없이 검수 문장만 반영한다. 잘못된 위치를 조용히 무시하지 않는다. */
 function applyReview(draft: GeneratedSection[], value: unknown, product: ReportProduct) {
-  const { corrections, ...reviewed } = reviewSchema(chapterPlan(product).map(chapter => chapter.id), ["factbomb", "destiny-full"].includes(product.slug)).parse(value);
+  const { corrections, ...reviewed } = reviewSchema(chapterPlan(product).map(chapter => chapter.id), Boolean(["factbomb", "destiny-full"].includes(product.slug) || product.bundle?.items.some(slug => ["factbomb", "destiny-full"].includes(slug)))).parse(value);
   const report = "overview" in reviewed ? (() => {
     const { overview, choices, ...header } = reviewed;
-    return { ...header, summary: Object.values(overview).join(" "), actions: {
+    return { ...header, summary: Object.values(overview).join("\n\n"), actions: {
       do: Object.values(choices).map(choice => choice.do), avoid: Object.values(choices).map(choice => choice.avoid),
     } };
   })() : reviewed;
@@ -94,14 +110,25 @@ function applyReview(draft: GeneratedSection[], value: unknown, product: ReportP
 }
 
 /** 일시적인 공급자 오류만 한 번 복구한다. 전체 제한 시간은 모든 호출이 공유한다. */
+let writingModel = WRITING_MODEL;
+
 async function generateStage(input: Parameters<typeof callOpenAi>[0], stage: string, slug: string) {
   const started = Date.now();
   for (let attempt = 0; ; attempt++) {
     try {
-      const result = await callOpenAi({ ...input, model: WRITING_MODEL, strict: true });
+      const result = await callOpenAi({ ...input, model: writingModel, strict: true });
       console.info("[report-generation]", JSON.stringify({ slug, stage, attempt: attempt + 1, elapsedMs: Date.now() - started, outputTokens: result.usage?.output_tokens }));
       return result;
     } catch (error) {
+      if (isModelUnavailable(error) && writingModel !== OPENAI_MODEL) {
+        console.error("[report-generation] 쓰기 모델을 쓸 수 없어 일반 모델로 내려갑니다.",
+          JSON.stringify({ slug, stage, unavailable: writingModel, fallback: OPENAI_MODEL }));
+        writingModel = OPENAI_MODEL;
+        input.signal?.throwIfAborted();
+        // 모델을 내린 것은 시도 횟수로 세지 않는다 — 일시적 오류를 한 번 더 복구할 몫을 남긴다.
+        attempt -= 1;
+        continue;
+      }
       const status = typeof error === "object" && error !== null ? (error as { status?: number }).status : undefined;
       const transient = status === 408 || status === 429 || (typeof status === "number" && status >= 500)
         || (error instanceof TypeError && /fetch|network/i.test(error.message));
@@ -121,12 +148,12 @@ export async function generateOpenAiReport(
   today: string,
 ) {
   const source = buildReportUserPrompt(product, reading, sazu, today);
-  const broad = ["factbomb", "destiny-full"].includes(product.slug);
+  const broad = Boolean(["factbomb", "destiny-full"].includes(product.slug) || product.bundle?.items.some(slug => ["factbomb", "destiny-full"].includes(slug)));
   const instructions = buildReportSystemPrompt(product);
   const plan = chapterPlan(product);
   if (!plan.length) throw new Error("[report-quality] 상품 목차 누락");
   // 열한 장도 한 응답에서 두 번 쓰지 않는다. 묶음마다 동일한 전체 명식·목차를 본다.
-  const batchSize = Math.ceil(plan.length / 3);
+  const batchSize = Math.ceil(plan.length / (plan.length > 15 ? 6 : 3));
   const batches = Array.from({ length: Math.ceil(plan.length / batchSize) }, (_, index) => plan.slice(index * batchSize, (index + 1) * batchSize));
   const controller = new AbortController();
   const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(240_000)]);
@@ -154,7 +181,7 @@ export async function generateOpenAiReport(
     const draft = drafted.flat();
     const schema = reviewSchema(plan.map(chapter => chapter.id), broad);
     const reviewInput = {
-      instructions: `${instructions}\n\n${REVIEW}\n\n## 이번 출력 범위\n1. 전체 초안과 원자료를 바탕으로 briefing·headline·summary·keywords·timeline·actions·closing을 완성한다. 장 사이에 모순이 있으면 원자료에 맞춰 고친다.\n2. corrections에는 수정이 필요한 장만 넣는다. 각 장의 lead는 수정할 때만 새 문장, 아니면 null. body는 수정할 문단의 0부터 시작하는 index와 그 문단의 교정된 전체 text만 넣는다. 수정하지 않는 문단은 출력하지 않는다. evidence는 고칠 때만 해당 장의 근거 전체, 아니면 null. 장이나 문단을 추가·삭제하지 않는다. 문제가 없으면 corrections는 빈 배열이다.\n3. 쉬운 말·말투·시기·근거를 모든 장에서 검토한다. 검수를 생략하지 않는다. 정상이었던 문단 전체를 다시 출력하지 않는다.\n${broad ? '4. summary 대신 overview의 여섯 항목을 각각 1~2문장으로 쓴다. personality=타고난 모습, relationship=연애·배우자, benefactor=귀인·사람, work=직업·사업, money=재물, timing=지나온 변화와 다음 시기. 각 항목은 그 분야만 답하고 직업 상담으로 돌리지 않는다. 이 순서로 하나의 요약이 되므로 이름과 인사를 매번 반복하지 말고 문장을 자연스럽게 잇는다. headline은 이 사람의 타고난 특징을 짚는다. actions 대신 choices의 relationship·people·work·money에 각각 그 분야에서 해 볼 것(do)과 피하고 대신 할 것(avoid)을 한 문장씩 쓴다. relationship는 연애와 가까운 사이, people은 귀인과 사람, work는 일, money는 돈이다. 이 여덟 문장은 각 180자 이내로, 같은 조언을 다른 말로 반복하지 않는다. 사용자가 적지 않은 집착·억울함·의리·속마음을 사실처럼 단정한 문장은 반드시 고친다.' : ''}`,
+      instructions: `${instructions}\n\n${REVIEW}\n\n## 이번 출력 범위\n1. 전체 초안과 원자료를 바탕으로 briefing·headline·summary·keywords·timeline·actions·closing을 완성한다. 장 사이에 모순이 있으면 원자료에 맞춰 고친다.\n2. corrections에는 수정이 필요한 장만 넣는다. 각 장의 lead는 수정할 때만 새 문장, 아니면 null. body는 수정할 문단의 0부터 시작하는 index와 그 문단의 교정된 전체 text만 넣는다. 수정하지 않는 문단은 출력하지 않는다. evidence는 고칠 때만 해당 장의 근거 전체, 아니면 null. 장이나 문단을 추가·삭제하지 않는다. 문제가 없으면 corrections는 빈 배열이다.\n3. 쉬운 말·말투·시기·근거를 모든 장에서 검토한다. 검수를 생략하지 않는다. 정상이었던 문단 전체를 다시 출력하지 않는다.\n${broad ? '4. summary 대신 overview의 여섯 항목을 각각 2~3문장으로 충분히 설명한다. personality=타고난 모습, relationship=연애·배우자, benefactor=귀인·사람, work=직업·사업, money=재물, timing=지나온 변화와 다음 시기. 각 항목은 그 분야만 답하고 직업 상담으로 돌리지 않는다. 이 순서로 하나의 요약이 되므로 이름과 인사를 매번 반복하지 말고 문장을 자연스럽게 잇는다. headline은 이 사람의 타고난 특징을 짚는다. actions 대신 choices의 relationship·people·work·money에 각각 그 분야에서 해 볼 것(do)과 피하고 대신 할 것(avoid)을 한 문장씩 쓴다. relationship는 연애와 가까운 사이, people은 귀인과 사람, work는 일, money는 돈이다. 이 여덟 문장은 각 180자 이내로, 같은 조언을 다른 말로 반복하지 않는다. 사용자가 적지 않은 집착·억울함·의리·속마음을 사실처럼 단정한 문장은 반드시 고친다.' : ''}`,
       input: `${source}\n\n<draft>${JSON.stringify(draft).replace(/</g, "\\u003c")}</draft>`,
       schema: z.toJSONSchema(schema) as Record<string, unknown>,
       signal,

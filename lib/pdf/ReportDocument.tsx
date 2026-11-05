@@ -96,6 +96,7 @@ const styles = StyleSheet.create({
 });
 
 export interface ReportPdfInput {
+  outlook?: import("@/lib/manse/outlook").ActionableOutlook;
   report: StoryReport;
   /** 상품 이름 — 표지와 머리글에 쓴다 */
   productTitle: string;
@@ -238,6 +239,16 @@ export function ReportDocument(input: ReportPdfInput) {
         </React.Fragment>
       ))}
 
+      {input.outlook && [...input.outlook.lifetime, ...input.outlook.pastAnnual, ...input.outlook.annual].map((row, index) => <Page key={`outlook-${index}`} size="A5" style={styles.page}>
+        <RunningHead title={productTitle} />
+        <Eyebrow>{index < input.outlook!.lifetime.length ? "평생 흐름" : index < input.outlook!.lifetime.length + input.outlook!.pastAnnual.length ? "지난 10년을 돌아보는 선택 기준" : "앞으로 10년"}</Eyebrow>
+        <SectionTitle>{row.period}</SectionTitle>
+        {[["재물", row.money], ["연애·관계", row.relationship], ["일·생활", row.work], ["이렇게 하세요", row.do], ["이것을 조심하세요", row.caution]].map(([label, text]) => <View key={label} style={{ marginBottom:space.md }} wrap={false}>
+          <Text style={{ fontSize:11, fontWeight:600, color:palette.accent }}>{label}</Text><Text style={{ fontSize:11, color:palette.ink, marginTop:4, lineHeight:1.65 }}>{text}</Text>
+        </View>)}
+        <Text style={styles.disclaimer}>나이는 세는나이이며, 연도는 입춘 이후의 흐름입니다.</Text>
+        <PageNumber />
+      </Page>)}
       {/* 시기 */}
       <Page size="A5" style={styles.page}>
         <RunningHead title={productTitle} />

@@ -22,6 +22,8 @@ export async function GET(_request: Request, { params }: { params: { token: stri
   const user = await getCurrentUser();
   if (!user) redirect(`/login?next=${encodeURIComponent(`/r/${params.token}`)}`);
   if (user.id !== reading.userId) redirect("/library");
+  const purchase = await getRepository().getPurchase(user.id, reading.reportSlug);
+  if (!purchase || purchase.readingId !== reading.id) redirect("/library");
   if (needsReadingRepair(reading)) redirect(`/reports/${reading.reportSlug}/read`);
 
   const stored = await ensureReadingPdf(reading).catch(() => null);

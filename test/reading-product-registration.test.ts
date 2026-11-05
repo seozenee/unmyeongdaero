@@ -19,7 +19,7 @@ describe("새 상품의 입력 저장", () => {
     expect(result.reportSlug).toBe("factbomb");
     expect(insert).toHaveBeenCalledTimes(2);
     expect(insert.mock.calls[0]![0]).toEqual(insert.mock.calls[1]![0]);
-    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({ slug: "factbomb", price: 12900 }), { onConflict: "slug", ignoreDuplicates: true });
+    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({ slug: "factbomb", price: 34900 }), { onConflict: "slug", ignoreDuplicates: true });
   });
   it("이미 등록된 상품은 추가 쓰기 없이 한 번에 저장한다", async () => {
     single.mockResolvedValueOnce({ data: saved, error: null });

@@ -154,22 +154,9 @@ export function tenGod(dayStem: Stem, other: Stem): TenGod {
   return sameParity ? "편인" : "정인"; // target 이 me 를 생하는 경우
 }
 
-/**
- * 지지의 십성.
- * 오행은 지장간의 정기(正氣)에서 가져오되, 음양은 지지 자체를 따른다.
- * (예: 일간 병[양] + 지지 사[음] — 정기가 병이라 같은 화지만 음양이 달라 겁재)
- */
+/** 지지 십성은 본기의 오행과 음양을 함께 쓴다. 자·오·사·해는 지지 자체의 음양과 다르다. */
 export function branchTenGod(dayStem: Stem, branch: Branch): TenGod {
-  const mainHidden = HIDDEN_STEMS[branch].at(-1)!;
-  const me = STEM_ELEMENT[dayStem];
-  const target = STEM_ELEMENT[mainHidden];
-  const sameParity = STEM_POLARITY[dayStem] === BRANCH_POLARITY[branch];
-
-  if (me === target) return sameParity ? "비견" : "겁재";
-  if (GENERATES[me] === target) return sameParity ? "식신" : "상관";
-  if (OVERCOMES[me] === target) return sameParity ? "편재" : "정재";
-  if (OVERCOMES[target] === me) return sameParity ? "편관" : "정관";
-  return sameParity ? "편인" : "정인";
+  return tenGod(dayStem, HIDDEN_STEMS[branch].at(-1)!);
 }
 
 /** 납음오행 — 60갑자를 두 칸씩 묶어 부르는 이름 */

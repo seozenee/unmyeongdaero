@@ -53,18 +53,18 @@ const TEN_GOD_FLAVOR: Record<TenGod, { keyword: string; incoming: string }> = {
 
 /** 십이운성 — 일간이 그 지지에서 갖는 힘의 단계 */
 const STAGE_PHASE: Record<TwelveStage, { keyword: string; phase: string }> = {
-  장생: { keyword: "시작", phase: "자라는 때 — 시작과 배움에 힘이 붙는다" },
-  목욕: { keyword: "흔들림", phase: "다듬는 때 — 시행착오를 겪으며 자리를 찾는다" },
-  관대: { keyword: "준비", phase: "나설 채비를 하는 때 — 내놓을 것이 갖춰진다" },
-  건록: { keyword: "독립", phase: "제 몫을 하는 때 — 일한 만큼 돌아온다" },
-  제왕: { keyword: "절정", phase: "힘이 가장 찬 때 — 벌여 놓은 일이 앞으로 나간다" },
-  쇠: { keyword: "여유", phase: "한풀 꺾이는 때 — 벌이기보다 지키는 편이 낫다" },
-  병: { keyword: "돌봄", phase: "쉬어 가는 때 — 몸과 마음을 먼저 챙길 일이 생긴다" },
-  사: { keyword: "정리", phase: "매듭짓는 때 — 오래 끌던 것을 마무리하게 된다" },
-  묘: { keyword: "갈무리", phase: "거두어 두는 때 — 드러내기보다 안으로 쌓는다" },
-  절: { keyword: "전환", phase: "끊기고 이어지는 때 — 자리를 옮길 일이 생기기 쉽다" },
-  태: { keyword: "씨앗", phase: "품는 때 — 아직 보이지 않는 것이 자리를 잡는다" },
-  양: { keyword: "기다림", phase: "기르는 때 — 서두르지 않을수록 단단해진다" },
+  장생: { keyword: "시작", phase: "자라는 때 — 시작과 배움에 힘이 붙어요" },
+  목욕: { keyword: "흔들림", phase: "다듬는 때 — 시행착오를 겪으며 자리를 찾아요" },
+  관대: { keyword: "준비", phase: "나설 채비를 하는 때 — 내놓을 것이 갖춰져요" },
+  건록: { keyword: "독립", phase: "제 몫을 하는 때 — 일한 만큼 돌아와요" },
+  제왕: { keyword: "절정", phase: "힘이 가장 찬 때 — 벌여 놓은 일이 앞으로 나가요" },
+  쇠: { keyword: "여유", phase: "한풀 꺾이는 때 — 벌이기보다 지키는 편이 나아요" },
+  병: { keyword: "돌봄", phase: "쉬어 가는 때 — 몸과 마음을 먼저 챙길 일이 생겨요" },
+  사: { keyword: "정리", phase: "매듭짓는 때 — 오래 끌던 것을 마무리하게 돼요" },
+  묘: { keyword: "갈무리", phase: "거두어 두는 때 — 드러내기보다 안으로 쌓아요" },
+  절: { keyword: "전환", phase: "끊기고 이어지는 때 — 자리를 옮길 일이 생기기 쉬워요" },
+  태: { keyword: "씨앗", phase: "품는 때 — 아직 보이지 않는 것이 자리를 잡아요" },
+  양: { keyword: "기다림", phase: "기르는 때 — 서두르지 않을수록 단단해져요" },
 };
 
 /** 십이운성의 힘을 세 갈래로 — 타임라인의 tone 으로 쓴다 */
@@ -113,7 +113,7 @@ function luckPillar(pillars: FourPillars, gan: Stem, ji: Branch, label: string):
     twelveFortune: { name: stage, keyword: STAGE_PHASE[stage].keyword, phase: STAGE_PHASE[stage].phase, season: seasonOf(ji) },
     tone: STAGE_TONE[stage],
     hapChungRelations: incomingRelations(pillars, { stem: gan, branch: ji, label }),
-    interpretation: `${TEN_GOD_FLAVOR[ganGod].incoming} 결 — ${STAGE_PHASE[stage].phase}`,
+    interpretation: `${TEN_GOD_FLAVOR[ganGod].incoming} 때예요. ${STAGE_PHASE[stage].phase}`,
   };
 }
 
@@ -214,7 +214,7 @@ export function computeIljin(pillars: FourPillars, now = new Date()): Iljin {
     date,
     ilju: { ganji: base.ganji },
     toDayMaster: { stemSipseong: base.sipseongRelation.gan, branchSipseong: base.sipseongRelation.ji },
-    summary: `오늘은 ${base.ganji} 일진이 들어오는 날이다. ${base.interpretation}.${
+    summary: `오늘은 ${base.ganji} 일진이 들어오는 날이에요. ${base.interpretation}${
       met ? ` 원국의 ${met.targetPosition}와 ${met.type}으로 만나, ${met.meaning}.` : ""
     }`,
   };

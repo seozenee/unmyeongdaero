@@ -1,4 +1,5 @@
 "use client";
+import { ScrollPurchaseCta } from "@/components/story/ScrollPurchaseCta";
 
 import { useEffect, useRef, useState } from "react";
 import { GuideAvatar } from "@/components/story/GuideAvatar";
@@ -142,10 +143,10 @@ function PreviewScene({ guide, assetKey, caption, impact = false }: { guide: Gui
 }
 
 /** 자기 인식 → 원국의 이유 → 과거 회고 → 잠긴 질문으로 이어지는 결제 전 미리보기. */
-export function LegacyReadingWebtoon({ name, guide, poster, narrative, context, chapters, productTitle, chart, purchaseHref }: {
+export function LegacyReadingWebtoon({ name, guide, poster, narrative, context, chapters, productTitle, chart, purchaseHref, onPurchase }: {
   teaser: Teaser; name: string; guide: Guide; poster: WebtoonAsset | null;
   narrative: PreviewReading; context: PreviewContext; chapters: readonly string[];
-  productTitle: string; chart: React.ReactNode; purchaseHref: string;
+  productTitle: string; chart: React.ReactNode; purchaseHref: string; onPurchase?: () => void;
 }) {
   const areaChapter = narrative.past.length > 0 ? 3 : 2;
   const blunt = context.speech === "반말";
@@ -260,7 +261,7 @@ export function LegacyReadingWebtoon({ name, guide, poster, narrative, context, 
           </li>)}
         </ol>
         <p className="mt-space-md font-body-sm text-body-sm leading-relaxed text-outline">성격만이 아니라 지나온 변화, 앞으로의 시기와 선택까지 한 편으로 이어서 읽어 드려요.</p>
-        <a href={purchaseHref} className="mt-space-lg flex w-full items-center justify-center gap-space-xs rounded-xl bg-secondary px-space-md py-space-md font-label-md text-label-md font-bold text-on-secondary">내 전체 풀이 확인하기<Icon name="arrow_forward" className="text-[18px]" /></a>
+        <ScrollPurchaseCta>{onPurchase ? <button type="button" onClick={onPurchase} className="mt-space-lg flex w-full items-center justify-center gap-space-xs rounded-xl bg-secondary px-space-md py-space-md font-label-md text-label-md font-bold text-on-secondary">내 전체 풀이 확인하기<Icon name="arrow_forward" className="text-[18px]" /></button> : <a href={purchaseHref} className="mt-space-lg flex w-full items-center justify-center gap-space-xs rounded-xl bg-secondary px-space-md py-space-md font-label-md text-label-md font-bold text-on-secondary">내 전체 풀이 확인하기<Icon name="arrow_forward" className="text-[18px]" /></a>}</ScrollPurchaseCta>
       </div>
     </section>
   );

@@ -144,7 +144,7 @@ export async function getOwnedPurchasedReading(user: AppUser, readingId: string)
   const purchase = await repo.getPurchase(user.id, report.slug);
   if (!purchase || purchase.readingId !== reading.id) {
     throw new AppError(402, "PAYMENT_REQUIRED", "열람권 구매 후 확인할 수 있어요.", {
-      checkoutUrl: `/checkout/${report.slug}?reading=${reading.id}`,
+      checkoutUrl: `/reports/${report.slug}?reading=${reading.id}`,
     });
   }
   return { reading, report };
@@ -227,7 +227,7 @@ async function runGeneration(reading: Reading, report: ReportProduct, live: Retu
   void notifyReading(reading, report, "reading-started");
   try {
     let sazu: StoredSazu = reading.sazu ?? {};
-    if (reading.subject.isLunar || reading.partner?.isLunar || report.topics.some((topic) => !sazu[topic]) || !sazu.manse?.modules.readingFocus) {
+    if (reading.subject.isLunar || reading.partner?.isLunar || report.topics.some((topic) => !sazu[topic]) || !sazu.manse?.modules.readingFocus || !sazu.manse?.modules.actionableOutlook || !(sazu.manse?.modules.character as { 핵심풀이?: unknown } | undefined)?.핵심풀이) {
       // 초안 때 저장해 둔 건 manse 한 토픽뿐이다. 나머지는 여기서 마저 계산한다.
       sazu = { ...sazu, ...buildManseTopics(report.topics, reading.subject, reading.partner) };
       await repo.updateReading(reading.id, { sazu });

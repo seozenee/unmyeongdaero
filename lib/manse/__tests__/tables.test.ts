@@ -35,8 +35,8 @@ describe("십성 · 십이운성 · 납음 · 지장간 — sazu 실제 응답�
         // 천간의 십성
         expect(tenGod(dayStem, got.stem as Stem), `${key} 십성`).toBe(want.sippiSeong);
 
-        // 지지의 십성은 오행을 정기에서, 음양을 지지에서 가져온다
-        expect(branchTenGod(dayStem, got.branch as Branch), `${key} 지지십성`).toBe(want.earthSippiSeong);
+        // 이전 외부 응답은 지지 자체 음양을 썼다. 이제 본기의 오행·음양으로 통일한다.
+        expect(branchTenGod(dayStem, got.branch as Branch), `${key} 지지십성`).toBe(tenGod(dayStem, HIDDEN_STEMS[got.branch as Branch].at(-1)!));
 
         // 십이운성
         expect(twelveStage(dayStem, got.branch as Branch), `${key} 십이운성`).toBe(want.twelveStage);
@@ -52,4 +52,12 @@ describe("십성 · 십이운성 · 납음 · 지장간 — sazu 실제 응답�
       }
     });
   }
+});
+
+// 자오사해의 음양을 지지 자체에서 가져오면 정·편이 뒤집힌다.
+it("지지 십성은 본기를 기준으로 자오사해까지 계산한다", () => {
+  expect(branchTenGod("계", "오")).toBe("편재");
+  expect(branchTenGod("갑", "자")).toBe("정인");
+  expect(branchTenGod("병", "사")).toBe("비견");
+  expect(branchTenGod("임", "해")).toBe("비견");
 });

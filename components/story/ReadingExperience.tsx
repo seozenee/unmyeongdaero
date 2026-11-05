@@ -51,7 +51,7 @@ function CalendarRepairNotice({ done }: { done: boolean }) {
 
 function ScopeRepairNotice({ done }: { done: boolean }) {
   return <p role="status" className="rounded-xl border border-secondary/30 bg-secondary/5 p-space-md text-sm leading-relaxed text-on-surface-variant">
-    {done ? "성격·인연·배우자·귀인·일과 돈을 함께 담아 보완한 풀이예요. 추가 결제는 없습니다." : "성격·인연·배우자·귀인까지 빠짐없이 읽도록 기존 풀이를 보완하고 있어요. 열람권은 그대로이며 추가 결제는 없습니다."}
+    {done ? "각 장의 근거와 생활 속 모습을 더 자세히 담아 보완한 풀이예요. 추가 결제는 없습니다." : "각 장의 근거와 생활 속 모습을 더 자세히 읽도록 기존 풀이를 보완하고 있어요. 열람권은 그대로이며 추가 결제는 없습니다."}
   </p>;
 }
 

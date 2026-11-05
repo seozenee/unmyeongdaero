@@ -21,13 +21,13 @@ export function lockedTopicsFor(context: PreviewContext): LockedTopic[] {
   if (context.slug === "child-dream") return [TOPICS.dream!, TOPICS.talent!, TOPICS.child!];
   if (context.slug === "child-admission") return [TOPICS.admission!, TOPICS.study!, TOPICS.child!];
   if (context.category === "child") return [TOPICS.child!, TOPICS.study!, TOPICS.time!];
-  if (context.category === "study" || context.minor) return [TOPICS.study!, TOPICS.child!, TOPICS.time!];
+  if (context.category === "study") return [TOPICS.study!, TOPICS.child!, TOPICS.time!];
   if (context.category === "reunion") return [TOPICS.reunion!, TOPICS.relationship!, TOPICS.time!];
   if (context.category === "romance" || context.category === "chemistry") return [TOPICS.relationship!, TOPICS.time!, TOPICS.everyday!];
   if (context.category === "wealth" || context.slug === "business") return [TOPICS.money!, TOPICS.work!, TOPICS.time!];
   if (context.category === "work") return [TOPICS.work!, TOPICS.money!, TOPICS.time!];
   if (context.slug === "health") return [TOPICS.health!, TOPICS.work!, TOPICS.time!];
-  if (context.category === "year") return [TOPICS.time!, TOPICS.work!, TOPICS.relationship!];
+  if (context.category === "year") return context.minor ? [TOPICS.time!, TOPICS.study!, TOPICS.child!] : [TOPICS.time!, TOPICS.work!, TOPICS.relationship!];
   const relation = context.lifeContext.relationshipStatus === "재회 원해요" ? TOPICS.reunion!
     : context.lifeContext.relationshipStatus === "결혼했어요" ? TOPICS.everyday! : TOPICS.relationship!;
   return [relation, TOPICS.money!, TOPICS.time!];
@@ -35,12 +35,14 @@ export function lockedTopicsFor(context: PreviewContext): LockedTopic[] {
 
 /** 실제 판매 목차의 내용을 쉽게 읽을 세 항목으로 펼친다. */
 export function chapterPreview(title: string): readonly string[] {
+  if (/80대|말년/.test(title)) return ["열 해마다 바뀌는 삶의 배경", "70·80대까지 이어지는 흐름", "지금부터 쌓아 둘 기반"];
   if (/그릇/.test(title)) return ["타고난 기질이 드러나는 모습", "계절과 여덟 글자가 함께 만드는 특징", "편한 환경과 부담이 되는 환경"];
   if (/움직이는 힘|막는 힘/.test(title)) return ["결심할 때 힘을 보태는 것", "잘하는 일이 부담으로 바뀌는 순간", "막힌 상황에서 달리 해 볼 선택"];
   if (/살리는 기운/.test(title)) return ["나를 돕는 기운을 읽는 이유", "혼자 할 일과 도움받을 일", "내 장점을 살릴 환경의 조건"];
   if (/한가운데/.test(title)) return ["현재 대운에서 두드러지는 주제", "원국과 지금의 흐름이 만나는 지점", "다음 시기로 가져갈 것과 정리할 것"];
   if (/말년/.test(title)) return ["삶의 후반기에 중요해지는 관계", "오래 이어 갈 일과 생활의 방식", "지금부터 쌓아 둘 기반"];
   if (/귀인/.test(title)) return ["내 편이 되는 사람의 역할과 특징", "조언과 소개가 힘이 되는 시기", "도움을 알아보고 관계를 이어 가는 법"];
+  if (/해마다|연도별/.test(title)) return ["해마다 들어오는 운이 어느 쪽인지", "그 해에 하면 좋은 일", "그 해에 조심할 선택"];
   if (/지나온|과거/.test(title)) return ["최근의 변화가 겹쳤던 해", "그때 마음과 선택이 달라진 이유", "지금까지 이어지는 반복과 전환점"];
   if (/표현|말과/.test(title)) return ["내 말을 듣게 만드는 타고난 강점", "설명과 설득이 잘 맞는 자리", "같은 말이 오해로 바뀌는 순간"];
   if (/배우자/.test(title)) return ["내가 끌리는 사람과 오래 편한 사람", "관계의 흐름이 겹치는 연도와 달", "가까워진 뒤 맞춰 가야 할 부분"];

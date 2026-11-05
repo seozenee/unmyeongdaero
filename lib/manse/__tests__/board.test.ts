@@ -28,10 +28,10 @@ describe("원국 판 — 손으로 따진 값과 맞춰 보기", () => {
     expect(tenGod(dayStem, "무")).toBe("식신");
   });
 
-  it("지지 십성 — 진은 식신, 인은 편인, 사는 겁재", () => {
+  it("지지 십성 — 진은 식신, 인은 편인, 사는 본기 병 기준 비견", () => {
     expect(branchTenGod(dayStem, "진")).toBe("식신");
     expect(branchTenGod(dayStem, "인")).toBe("편인");
-    expect(branchTenGod(dayStem, "사")).toBe("겁재");
+    expect(branchTenGod(dayStem, "사")).toBe("비견");
   });
 
   it("십이운성 — 병의 장생은 인, 사는 건록, 진은 관대", () => {

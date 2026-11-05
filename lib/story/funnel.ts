@@ -30,11 +30,18 @@ const OPENING_REPLY: Record<string, string> = {
   "parent-child": "아이와 왜 자꾸 부딪히는지 알고 싶어요",
 };
 
+/*
+  상대의 생일을 묻는 말.
+
+  "이제 그 사람의 글자도 필요해요" 로 물은 다음 화면에 「이름은…」만 떠 있었다. 누구 이름을
+  적으라는 말인지 알 수 없다는 말을 들었다. 묻는 대상을 문장 안에 박아 넣는다 —
+  이름인지 생년월일인지, 누구의 것인지까지.
+*/
 const PARTNER_INTRO: Record<string, string> = {
-  reunion: "이제 그 사람의 글자도 필요해요. 아는 만큼만 적어도 괜찮아요. 태어난 시간을 모르면 '모름'으로 두세요.",
-  chemistry: "상대분의 생년월일도 알려 주세요. 두 장을 나란히 놓아야 보이는 것들이 있거든요.",
-  romance: "마음에 둔 사람이 있다면 알려 주세요. 없다면 건너뛰어도 괜찮아요.",
-  child: "이제 아이의 글자도 필요해요. 태어난 시간을 모르면 '모름'으로 두세요.",
+  reunion: "이제 그 사람 차례예요. 그 사람의 이름(또는 부르는 호칭)과 태어난 날을 알려 주세요. 태어난 시간을 모르면 '몰라요'로 두셔도 돼요.",
+  chemistry: "이번에는 상대분이에요. 그 사람의 이름(또는 부르는 호칭)과 생년월일을 알려 주세요. 두 장을 나란히 놓아야 보이는 것들이 있거든요.",
+  romance: "마음에 둔 사람이 있다면 그 사람의 이름과 생년월일도 알려 주세요. 없다면 건너뛰어도 괜찮아요.",
+  child: "이제 아이 차례예요. 아이의 이름과 태어난 날을 알려 주세요. 태어난 시간을 모르면 '몰라요'로 두셔도 돼요.",
 };
 
 /** 상품이 따로 묻는 말을 두지 않았을 때 쓰는 한 칸 */
@@ -49,7 +56,7 @@ export function buildFunnel(report: ReportProduct): FunnelStep[] {
     return [
       { kind: "reply", text: "돌려 말하지 말고, 제 사주를 짚어 주세요" },
       { kind: "line", speaker: "guide", text: "난 돌직구 강호야. 말은 짧게 해도, 왜 그렇게 읽는지는 빠뜨리지 않아." },
-      { kind: "line", speaker: "guide", text: "먼저 네 원국부터 봐야겠어. 태어난 날과 시각을 알려 줘. 시각을 모르면 모름으로 두면 돼." },
+      { kind: "line", speaker: "guide", text: "먼저 네 원국부터 봐야겠어. 네 이름하고 태어난 날, 시각을 알려 줘. 시각을 모르면 모름으로 두면 돼." },
       { kind: "birth", target: "subject", optional: false },
       { kind: "panel", camera: "push", figure: "none", asset: "panel-brush", sfx: "스윽", caption: "강호가 붓끝으로 {name}의 첫 글자를 짚었다." },
       { kind: "line", speaker: "guide", text: "됐어. 네가 준 정보는 확인했어. 이제 어디를 더 짚을지 보자." },
@@ -63,10 +70,10 @@ export function buildFunnel(report: ReportProduct): FunnelStep[] {
   const subjectRole = report.roles?.subject ?? "self";
   const subjectAsk =
     subjectRole === "child"
-      ? "정확하게 읽으려면 몇 가지가 필요해요. 먼저 아이의 여덟 글자부터 펼쳐 볼게요. 아이가 태어난 날을 알려 주세요."
+      ? "정확하게 읽으려면 몇 가지가 필요해요. 먼저 아이의 이름과 태어난 날부터 알려 주세요."
       : subjectRole === "parent"
-        ? "정확하게 읽으려면 몇 가지가 필요해요. 먼저 부모님, 당신의 여덟 글자부터 펼쳐 볼게요."
-        : "정확하게 읽으려면 몇 가지가 필요해요. 먼저 당신의 여덟 글자부터 펼쳐 볼게요.";
+        ? "정확하게 읽으려면 몇 가지가 필요해요. 먼저 부모님, 당신의 이름과 태어난 날부터 알려 주세요."
+        : "정확하게 읽으려면 몇 가지가 필요해요. 먼저 당신의 이름과 태어난 날부터 알려 주세요.";
   const subjectThanks =
     subjectRole === "child" ? "{name}의 글자가 하나씩 떠오르고 있어요. 기질이 또렷한 아이네요." : "{name}님, 고마워요. 글자가 하나씩 떠오르고 있어요.";
 

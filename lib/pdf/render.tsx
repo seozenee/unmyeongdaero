@@ -1,3 +1,4 @@
+import { outlookSchema } from "@/lib/manse/outlook";
 import "server-only";
 
 import { renderToBuffer } from "@react-pdf/renderer";
@@ -154,6 +155,7 @@ export async function renderReportPdf(input: RenderReportPdfInput): Promise<Buff
 
   return renderToBuffer(
     <ReportDocument
+      outlook={(["life", "destiny-full", "factbomb"].includes(input.product.slug) || input.product.bundle?.items.some(slug => ["life", "destiny-full", "factbomb"].includes(slug))) ? outlookSchema.safeParse(modules.actionableOutlook).data : undefined}
       report={input.report}
       productTitle={input.product.title}
       categoryLabel={input.product.categoryLabel}

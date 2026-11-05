@@ -13,6 +13,7 @@ type ConfirmResult =
 
 type CheckoutStart =
   | { kind: "already-purchased"; redirect: string }
+  | { kind: "free"; paymentId: string; redirect: string; reason: string }
   | {
       kind: "toss";
       paymentId: string;
@@ -39,6 +40,11 @@ interface CheckoutPanelProps {
   price: number;
   ctaLabel: string;
   initialNotice?: Notice | null;
+  compact?: boolean;
+  /** 운영자 계정 — 결제수단·동의 절차 없이 0원으로 발급한다 */
+  freeIssue?: boolean;
+  onPaymentWindowOpen?: () => void;
+  onPaymentWindowClose?: () => void;
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -56,9 +62,9 @@ const METHODS = [
 
 type PaymentMethod = (typeof METHODS)[number]["id"];
 
-export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice = null }: CheckoutPanelProps) {
+export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice = null, compact = false, freeIssue = false, onPaymentWindowOpen, onPaymentWindowClose }: CheckoutPanelProps) {
   const router = useRouter();
-  const [agreed, setAgreed] = useState(false);
+  const [agreed, setAgreed] = useState(freeIssue);
   const [method, setMethod] = useState<PaymentMethod>("CARD");
   const [busy, setBusy] = useState<null | "preparing" | "paying" | "confirming">(null);
   const [notice, setNotice] = useState<Notice | null>(initialNotice);
@@ -155,7 +161,7 @@ export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice 
       return;
     }
 
-    if (start.kind === "already-purchased") {
+    if (start.kind === "already-purchased" || start.kind === "free") {
       router.replace(start.redirect);
       return;
     }
@@ -166,6 +172,7 @@ export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice 
     }
 
     setBusy("paying");
+    let paymentWindowOpened = false;
     try {
       const { loadTossPayments } = await import("@tosspayments/tosspayments-sdk");
       const tossPayments = await loadTossPayments(start.clientKey);
@@ -181,6 +188,9 @@ export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice 
         successUrl: start.successUrl,
         failUrl: start.failUrl,
       };
+      // native dialog의 top layer가 토스 iframe을 가리지 않게 먼저 닫는다.
+      onPaymentWindowOpen?.();
+      paymentWindowOpened = true;
       await (method === "CARD"
         ? payment.requestPayment({
             ...common,
@@ -196,6 +206,7 @@ export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice 
       if (result) await handleResult(start.paymentId, result);
     } finally {
       setBusy(null);
+      if (paymentWindowOpened) onPaymentWindowClose?.();
     }
   };
 
@@ -221,12 +232,14 @@ export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice 
     }
   };
 
-  const busyLabel = { preparing: "결제를 준비하고 있어요…", paying: "결제창에서 진행해 주세요…", confirming: "결제를 확인하고 있어요…" };
+  const busyLabel = freeIssue
+    ? { preparing: "풀이를 열고 있어요…", paying: "풀이를 열고 있어요…", confirming: "풀이를 열고 있어요…" }
+    : { preparing: "결제를 준비하고 있어요…", paying: "결제창에서 진행해 주세요…", confirming: "결제를 확인하고 있어요…" };
 
   const selected = METHODS.find((item) => item.id === method)!;
 
   return (
-    <div className="flex flex-col gap-space-sm">
+    <div className={compact ? "checkout-sheet-payment flex flex-col gap-3" : "flex flex-col gap-space-sm"}>
       {notice && (
         <div
           role="alert"
@@ -248,7 +261,13 @@ export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice 
         </div>
       )}
 
-      <fieldset className="flex flex-col gap-space-sm">
+      {freeIssue && (
+        <p className="rounded-xl bg-tertiary/12 p-space-md font-body-sm text-body-sm text-on-surface">
+          <strong className="text-tertiary">운영자 계정</strong>이라 결제 없이 전체 풀이를 열 수 있어요. 결제 기록은 0원으로 남습니다.
+        </p>
+      )}
+
+      {!freeIssue && <><fieldset className="flex flex-col gap-space-sm">
         <legend className="mb-space-sm font-label-md text-label-md text-on-surface">결제수단</legend>
         <div className="grid grid-cols-2 gap-space-xs">
           {METHODS.map((item) => {
@@ -280,7 +299,7 @@ export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice 
           결제 즉시 풀이 생성이 시작되는 디지털 콘텐츠로, <strong className="text-on-surface">열람이 시작되면 청약철회가 제한</strong>
           됨을 확인했어요. (전자상거래법 제17조 제2항)
         </span>
-      </label>
+      </label></>}
 
       <button
         type="button"
@@ -288,10 +307,10 @@ export function CheckoutPanel({ slug, readingId, price, ctaLabel, initialNotice 
         disabled={busy !== null}
         className="product-button mt-space-xs flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-label-md text-label-md transition-transform active:scale-[0.98] disabled:opacity-60"
       >
-        <span>{busy ? busyLabel[busy] : `${formatKRW(price)} · ${selected.label}로 ${ctaLabel}`}</span>
+        <span>{busy ? busyLabel[busy] : freeIssue ? `0원 · 운영자 무료 발급` : `${formatKRW(price)} · ${selected.label}로 ${ctaLabel}`}</span>
         {!busy && <Icon name="arrow_forward" className="text-[18px]" />}
       </button>
-      <p className="text-center font-label-sm text-label-sm text-outline">구독 결제 없음 · 12개월 열람권</p>
+      <p className="text-center font-label-sm text-label-sm text-outline">{freeIssue ? "검수용 발급 · 매출에는 집계되지 않아요" : "구독 결제 없음 · 12개월 열람권"}</p>
 
       {mock && (
         <div className="fixed inset-0 z-[60] mx-auto flex w-full max-w-md items-end justify-center bg-black/60 motion-safe:animate-fade-in" role="dialog" aria-modal>

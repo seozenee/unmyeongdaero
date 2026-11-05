@@ -8,10 +8,59 @@ import type { BirthProfile } from "@/lib/db/types";
 import { writeLocalProfile } from "@/lib/me/local-profile";
 import birthCities from "@/lib/saju/birth-cities.json";
 
+/**
+ * 누구의 생일을 묻는지.
+ *
+ * 한동안 어느 쪽이든 "이름은…" 한 마디로 물었다. 궁합·재회·부모자녀 상품에서는 같은
+ * 양식이 두 번 나오는데, 두 번째 화면에도 "이름은…" 이 떠 있으니 누구 이름을 적으라는
+ * 말인지 알 수 없었다. 묻는 대상을 문장에 박아 넣는다.
+ */
+export type BirthSubject = "self" | "partner" | "child" | "parent";
+
+const SUBJECT_WORDS: Record<BirthSubject, {
+  /** 단계 제목 — "그 사람의 이름을 알려 주세요" */
+  steps: [string, string, string, string, string];
+  nameLabel: string;
+  namePlaceholder: string;
+  nameHint: string;
+  missingName: string;
+}> = {
+  self: {
+    steps: ["이름을 알려 주세요", "태어난 날을 알려 주세요", "성별을 골라 주세요", "태어난 시간을 알려 주세요", "태어난 곳을 알려 주세요"],
+    nameLabel: "풀이에서 어떻게 불러 드릴까요",
+    namePlaceholder: "내 이름 또는 불리고 싶은 호칭",
+    nameHint: "본명이 아니어도 괜찮아요. 풀이에서 당신을 부를 이름이에요.",
+    missingName: "이름(또는 불리고 싶은 호칭)을 적어 주세요.",
+  },
+  partner: {
+    steps: ["그 사람의 이름을 알려 주세요", "그 사람이 태어난 날을 알려 주세요", "그 사람의 성별을 골라 주세요", "그 사람이 태어난 시간을 알려 주세요", "그 사람이 태어난 곳을 알려 주세요"],
+    nameLabel: "그 사람을 무엇이라고 부를까요",
+    namePlaceholder: "그 사람의 이름 또는 부르는 호칭",
+    nameHint: "본명을 몰라도 괜찮아요. 풀이에서 그 사람을 가리킬 이름이에요.",
+    missingName: "그 사람의 이름(또는 부르는 호칭)을 적어 주세요.",
+  },
+  child: {
+    steps: ["아이의 이름을 알려 주세요", "아이가 태어난 날을 알려 주세요", "아이의 성별을 골라 주세요", "아이가 태어난 시간을 알려 주세요", "아이가 태어난 곳을 알려 주세요"],
+    nameLabel: "아이를 무엇이라고 부를까요",
+    namePlaceholder: "아이의 이름 또는 부르는 호칭",
+    nameHint: "본명이 아니어도 괜찮아요. 풀이에서 아이를 부를 이름이에요.",
+    missingName: "아이의 이름(또는 부르는 호칭)을 적어 주세요.",
+  },
+  parent: {
+    steps: ["부모님(나)의 이름을 알려 주세요", "태어난 날을 알려 주세요", "성별을 골라 주세요", "태어난 시간을 알려 주세요", "태어난 곳을 알려 주세요"],
+    nameLabel: "풀이에서 어떻게 불러 드릴까요",
+    namePlaceholder: "내 이름 또는 불리고 싶은 호칭",
+    nameHint: "아이가 아니라, 아이를 보는 부모님의 생일이에요.",
+    missingName: "이름(또는 불리고 싶은 호칭)을 적어 주세요.",
+  },
+};
+
 interface BirthFormProps {
   cinematic?: boolean;
   onStepChange?: (step: number) => void;
   title: string;
+  /** 누구의 생일인지 — 묻는 문장과 안내가 이 값에 따라 바뀐다 */
+  subject?: BirthSubject;
   submitLabel?: string;
   initial?: Partial<BirthProfile>;
   onSubmit: (profile: BirthProfile) => void;
@@ -209,6 +258,7 @@ export function BirthForm({
   cinematic = false,
   onStepChange,
   title,
+  subject: subjectRole = "self",
   submitLabel = "다 적었어요",
   initial,
   onSubmit,
@@ -216,6 +266,7 @@ export function BirthForm({
   remember = false,
 }: BirthFormProps) {
   const id = useId();
+  const words = SUBJECT_WORDS[subjectRole];
   const [step, setStep] = useState(0);
   useEffect(() => { onStepChange?.(step); }, [step, onStepChange]);
 
@@ -249,7 +300,7 @@ export function BirthForm({
 
   const next = () => {
     if (step === 0) {
-      if (!name.trim()) return setError("이름(또는 불리고 싶은 호칭)을 적어 주세요.");
+      if (!name.trim()) return setError(words.missingName);
       setError(null);
       return setStep(1);
     }
@@ -306,7 +357,7 @@ export function BirthForm({
       className={cn("flex flex-col gap-space-md motion-safe:animate-fade-up", cinematic ? "intake-form" : "rounded-xl bg-surface-container p-space-lg shadow-lg")}
     >
       <div className="flex items-center justify-between">
-        <h3 className={cinematic ? "text-[1.6rem] font-extrabold leading-snug text-white" : "font-label-md text-label-md text-on-surface"}>{cinematic ? ["이름은…", "태어난 날은…", "성별은…", "태어난 시간은…", "태어난 곳은…"][step] : title}</h3>
+        <h3 className={cinematic ? "text-[1.6rem] font-extrabold leading-snug text-white" : "font-label-md text-label-md text-on-surface"}>{cinematic ? words.steps[step] : title}</h3>
         {/* 어디쯤 왔는지 — 세 칸이면 끝이 보인다 */}
         {!(cinematic && onStepChange) && <span className="flex items-center gap-1" aria-label={`${step + 1} / ${STEPS.length} 단계`}>
           {STEPS.map((item, index) => (
@@ -323,7 +374,7 @@ export function BirthForm({
 
       {step === 0 && (
         <label className="flex flex-col gap-1" htmlFor={`${id}-name`}>
-          <span className="font-label-sm text-label-sm text-on-surface-variant">어떻게 불러 드릴까요</span>
+          <span className="font-label-sm text-label-sm text-on-surface-variant">{words.nameLabel}</span>
           <input
             id={`${id}-name`}
             className={FIELD}
@@ -331,13 +382,13 @@ export function BirthForm({
             maxLength={20}
             autoFocus
             enterKeyHint="next"
-            placeholder="이름 또는 불리고 싶은 호칭"
+            placeholder={words.namePlaceholder}
             onChange={(event) => {
               setName(event.target.value);
               setError(null);
             }}
           />
-          <span className="font-body-sm text-body-sm text-outline">본명이 아니어도 괜찮아요. 풀이에서 부를 이름이에요.</span>
+          <span className="font-body-sm text-body-sm text-outline">{words.nameHint}</span>
         </label>
       )}
 
@@ -459,7 +510,7 @@ export function BirthForm({
           {/* 적은 것을 한 번에 되짚어 준다 — 고치려면 지금이 마지막이다 */}
           {!cinematic && <dl className="flex flex-col gap-1 rounded-lg bg-surface-container-lowest p-space-md font-body-sm text-body-sm">
             <div className="flex gap-space-sm">
-              <dt className="w-16 shrink-0 text-outline">이름</dt>
+              <dt className="w-16 shrink-0 text-outline">{subjectRole === "partner" ? "그 사람" : subjectRole === "child" ? "아이" : "이름"}</dt>
               <dd className="text-on-surface">{name || "—"}</dd>
             </div>
             <div className="flex gap-space-sm">

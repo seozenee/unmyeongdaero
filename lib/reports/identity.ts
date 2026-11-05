@@ -25,6 +25,6 @@ export function normalizeReportIdentity(product: ReportProduct): ReportProduct {
   const builtIn = getReport(product.slug);
   const renamed = builtIn && product.title === LEGACY_TITLES[product.slug] ? { ...product, title: builtIn.title } : product;
   // 이 두 상품은 전반적인 사주다. 옛 DB 시드의 직업 중심 목차가 새 구성 위에 덮이지 않게 한다.
-  if (builtIn && ["factbomb", "destiny-full"].includes(product.slug) && (JSON.stringify(product.chapters) !== JSON.stringify(builtIn.chapters) || JSON.stringify(product.topics) !== JSON.stringify(builtIn.topics))) return { ...renamed, chapters: builtIn.chapters, topics: builtIn.topics };
+  if (builtIn && ["factbomb", "destiny-full", "child-talent"].includes(product.slug) && (JSON.stringify(product.chapters) !== JSON.stringify(builtIn.chapters) || JSON.stringify(product.topics) !== JSON.stringify(builtIn.topics))) return { ...renamed, chapters: builtIn.chapters, topics: builtIn.topics };
   return renamed;
 }

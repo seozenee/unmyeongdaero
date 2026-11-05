@@ -1,6 +1,7 @@
 "use client";
 
-import { ReadingSample } from "./ReadingSample";
+import { ScrollPurchaseCta } from "./ScrollPurchaseCta";
+
 import { ProductLink } from "@/components/ui/ProductLink";
 import { useEffect, useRef, useState } from "react";
 import { STITCH_ASSETS } from "@/components/home/assets";
@@ -9,7 +10,6 @@ import { getPoster } from "@/components/home/posters";
 import { useInView } from "@/components/home/useInView";
 import { GuideAvatar } from "@/components/story/GuideAvatar";
 import { ProductTease } from "@/components/story/ProductTease";
-import { LockBadge } from "@/components/story/VeiledText";
 import { Icon } from "@/components/ui/Icon";
 import { getWebtoonAsset } from "@/components/webtoon/assets";
 import { WebtoonMedia } from "@/components/webtoon/WebtoonMedia";
@@ -21,16 +21,15 @@ import { getPitch } from "@/lib/reports/pitch";
 import { getGuide } from "@/lib/story/guides";
 import { josa } from "@/lib/text/josa";
 
-import type { WritingSample } from "@/lib/reports/writing-sample";
 
 interface ProductIntroProps {
-  writingSample?: WritingSample | null;
   report: ReportProduct;
   /** 이 상품을 이미 몇 사람이 받아 갔는지. 모르면 숨긴다 — 숫자를 지어내지 않는다 */
   soldCount?: number | null;
   /** 같은 고민을 보던 사람이 함께 보는 다른 풀이 */
   related?: ReportProduct[];
   onStart: () => void;
+  onPurchase?: () => void;
   onWatchIntro?: () => void;
   resuming?: boolean;
 }
@@ -133,7 +132,7 @@ function SectionHead({ no, label, title }: { no: string; label: string; title: s
  *
  * 값과 시작 버튼은 아래에 붙어 어디까지 읽든 손이 닿는다.
  */
-export function LegacyProductIntro({ writingSample = null, report, soldCount, related = [], onStart, onWatchIntro, resuming = false }: ProductIntroProps) {
+export function LegacyProductIntro({ report, soldCount, related = [], onStart, onPurchase, onWatchIntro, resuming = false }: ProductIntroProps) {
   const guide = getGuide(report.guide);
   const pitch = getPitch(report.slug);
   const poster = getPoster(report.slug, report.guide);
@@ -261,7 +260,7 @@ export function LegacyProductIntro({ writingSample = null, report, soldCount, re
       </div>
 
       {/* ─ 맛보기 — 적어 둔 생일이 있으면 그 사람의 여덟 글자부터 깐다 ─ */}
-      <ProductTease report={report} onStart={onStart} />
+      <ProductTease report={report} />
 
       {pitch && (
         <>
@@ -394,62 +393,6 @@ export function LegacyProductIntro({ writingSample = null, report, soldCount, re
         </section>
       </Reveal>
 
-      {writingSample ? <Reveal className="mt-space-lg"><ReadingSample sample={writingSample} /></Reveal> : <>
-      {/* ─ 펼치면 어떻게 나오는지. 글은 가리고 모양만 보여 준다 ─ */}
-      <Reveal className="mt-space-lg">
-        <section className="relative overflow-hidden rounded-3xl bg-surface-container-lowest p-space-lg ring-1 ring-outline-variant/40">
-          <div className="head-rule flex items-start justify-between gap-space-sm">
-            <div className="flex flex-col gap-1">
-              <span className="font-label-sm text-label-sm font-bold tracking-[0.14em] text-[rgb(var(--accent))]">
-                03 · 미리보기
-              </span>
-              <h2 className="text-[1.45rem] font-extrabold leading-[1.35] tracking-[-0.02em] text-on-surface">
-                펼치면 이렇게 나와요
-              </h2>
-            </div>
-            <LockBadge className="mt-0.5" />
-          </div>
-
-          {/*
-            회색 막대를 네 줄 깔아 두었던 자리다. 모양은 보여 주는데, 그 모양이
-            "아직 안 만든 화면" 과 똑같이 생겼다. 로딩 중인 줄 알고 기다린 사람도
-            있었을 것이다.
-
-            그래서 진짜 글을 깔고 흐린다. 첫 줄은 읽히게 두고 나머지는 서리 낀
-            유리 너머로 민다 — 글이 거기 있다는 것은 보이고, 무슨 말인지는 안 보인다.
-            흐린 글은 복사도 안 되고 읽어 주는 기계에도 가지 않는다.
-          */}
-          <div className="mt-space-md flex flex-col gap-space-lg pb-space-xl">
-            {report.chapters.slice(0, 2).map((chapter, index) => (
-              <div key={chapter} className="flex flex-col gap-space-sm">
-                <span className="text-[1.05rem] font-bold leading-snug tracking-tight text-on-surface">
-                  <span className="mr-1.5 tabular-nums text-[rgb(var(--accent))]">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  {chapter}
-                </span>
-                <p className="font-body-sm text-body-sm leading-relaxed text-on-surface-variant">
-                  {pitch?.gets[index]?.body ?? report.description}
-                </p>
-                <p aria-hidden className="veil font-body-sm text-body-sm leading-relaxed text-on-surface">
-                  {report.description} {report.tagline}. {chapter}까지 한 편의 글로 이어서 풀어 드립니다.
-                  문장마다 어느 글자에서 나온 말인지 근거를 붙이고, 흐름이 바뀌는 시기는 따로 표로 묶어 둡니다.
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* 잠긴 자리 — 가린 것을 가렸다고 말한다 */}
-          <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-1 bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest/92 to-transparent px-space-lg pb-space-lg pt-space-xl">
-            <Icon name="lock" className="text-[22px] text-[rgb(var(--accent))]" />
-            <span className="font-label-md text-label-md text-on-surface">결제하면 전부 열려요</span>
-            <span className="font-label-sm text-label-sm text-outline">미리보기는 글의 모양만 보여 드려요</span>
-          </div>
-        </section>
-      </Reveal>
-
-      </>}
-
       {/* ─ 받고 나면 어떻게 생겼는지 ─ */}
       <Reveal className="mt-space-lg">
         <section className="overflow-hidden rounded-3xl bg-surface-container">
@@ -566,7 +509,7 @@ export function LegacyProductIntro({ writingSample = null, report, soldCount, re
       )}
 
       {/* ─ 값과 시작 ─ */}
-      <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] z-30 mx-auto w-full max-w-md border-t border-outline-variant/40 bg-surface/95 px-margin py-space-sm backdrop-blur">
+      <div id="purchase-final" className="relative mx-auto mt-10 w-full max-w-md border-t border-outline-variant/40 bg-surface px-margin py-space-lg">
         {soldCount != null && soldCount > 0 && (
           <p className="mb-1 text-center font-label-sm text-label-sm text-tertiary">
             지금까지 {soldCount.toLocaleString("ko-KR")}명이 이 풀이를 받아 갔어요
@@ -580,16 +523,16 @@ export function LegacyProductIntro({ writingSample = null, report, soldCount, re
           비운 자리는 버튼이 통째로 쓴다. 누르기 전에 알아야 하는 것은 값이 아니라
           "여기서 돈이 나가지 않는다"는 것이다.
         */}
-        <button
+<ScrollPurchaseCta>        <button
           type="button"
-          onClick={onStart}
+          onClick={onPurchase ?? onStart}
           className="cta-flow flex w-full items-center justify-center gap-1.5 rounded-2xl bg-secondary py-4 font-label-md text-label-md font-bold text-on-secondary shadow-[0_6px_28px_rgb(var(--accent)/0.5)] transition-transform active:scale-[0.98]"
         >
-          {resuming ? "이어서 보기" : report.roles?.subject === "child" ? "아이 사주 먼저 보기" : "내 사주 먼저 보기"}
+          {resuming ? "이어서 보기" : report.roles?.subject === "child" ? "우리 아이 사주 확인하기" : "내 사주 확인하기"}
           <Icon name="arrow_forward" className="text-[18px]" />
-        </button>
+        </button></ScrollPurchaseCta>
         <p className="mt-1.5 text-center font-label-sm text-label-sm text-outline">
-          내 여덟 글자까지 무료로 봐요 · 결제는 맨 마지막에 한 번
+          입력 후 결제 직전에 상품과 금액을 확인해요
         </p>
       </div>
     </div>

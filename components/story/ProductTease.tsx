@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { ChartBoard, dayPillarNickname } from "@/components/saju/ChartBoard";
 import { LockBadge } from "@/components/story/VeiledText";
-import { Icon } from "@/components/ui/Icon";
 import type { BirthProfile } from "@/lib/db/types";
 import type { HomeChart } from "@/lib/manse/home-chart";
 import { readLocalProfile } from "@/lib/me/local-profile";
@@ -23,7 +22,7 @@ import type { ReportProduct } from "@/lib/reports/catalog";
  * 가린 값은 서버에 남는다. 화면에서만 가리면 개발자 도구를 연 사람에게는 공짜로
  * 보인다 — 가린 척이 되는 것이다.
  */
-export function ProductTease({ report, onStart }: { report: ReportProduct; onStart: () => void }) {
+export function ProductTease({ report }: { report: ReportProduct }) {
   const [chart, setChart] = useState<HomeChart | null>(null);
   // 서버에서 받아 오기 전까지는 자리를 비워 둔다. 저장된 생일이 없는 사람에게
   // 판이 깜빡 나타났다 사라지면 화면이 흔들린다
@@ -54,9 +53,7 @@ export function ProductTease({ report, onStart }: { report: ReportProduct; onSta
   if (!chart) {
       return (
         <section className="mt-space-xl">
-          <button
-            type="button"
-            onClick={onStart}
+          <div
             className="flex w-full items-center gap-space-md rounded-3xl border border-[rgb(var(--accent)/0.4)] bg-surface-container-low p-space-lg text-left transition-colors hover:bg-surface-container"
           >
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[rgb(var(--accent)/0.18)] text-[1.4rem] font-extrabold text-[rgb(var(--accent))]">
@@ -64,14 +61,13 @@ export function ProductTease({ report, onStart }: { report: ReportProduct; onSta
             </span>
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
               <span className="text-[1.05rem] font-bold leading-snug tracking-tight text-on-surface">
-                내 여덟 글자부터 펼쳐 볼까요
+                내 여덟 글자로 읽는 이야기
               </span>
               <span className="font-body-sm text-body-sm leading-snug text-on-surface-variant">
-                이름부터 하나씩 알려 주세요. 먼저 읽는 건 무료예요.
+                어떤 풀이를 받는지 아래에서 자세히 살펴보세요.
               </span>
             </span>
-            <Icon name="chevron_right" className="shrink-0 text-[20px] text-outline" />
-          </button>
+          </div>
         </section>
       );
   }
@@ -91,13 +87,6 @@ export function ProductTease({ report, onStart }: { report: ReportProduct; onSta
             </h2>
           )}
         </div>
-        <button
-          type="button"
-          onClick={onStart}
-          className="shrink-0 rounded-full px-2.5 py-1 font-label-sm text-label-sm text-outline transition-colors hover:text-on-surface"
-        >
-          고치기
-        </button>
       </div>
 
       <ChartBoard chart={chart} />

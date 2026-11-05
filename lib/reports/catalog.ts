@@ -3,6 +3,31 @@
 import type { SazuTopic } from "../sazu/schemas";
 import type { GuideId } from "../story/guides";
 
+export const CHILD_CHAPTERS = [
+  { label: "우리 아이가 영재일까요? 사주 속 타고난 영재성", titles: [
+    "[영재요소 1] 아이의 학습과 이해 — 렌줄리의 세 고리",
+    "[영재요소 2] 아이가 타고난 창의성",
+    "[영재요소 3] 아이의 과제 집착력",
+    "아이의 재능을 키우는 타이밍",
+    "우리 아이의 진학 방향과 맞춤 전공",
+    "우리 아이에게 딱 맞는 공부법",
+  ] },
+  { label: "우리 아이에게 딱 맞는 직업", titles: [
+    "아이의 사주에서 읽는 직업 적성",
+    "아이의 주도적 에너지와 일하는 방식",
+    "사주와 연결해 살펴볼 진로 세 가지",
+    "진로를 고를 때 주의할 환경",
+  ] },
+  { label: "우리 아이의 재물과 성취", titles: [
+    "우리 아이의 타고난 재물운",
+    "우리 아이의 성취와 사람의 도움",
+    "성장을 위해 길러 줄 아이의 역량",
+    "우리 아이 인생의 큰 흐름 — 열 해 분석",
+  ] },
+  { label: "우리 아이 맞춤 양육법", titles: ["아이의 속마음을 이해하는 양육법"] },
+] as const;
+
+
 export type ReportCategory = "reunion" | "romance" | "chemistry" | "destiny" | "year" | "wealth" | "work" | "study" | "child";
 export type PartnerRequirement = "none" | "optional" | "required";
 export type ProductKind = "report" | "consult";
@@ -27,6 +52,7 @@ export interface ReportProduct {
   /** 실제로 무엇을 받는지. 전문용어 없이 */
   description: string;
   price: number;
+  bundle?: { baseSlug: string; items: string[]; tier: "pair" | "complete"; compareAtPrice: number };
   originalPrice?: number;
   discountLabel?: string;
   guide: GuideId;
@@ -62,7 +88,7 @@ const REUNION_DETAIL = {
   placeholder: "(예) 작년 여름 소개로 만나 올해 2월에 헤어졌어요. 제가 바쁘다는 이유로 연락을 소홀히 했고, 지금은 연락이 끊겼어요.",
 };
 
-export const REPORTS = [
+const ORIGINAL_REPORTS = [
   {
     slug: "reunion-deep",
     kind: "report",
@@ -165,9 +191,9 @@ export const REPORTS = [
       "타고난 그릇의 모양",
       "나를 움직이는 힘과 막는 힘",
       "나를 살리는 기운은 어느 쪽인가",
-      "열 해마다 바뀌는 삶의 배경",
+      "열 해마다 바뀌는 삶의 배경 — 지금부터 80대까지",
       "지금 지나는 열 해의 한가운데에서",
-      "올해와 내년, 그리고 그다음",
+      "앞으로 10년, 해마다 달라지는 흐름",
       "재물이 들어오는 길목과 새는 구멍",
       "인연의 자리와 가까워지는 방식",
       "배우자와 관계가 깊어지는 시기",
@@ -190,12 +216,22 @@ export const REPORTS = [
     title: "평생사주",
     tagline: "내 인생은 어떻게 흘러갈까?",
     description:
-      "타고난 그릇의 모양과 중심이 되는 기운, 인생의 큰 물줄기가 바뀌는 전환점을 읽어 드려요.",
+      "타고난 성격부터 열 해씩 바뀌는 삶의 배경을 80대까지 깔고, 가까운 10년은 해마다 어떤 운이 들어오는지와 그때 할 일·조심할 일을 나눠 드려요.",
     price: 19800,
     guide: "doham",
     topics: ["life"],
     partner: "none",
-    chapters: ["타고난 그릇의 모양", "나를 움직이는 힘과 막는 힘", "나를 살리는 기운은 어느 쪽인가", "삶의 배경이 바뀌는 전환점", "앞으로 10년을 위한 태도"],
+    // 평생사주가 앞으로 십 년에서 끝나면 「평생」이 아니다. 열 해씩 80대까지 깔고,
+    // 가까운 십 년은 해마다 따로 읽는다 — 손님이 가장 먼저 찾는 자리다.
+    chapters: [
+      "타고난 그릇의 모양 — 내 성격부터",
+      "나를 움직이는 힘과 막는 힘",
+      "나를 살리는 기운은 어느 쪽인가",
+      "열 해마다 바뀌는 삶의 배경 — 지금부터 80대까지",
+      "앞으로 10년, 해마다 달라지는 흐름",
+      "말년의 모습과 지금 심어 둘 것",
+      "앞으로 10년을 위한 태도",
+    ],
     detail: { prompt: "지금 가장 크게 고민하는 선택이 있다면 적어 주세요. 안 적으셔도 풀이는 그대로 나와요.", placeholder: "(예) 10년 다닌 회사를 그만두고 창업을 할지 고민이에요." },
     cover: "thumbLife",
   },
@@ -452,12 +488,7 @@ export const REPORTS = [
     roles: { subject: "child" },
     topics: ["life"],
     partner: "none",
-    chapters: [
-      "이 아이의 재능이 머무는 자리",
-      "어떤 종류의 영재인가 — 다섯 갈래로 보는 분류",
-      "재능이 터지는 시기와 기다려야 할 시기",
-      "키우는 법과 꺾는 법",
-    ],
+    chapters: CHILD_CHAPTERS.flatMap(chapter => [...chapter.titles]),
     detail: {
       prompt: "아이에게서 유난히 눈에 띄는 모습이 있다면 적어 주세요. 안 적으셔도 풀이는 그대로 나와요.",
       placeholder: "(예) 다섯 살인데 한글을 혼자 떼고 책을 하루 종일 읽어요.",
@@ -482,7 +513,78 @@ export const REPORTS = [
   },
 ] as const satisfies readonly ReportProduct[];
 
-export type ReportSlug = (typeof REPORTS)[number]["slug"];
+const PRICES: Record<string, number> = {
+  "reunion-deep":39900, reunion:34900, love:29900, compatibility:39900,
+  "destiny-full":44900, life:39900, yearly:29900, money:19800, career:19800,
+  factbomb:34900, health:19800, study:29900, "child-study":34900,
+  "parent-child":39900, business:19800, "child-admission":44900,
+  "child-dream":39900, "child-talent":44900, consult:9900,
+};
+// 운영자가 책정한 정상가와 현재 할인가. 종료일이나 예약 가격 전환은 두지 않는다.
+const REGULAR_PRICES: Record<string, number> = {
+  "reunion-deep":72000, reunion:69000, love:62000, compatibility:72000,
+  "destiny-full":78000, life:72000, yearly:62000, money:62000, career:62000,
+  factbomb:69000, health:62000, study:62000, "child-study":69000,
+  "parent-child":72000, business:72000, "child-admission":78000,
+  "child-dream":72000, "child-talent":78000,
+};
+const BASE_REPORTS: ReportProduct[] = ORIGINAL_REPORTS.map(item => {
+  const { originalPrice: _original, discountLabel: _discount, ...rest } = item as ReportProduct;
+  const price = PRICES[item.slug] ?? item.price;
+  const originalPrice = REGULAR_PRICES[item.slug];
+  return { ...rest, price, ...(originalPrice ? {originalPrice, discountLabel:`${Math.round((1-price/originalPrice)*100)}% 할인`} : {}) };
+});
+const RELATED: Record<string, string[]> = {
+  "reunion-deep":["compatibility","love"], reunion:["compatibility","love"],
+  compatibility:["reunion-deep","love"], love:["life","yearly"],
+  "destiny-full":["money","yearly"], life:["money","yearly"],
+  yearly:["money","career"], money:["career","yearly"], career:["money","yearly"],
+  factbomb:["money","love"], health:["life","yearly"], study:["career","yearly"],
+  business:["money","career"], "child-study":["child-dream","child-talent"],
+  "child-admission":["child-study","child-dream"], "child-dream":["child-talent","child-study"],
+  "child-talent":["child-study","child-dream"], "parent-child":["child-study","child-talent"],
+};
+const BUNDLE_NAMES: Record<string, [string,string]> = {
+  "destiny-full":["운명의 큰 그림","내 인생 총집합"], life:["인생과 돈의 지도","내 인생 완전 정리"],
+  factbomb:["내 본모습과 돈의 민낯","인생 팩트폭격"], love:["사랑과 인생의 연결고리","나의 인연 총집합"],
+  reunion:["그 사람과 나, 다시 읽기","인연의 답안지"], "reunion-deep":["우리 관계의 진짜 이유","다시 만나는 인연 지도"],
+  compatibility:["우리 사이 완전 분석","사랑의 모든 답"], yearly:["올해의 기회와 돈","한 해 운명 총정리"],
+  money:["내 돈이 모이는 길","돈과 일의 판을 바꾸다"], career:["내 직업과 돈의 방향","내 커리어 총집합"],
+  business:["사장님의 돈 버는 지도","사업과 돈의 총정리"], health:["몸과 삶의 균형","내 생활의 리듬 찾기"],
+  study:["공부와 진로의 연결고리","나의 성장 총집합"], "child-study":["우리 아이 공부 설명서","우리 아이 학습 총집합"],
+  "child-admission":["입시 준비의 첫걸음","우리 아이 입시 나침반"], "child-dream":["우리 아이 가능성 지도","우리 아이 미래 총집합"],
+  "child-talent":["우리 아이 숨은 가능성","우리 아이 성장 총집합"], "parent-child":["우리 집 대화 설명서","부모와 아이 성장 지도"],
+};
+const BUNDLES = BASE_REPORTS.filter(base => base.kind === "report").flatMap(base => (["pair","complete"] as const).map(tier => {
+  const members = [base, ...RELATED[base.slug]!.slice(0,tier === "pair" ? 1 : 2).map(slug => BASE_REPORTS.find(r => r.slug === slug)!)];
+  const sum = members.reduce((n,r)=>n+r.price,0);
+  const regularSum = members.reduce((n,r)=>n+(r.originalPrice ?? r.price),0);
+  // 묶음 결제가는 단품 할인가에서 더 낮추고, 비교가는 단품의 할인 전 정상가 합계로 표시한다.
+  const suggestedPrice = Math.ceil(sum * (tier === "pair" ? .85 : .8) / 1000) * 1000 - 100;
+  const pair = members.slice(0,2);
+  const pairPrice = Math.ceil(pair.reduce((n,r)=>n+r.price,0) * .85 / 1000) * 1000 - 100;
+  const pairRegularSum = pair.reduce((n,r)=>n+(r.originalPrice ?? r.price),0);
+  // 낮은 가격의 단품이 섞여도 3종의 할인율은 2종보다 높게 유지한다.
+  const price = tier === "pair" ? suggestedPrice : Math.min(suggestedPrice, Math.floor(pairPrice / pairRegularSum * regularSum / 1000) * 1000 - 100);
+  return { ...base, slug:`${base.slug}--${tier}`, title:BUNDLE_NAMES[base.slug]![tier === "pair" ? 0 : 1],
+    tagline:members.map(r=>r.title).join(" + "),
+    description:`${members.map(r=>r.title).join(" · ")}의 모든 주제를 한 권의 통합 리포트와 PDF로 받아보세요.`,
+    price, originalPrice:regularSum, discountLabel:`단품 정상가 합계 대비 ${Math.round((1-price/regularSum)*100)}% 할인`,
+    bundle:{baseSlug:base.slug,items:members.map(r=>r.slug),tier,compareAtPrice:regularSum},
+    chapters:members.flatMap(r=>r.chapters.map(title=>`${r.title} · ${title}`)),
+    topics:Array.from(new Set(members.flatMap(r=>r.topics))),
+  } satisfies ReportProduct;
+}));
+export const REPORTS: readonly ReportProduct[] = [...BASE_REPORTS,...BUNDLES];
+export type ReportSlug = string;
+
+export function purchaseOptions(slug: string): ReportProduct[] {
+  const base = BASE_REPORTS.find(r=>r.slug===slug);
+  return base ? [base,...BUNDLES.filter(r=>r.bundle.baseSlug===slug)] : [];
+}
+export function coveredReportSlugs(slug: string): string[] {
+  return [slug,...BUNDLES.filter(r=>r.bundle.items.includes(slug)).map(r=>r.slug)];
+}
 
 /** AI 상담 세션 1회당 최대 턴(사용자 질문 수) */
 export const CONSULT_TURN_LIMIT = 20;
@@ -492,5 +594,5 @@ export function getReport(slug: string): ReportProduct | undefined {
 }
 
 export function listReports(kind: ProductKind = "report"): ReportProduct[] {
-  return REPORTS.filter((report) => report.kind === kind);
+  return REPORTS.filter((report) => report.kind === kind && !report.bundle);
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { GuideAvatar } from "@/components/story/GuideAvatar";
+import { ReferencePillars, ReferenceElements } from "./ReferenceCharts";
 import { Icon } from "@/components/ui/Icon";
 import { buildBookPages } from "@/lib/story/book";
 import { readableSourceNames } from "@/lib/story/sanitize";
@@ -9,8 +9,6 @@ import { ReadingCard } from "./ReadingCard";
 import { ReadingCardBasis } from "./ReadingCardBasis";
 import { ReadingProse } from "./ReadingProse";
 import { ReadingDiagram } from "./ReadingDiagram";
-import { FourPillarsChart } from "@/components/saju/FourPillarsChart";
-import { FiveElementsRadar } from "@/components/saju/FiveElementsRadar";
 import type { ReportDocumentProps } from "./ReportDocument";
 
 /** PDF를 넘기듯 한 주제씩 읽는다. 각 페이지에서는 전체 설명을 이어서 보여 준다. */
@@ -23,8 +21,12 @@ export function CardReportReader(props: ReportDocumentProps) {
   const restored = useRef<string | null>(null);
   const cards = buildBookPages(report.sections, {
     chart: Boolean(props.panels.pillars || props.panels.counts),
+    character: Boolean(props.panels.character),
     benefactor: Boolean(props.timingWindows?.benefactor.length),
     partnership: Boolean(props.timingWindows?.partnership.length),
+    pastYears: props.panels.outlook?.pastAnnual.map(row => row.year),
+    annualYears: props.panels.outlook?.annual.map(row => row.year),
+    lifetime: Boolean(props.panels.outlook?.lifetime.length),
   });
   pageCount.current = cards.length;
   useEffect(() => {
@@ -72,36 +74,66 @@ export function CardReportReader(props: ReportDocumentProps) {
       const dy = event.changedTouches[0].clientY - start.y;
       if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) move(position + (dx < 0 ? 1 : -1));
     }} onTouchCancel={() => { touch.current = null; }}>
-    {active.kind === "cover" ? <div className="reading-book-floating-menu">{menu}</div> : <header className="flex items-center gap-3 py-2">
-      <GuideAvatar guide={props.guide} size="sm" />
-      <div className="min-w-0 flex-1"><h1 className="text-lg font-bold text-on-surface">{props.title}</h1><p className="text-xs leading-relaxed text-on-surface-variant">{props.subjectName}님{props.partnerName ? ` · ${props.partnerName}님` : ""}의 풀이 · {props.issuedAt}</p></div>
-      {menu}
-    </header>}
-    <div className="reading-reader-tools" data-book-ignore-swipe>
-      <span>{position > 0 ? `${Math.round(position / (cards.length - 1) * 100)}% 읽었어요` : "한 장씩, 나를 알아가는 시간"}</span>
+    <div className="reading-book-floating-menu">{menu}</div>
+    <div className="reading-reader-tools reference-reader-tools" data-book-ignore-swipe>
       <button type="button" aria-pressed={largeText} onClick={() => setLargeText(value => !value)}>가 {largeText ? "기본 글씨" : "큰 글씨"}</button>
     </div>
-    <div className="reading-reader-progress" role="progressbar" aria-label="풀이 읽기 진행률" aria-valuemin={0} aria-valuemax={cards.length - 1} aria-valuenow={position}><span style={{ width: `${position / (cards.length - 1) * 100}%` }} /></div>
     <div key={active.id} className="motion-safe:animate-fade-up" role="region" aria-label={active.label}>
       {active.kind === "cover" ? <section className="reading-book-cover" aria-label="이름 표지"><h1>{props.subjectName}</h1></section>
-      : active.kind === "chapter" ? <section className="reading-book-chapter"><Icon name={active.icon} className="book-chapter-symbol" /><span>CHAPTER</span><h2>{active.label}</h2></section>
+      : active.kind === "chapter" ? <section className="reading-book-chapter"><span>Chapter {String(active.chapterNumber ?? 1).padStart(2, "0")}</span><h2>{active.label}</h2></section>
       : section ? <ReadingCard section={section} index={active.sectionIndex!} timingWindows={timingWindows} diagram={<ReadingDiagram section={section} panels={props.panels} windows={timingWindows} />}>
         <ReadingCardBasis section={section} glossary={props.glossary} />
       </ReadingCard> : <section className="reading-card reading-book-page">
-        <div className="reading-card-topic"><Icon name={active.icon} className="text-[18px]" />{active.label}</div>
+        {(active.kind === "opening" || active.kind === "chart" || active.kind === "character") && <div className="reference-page-label">{active.kind === "opening" ? `${props.guide.name}이 전하는 한마디` : active.kind === "character" ? "읽기 전에 — 타고난 성격" : "나의 사주"}</div>}
         {active.kind === "opening" && <>
-          <h2 className="reading-card-title">{props.subjectName}님께 드리는 첫 이야기</h2>
           <p className="reading-book-lead">{report.headline}</p>
           <ReadingProse text={report.summary} />
           <div className="flex flex-wrap gap-2">{report.keywords.map(keyword => <span key={keyword} className="reading-card-keyword">#{keyword}</span>)}</div>
         </>}
+        {active.kind === "character" && props.panels.character && <>
+          <h2 className="reading-card-title">{props.subjectName}님은 어떤 사람인가요?</h2>
+          <p className="reading-book-lead">{props.panels.character.base}</p>
+          <div className="reading-book-prose">
+            <ReadingProse text={props.panels.character.force} />
+          </div>
+          <dl className="reading-character-grid">
+            {([
+              ["평소에 쓰는 힘", props.panels.character.strong?.note],
+              ["쓰지 못해 애먹는 힘", props.panels.character.weak?.note],
+              ["가까운 사람 앞에서", props.panels.character.inside],
+              ["일하고 사람 만나는 자리에서", props.panels.character.outside],
+              ["이 힘이 지나칠 때", props.panels.character.shadow],
+              ["배워서 채워야 하는 자리", props.panels.character.missing],
+            ] as Array<[string, string | null | undefined]>).filter(row => Boolean(row[1])).map(([label, text]) => <div key={label}>
+              <dt>{label}</dt><dd>{text}</dd>
+            </div>)}
+          </dl>
+          {props.panels.character.core.length > 0 && <div className="flex flex-col gap-4">
+            {props.panels.character.core.map(item => <div key={item.topic} className="reading-card-paragraph">
+              <h3 className="reading-timing-label">{item.topic}</h3>
+              <p className="mt-2 text-base font-semibold text-on-surface">{item.conclusion}</p>
+              <ReadingProse text={item.scene} />
+              <ReadingProse text={item.flip} />
+            </div>)}
+          </div>}
+          <p className="reference-chart-note">태어난 날·달의 글자와 여덟 글자의 분포에서 바로 계산한 성향이에요. 이어지는 장에서는 이 성향이 어떤 선택으로 이어지는지 읽어요.</p>
+        </>}
         {active.kind === "chart" && <>
-          <h2 className="reading-card-title">나의 사주</h2>
           <div className="reading-book-data" data-book-ignore-swipe>
-            {props.panels.pillars && <FourPillarsChart pillars={props.panels.pillars} />}
-            {props.panels.counts && <FiveElementsRadar counts={props.panels.counts} />}
+            {props.panels.pillars && <ReferencePillars pillars={props.panels.pillars} name={props.subjectName} birthLabel={props.panels.birthLabel} />}
+            {props.panels.counts && <ReferenceElements counts={props.panels.counts} pillars={props.panels.pillars} />}
           </div>
           <dl className="flex flex-col gap-3">{props.basisFacts.map(fact => <div key={fact.label} className="flex gap-3 text-sm leading-relaxed"><dt className="w-16 shrink-0 text-on-surface-variant">{fact.label}</dt><dd className="text-on-surface">{fact.value}</dd></div>)}</dl>
+        </>}
+        {(active.kind === "annual" || active.kind === "lifetime") && <>
+          <h2 className="reading-card-title">{active.label}</h2>
+          {active.id.startsWith("past-") && <p className="reference-chart-note">당시의 흐름과 선택 기준을 돌아보는 페이지입니다. 실제 경험과 비교해 읽어 주세요.</p>}
+          {(active.kind === "annual" ? [active.id.startsWith("past-") ? props.panels.outlook?.pastAnnual[active.outlookIndex!] : props.panels.outlook?.annual[active.outlookIndex!]] : props.panels.outlook?.lifetime)?.map(row => row && <div key={row.period} className="reading-book-prose">
+            <h3 className="reading-timing-label">{row.period}</h3>
+            {([['재물', row.money], ['연애·관계', row.relationship], ['일·생활', row.work], ['이렇게 하세요', row.do], ['이것을 조심하세요', row.caution]] as const).map(([label, text]) => <div key={label}><h4 className="reference-outlook-label">{label}</h4><ReadingProse text={text} /></div>)}
+            <details className="reference-method"><summary>이 시기를 풀이한 근거</summary>{row.basis.map(item => <p key={item}>{item}</p>)}</details>
+          </div>)}
+          <p className="reference-chart-note">나이는 세는나이입니다. 연도별 흐름은 입춘 이후를 봅니다.</p>
         </>}
         {active.id === "timing" && <>
           <h2 className="reading-card-title">언제 힘을 쓰고, 언제 쉬어 갈까요?</h2>
