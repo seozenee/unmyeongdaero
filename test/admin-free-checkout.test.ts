@@ -51,6 +51,32 @@ describe("운영자 무료 발급", () => {
     expect(repo.updatePayment).not.toHaveBeenCalled();
   });
 
+  /*
+    0원을 막는 DB 가 남아 있어도 운영자는 들어간다.
+
+    payments.amount 에 `check (amount > 0)` 이 걸린 채로 배포된 곳이 있다. 그 환경에서
+    운영자가 검수하러 들어오면 "결제를 준비하지 못했어요"로 끝났다. 마이그레이션을 올리지
+    않아도 1원으로 발급되게 해 둔다 — 1원짜리 기록이 남는 쪽이 막히는 쪽보다 낫다.
+  */
+  it("DB 가 0원을 막아도 1원으로 발급한다", async () => {
+    repo.getReading.mockResolvedValue({ id: "input", userId: admin.id, reportSlug: "life", subject: { name: "검수" } });
+    repo.createPayment.mockReset();
+    repo.createPayment
+      .mockRejectedValueOnce(new Error('new row violates check constraint "payments_amount_check"'))
+      .mockImplementation(async (input: Record<string, unknown>) => ({ ...input, id: "row", status: "pending" }));
+
+    const result = await startCheckout(admin, "life", "input");
+    expect(result).toMatchObject({ kind: "free", redirect: "/reports/life/read" });
+    expect(repo.createPayment).toHaveBeenCalledTimes(2);
+    expect(repo.createPayment.mock.calls[0]![0].amount).toBe(0);
+    expect(repo.createPayment.mock.calls[1]![0].amount).toBe(1);
+    // 금액이 얼마든 매출에서 걸러지도록 수단과 거래번호는 그대로 남는다
+    expect(repo.createPayment.mock.calls[1]![0].provider).toBe("mock");
+    expect(repo.updatePayment).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({
+      status: "paid", pgTransactionId: expect.stringContaining("admin_free_"),
+    }));
+  });
+
   it("운영자 목록이 비어 있으면 아무도 공짜로 받지 못한다", async () => {
     process.env.ADMIN_EMAILS = "";
     repo.getReading.mockResolvedValue({ id: "input", userId: admin.id, reportSlug: "life", subject: { name: "검수" } });

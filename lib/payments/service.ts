@@ -65,23 +65,19 @@ export async function startCheckout(user: AppUser, slug: string, readingId: stri
     이 길이 권한 상승의 입구가 되지는 않는다.
 
     결제창을 거치지 않고 여기서 바로 승인·권한 부여까지 끝낸다. 기록은 남긴다 —
-    금액 0원, 수단 admin 으로 남아 매출 집계에서 바로 걸러진다.
+    provider=mock, pg_transaction_id=admin_free_… 로 남아 매출 집계에서 그대로 걸러진다.
+
+    금액은 0원으로 넣되, 못 넣으면 1원으로 한 번 더 시도한다. payments.amount 에
+    `check (amount > 0)` 이 걸려 있던 흔적이 남아 있을 수 있기 때문이다(0009 마이그레이션이
+    `>= 0` 으로 푼다). 운영자가 검수하러 들어왔는데 "결제를 준비하지 못했어요"를 보는 것보다,
+    1원짜리 기록이 남는 쪽이 낫다. 마이그레이션을 올렸으면 첫 시도가 그대로 통과한다.
   */
   if (isAdmin(user)) {
     const paymentId = `admin_${Date.now().toString(36)}_${randomUUID().replaceAll("-", "").slice(0, 10)}`;
-    // 0원 주문은 payments.amount 의 체크 제약을 푼 뒤에야 들어간다(0009_admin_free_payment.sql).
-    // 안 풀렸을 때 "잠시 문제가 생겼어요"로 끝내면 무엇을 해야 하는지 알 길이 없다.
-    const payment = await repo.createPayment({
-      paymentId,
-      provider: "mock",
-      userId: user.id,
-      reportSlug: report.slug,
-      readingId: reading.id,
-      amount: 0,
-    }).catch((error) => {
-      console.error("[payments] 운영자 0원 주문 생성 실패", error);
-      throw new AppError(500, "ADMIN_FREE_UNAVAILABLE",
-        "운영자 무료 발급을 쓰려면 supabase/migrations/0009_admin_free_payment.sql 을 먼저 실행해 주세요. (payments.amount 가 아직 0원을 막고 있어요)");
+    const order = { paymentId, provider: "mock" as const, userId: user.id, reportSlug: report.slug, readingId: reading.id };
+    const payment = await repo.createPayment({ ...order, amount: 0 }).catch(async (error) => {
+      console.warn("[payments] 0원 주문이 막혀 1원으로 발급합니다. 0009_admin_free_payment.sql 을 올리면 0원으로 남습니다.", error);
+      return repo.createPayment({ ...order, amount: 1 });
     });
     await repo.updatePayment(paymentId, {
       status: "paid",
