@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { STITCH_ASSETS } from "@/components/home/assets";
 import { Icon } from "@/components/ui/Icon";
+import { isAdmin } from "@/lib/admin/access";
 import { getCurrentUser, loginUrl } from "@/lib/auth/session";
 import { getRepository, type ReadingStatus } from "@/lib/db";
 import { modes } from "@/lib/env";
@@ -35,8 +36,17 @@ export default async function LibraryPage() {
           <span className="font-label-sm text-label-sm tracking-widest text-primary">MY LIBRARY</span>
           <h1 className="mt-0.5 font-headline-lg-mobile text-headline-lg-mobile text-on-surface">나의 보관함</h1>
         </div>
-        <span className="font-label-sm text-label-sm text-outline">
-          {user.displayName ?? "회원"}님 · {user.provider === "kakao" ? "카카오" : "개발용 계정"}
+        {/*
+          로그인 수단과 권한을 있는 그대로 적는다.
+
+          이메일로 들어온 계정까지 "개발용 계정"으로 찍고 있었다. 카카오가 아니면 전부
+          개발용으로 몰아 둔 탓인데, 운영자가 이메일로 로그인해 놓고 이 글자를 보면
+          로그인이 잘못된 줄 알게 된다. 운영자로 인식됐는지도 여기서 바로 보이게 한다 —
+          무료 발급이 되는지 결제창까지 가 보지 않아도 알 수 있다.
+        */}
+        <span className="flex items-center gap-1.5 font-label-sm text-label-sm text-outline">
+          {user.displayName ?? "회원"}님 · {user.provider === "kakao" ? "카카오" : user.provider === "email" ? "이메일" : "개발용 계정"}
+          {isAdmin(user) && <span className="rounded-full bg-tertiary/15 px-2 py-0.5 text-tertiary">운영자</span>}
         </span>
       </header>
 
