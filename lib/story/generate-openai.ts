@@ -152,8 +152,19 @@ export async function generateOpenAiReport(
   const instructions = buildReportSystemPrompt(product);
   const plan = chapterPlan(product);
   if (!plan.length) throw new Error("[report-quality] 상품 목차 누락");
-  // 열한 장도 한 응답에서 두 번 쓰지 않는다. 묶음마다 동일한 전체 명식·목차를 본다.
-  const batchSize = Math.ceil(plan.length / (plan.length > 15 ? 6 : 3));
+  /*
+    묶음은 장 수로 정한다.
+
+    전에는 장이 몇 개든 무조건 셋으로 쪼갰다. 세 장짜리 재물운 사주가 "한 장에 한 번"씩
+    세 번 호출되고 검수까지 네 번이 나갔다. 묶음마다 같은 명식 전체(30KB 남짓)를 다시
+    보내므로, 장 세 개를 쓰는 데 명식을 네 번 보낸 셈이다 — 그대로 돈이다.
+
+    한 번에 다섯 장까지 맡긴다. 장이 적은 상품은 초안 한 번으로 끝나고(호출 4→2),
+    많은 상품도 묶음이 줄어든다(열여섯 장 7→4). 한 응답이 맡는 장 수는 늘지만, 묶음마다
+    전체 목차를 함께 주는 구조는 그대로라 장끼리 주제가 겹치는 문제는 생기지 않는다.
+  */
+  const CHAPTERS_PER_CALL = 5;
+  const batchSize = Math.max(CHAPTERS_PER_CALL, Math.ceil(plan.length / 3));
   const batches = Array.from({ length: Math.ceil(plan.length / batchSize) }, (_, index) => plan.slice(index * batchSize, (index + 1) * batchSize));
   const controller = new AbortController();
   const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(240_000)]);

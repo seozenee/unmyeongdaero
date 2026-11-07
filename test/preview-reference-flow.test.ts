@@ -15,7 +15,9 @@ const profile = { name: "가상고객", birthYear: 1995, birthMonth: 5, birthDay
   birthMinute: 30, isFemale: true, isLunar: false, birthCity: "서울" };
 
 describe("참고 파일을 옮긴 개인 미리보기", () => {
-  it("모든 리포트에 읽을 본문·모자이크 분야·상세 목차가 있고 같은 입력의 글은 고정된다", () => {
+  // 쉰다섯 상품의 명식을 전부 세우고 판매 화면 자료까지 만든다. 5초 기본값으로는 모자라,
+  // 다른 파일과 함께 돌 때만 시간 초과로 떨어졌다(계산이 틀린 적은 없다).
+  it("모든 리포트에 읽을 본문·모자이크 분야·상세 목차가 있고 같은 입력의 글은 고정된다", { timeout: 30_000 }, () => {
     for (const product of (REPORTS as readonly ReportProduct[]).filter(p => p.kind === "report")) {
       const subject = { ...profile, birthYear: product.roles?.subject === "child" ? 2012 : 1995 };
       const modules = buildManseTopics([], subject, null, now).manse!.modules;

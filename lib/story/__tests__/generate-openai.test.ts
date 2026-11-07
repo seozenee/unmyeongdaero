@@ -122,7 +122,8 @@ describe("분할 작성 후 전체 검수", () => {
     call.mockImplementation(responder(source));
     const result = await generate();
     expect(result.sections[2]!.evidence[0]!.label).toBe("정미 세운");
-    expect(call).toHaveBeenCalledTimes(4);
+    // 세 장짜리 상품은 초안 한 번 + 검수 한 번. 장 다섯 개까지 한 묶음으로 맡긴다.
+    expect(call).toHaveBeenCalledTimes(2);
   });
 
   it("검수에서 근거를 빈 배열로 지워도 같은 작성 요청 안에서 한 번 보완한다", async () => {
@@ -137,7 +138,7 @@ describe("분할 작성 후 전체 검수", () => {
     });
     const result = await generate();
     expect(reviews).toBe(2);
-    expect(call).toHaveBeenCalledTimes(5);
+    expect(call).toHaveBeenCalledTimes(3);
     expect(result.sections[0]!.evidence).toEqual(draft.sections[0]!.evidence);
   });
 
@@ -174,13 +175,13 @@ describe("분할 작성 후 전체 검수", () => {
       return respond(input);
     });
     const result = await generate();
-    expect(call).toHaveBeenCalledTimes(5);
+    expect(call).toHaveBeenCalledTimes(3);
     expect(result.sections).toHaveLength(product.chapters.length);
   });
 
   it("인증 실패는 같은 호출을 자동 반복하지 않는다", async () => {
     call.mockRejectedValue(Object.assign(new Error("invalid key"), { status: 401 }));
     await expect(generate()).rejects.toThrow("invalid key");
-    expect(call).toHaveBeenCalledTimes(3);
+    expect(call).toHaveBeenCalledTimes(1);
   });
 });
