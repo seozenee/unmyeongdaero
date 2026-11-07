@@ -12,8 +12,18 @@ import { chapterPlan, resolveGeneratedReport } from "./generation-schema";
 import { briefingBeatSchema, evidenceSchema, reportSectionSchema, storyReportSchema } from "./report";
 import { env } from "@/lib/env";
 
-// 문체·근거 대조를 실제 가상 고객 풀이로 검증한 스냅샷. 다른 채팅 작업의 모델은 유지한다.
-const WRITING_MODEL = env.openaiReportModel ?? "gpt-5.5-2026-04-23";
+/*
+  풀이를 쓰는 모델.
+
+  한동안 기본값을 채팅 모델과 다른 비싼 모델로 못 박아 두었다. 풀이 한 편에 호출이
+  여러 번 나가는 데다 묶음마다 명식 전체를 다시 보내므로, 검수 한 번에 몇 달러가 나갔다.
+
+  기본값을 OPENAI_MODEL 과 같게 둔다. 풀이만 더 좋은 모델로 쓰고 싶으면
+  OPENAI_REPORT_MODEL 에 그 모델을 적으면 되고, 적지 않으면 나머지 기능과 같은 모델을 쓴다.
+  비싼 쪽이 기본이면 설정을 깜빡했을 때 돈이 새고, 싼 쪽이 기본이면 품질이 조금 내려간다 —
+  깜빡해서 새는 쪽이 더 나쁘다.
+*/
+const WRITING_MODEL = env.openaiReportModel ?? OPENAI_MODEL;
 
 /*
   쓰기 모델이 그 계정에서 열려 있지 않을 때.
