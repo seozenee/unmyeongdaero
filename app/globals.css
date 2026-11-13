@@ -590,7 +590,20 @@ body[data-stage-open="true"] > nav {
 .ds-finale { aspect-ratio:9/15; margin-top:40px; }.ds-finale + .ds-say { margin-top:-65px; }.ds-assurance { text-align:center; margin:0 22px 66px; }.ds-assurance > div { padding:30px 0; border-bottom:1px solid #673c3766; }.ds-assurance b { font-family:'GapyeongBrush','Song Myung',serif; font-size:29px; color:#e6c39b; }.ds-assurance p { color:#baa497; font-size:14px; line-height:1.8; margin:14px 0 0; }
 .ds-toc { padding:8px 20px; }.ds-toc-item { margin:0 0 22px; padding:24px 20px 20px; border:1px solid #81483f88; background:linear-gradient(130deg,#42201c66,#170b0d); }.ds-toc-item h3 { display:flex; gap:10px; margin:0 0 18px; font-family:'GapyeongBrush','Song Myung',serif; font-size:21px; font-weight:700; line-height:1.55; color:#e7d4bc; }.ds-toc-item h3 > span { flex-shrink:0; font-size:10px; margin-top:6px; color:#b4755c; }.ds-toc-item ul { list-style:none; margin:0; padding:0; }.ds-toc-item li { color:#b29b8d; margin:9px 0; font-size:13px; line-height:1.8; }.ds-toc-item li::before { content:'·'; margin-right:8px; color:#c98f70; }
 .ds-main-cta { display:flex; justify-content:center; align-items:center; gap:9px; margin:26px 20px 15px; padding:18px 12px; border:1px solid #ac5d62; border-radius:6px; background:linear-gradient(135deg,#8f3543,#632632); color:#fff1e8; font-size:17px; font-weight:700; box-shadow:0 0 32px #6d323d33; width:calc(100% - 40px); }.ds-main-cta:active { transform:scale(.985); }.ds-main-cta:disabled { opacity:.6; }.ds-footnote { margin:0 25px 22px; text-align:center; color:#b59b8c; font-size:11px; line-height:1.9; }.ds-font-credit { margin:44px 20px 0; text-align:center; color:#81695f; font-size:10px; }.ds-watch { display:block; margin:18px auto 0; padding:10px 12px; text-decoration:underline; text-underline-offset:4px; color:#bba391; font-size:12px; }
-.ds-preview-label { text-align:center; margin:0 24px 40px; padding:12px; color:#b79c8c; border-block:1px solid #6a3c3455; font-size:11px; line-height:1.8; }.ds-sticky-cta { position:sticky; z-index:25; bottom:calc(4rem + env(safe-area-inset-bottom,0px)); padding:18px 0 10px; background:linear-gradient(transparent,#100608 28%); margin-top:20px; }.ds-sticky-cta .ds-main-cta { margin-top:12px; margin-bottom:6px; }.ds-sticky-cta .ds-footnote { margin-bottom:0; }
+.ds-preview-label { text-align:center; margin:0 24px 40px; padding:12px; color:#b79c8c; border-block:1px solid #6a3c3455; font-size:11px; line-height:1.8; }
+.ds-sticky-cta {
+  position:fixed;
+  z-index:45;
+  inset-inline:0;
+  bottom:calc(4rem + env(safe-area-inset-bottom,0px));
+  width:min(100%,28rem);
+  margin-inline:auto;
+  padding:10px 20px;
+  border-top:1px solid rgb(var(--accent)/.25);
+  background:var(--ds-bg);
+}
+.ds-sticky-cta .ds-main-cta { width:100%; margin:0; padding:12px 16px; }
+main:has(.ds-sticky-cta) { padding-bottom:calc(10rem + env(safe-area-inset-bottom,0px)); }
 @keyframes ds-enter { from { transform:translateY(22px); } to { transform:translateY(0); } }
 @keyframes ds-petal { 0%,100% { transform:translateY(0) rotate(40deg); } 50% { transform:translateY(16px) rotate(75deg); } }
 @media (prefers-reduced-motion:reduce) { .destiny-sales *,.destiny-sales *::before,.destiny-sales *::after { animation:none !important; transition:none !important; } }
@@ -646,7 +659,6 @@ details[open] > summary .reading-card-chevron { transform:rotate(180deg); }
 .product-theme .ds-chapter { background:linear-gradient(90deg,transparent,rgb(var(--accent)/.15) 30%,rgb(var(--accent)/.15) 70%,transparent); border-color:rgb(var(--accent)/.25); }
 .product-theme .ds-card blockquote,.product-theme .ds-evidence,.product-theme .ds-input-check { border-color:rgb(var(--accent)/.35); }
 .product-theme .ds-card-body p.ds-emphasis,.product-theme .ds-pillar-grid .ds-day strong { color:rgb(var(--accent-ink)); }
-.product-theme .ds-sticky-cta { background:linear-gradient(transparent,rgb(var(--accent-deep)) 28%); }
 .product-theme .ds-domain-grid > div > span { border-color:rgb(var(--accent)/.45); color:rgb(var(--accent-ink)); background:radial-gradient(circle,rgb(var(--accent)/.14),transparent); }
 .product-theme #reading-purchase > div { background:rgb(var(--accent-deep)/.96); border:1px solid rgb(var(--accent)/.4); --tw-ring-color:transparent; border-radius:18px; }
 .product-theme .intake-choice:hover { border-color:rgb(var(--accent)/.7); background:rgb(var(--accent)/.12); }

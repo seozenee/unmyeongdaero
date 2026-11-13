@@ -1,13 +1,13 @@
 import type { MetadataRoute } from "next";
-import { listReports } from "@/lib/reports/catalog";
+import { loadReports } from "@/lib/reports/store";
 import { env } from "@/lib/env";
 
-const siteUrl = env.siteUrl;
+// Use the same published catalog as the storefront, including newly added products.
+export const dynamic = "force-dynamic";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const paths = ["/", "/consult", "/free/today", "/free/dohwa", "/free/mbti", "/terms", "/privacy", "/refund"];
-  return [...paths, ...listReports("report").map((report) => `/reports/${report.slug}`)].map((path) => ({
-    url: `${siteUrl}${path}`,
-    changeFrequency: "weekly",
-  }));
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const products = await loadReports("report");
+  const paths = ["/", "/search", "/consult", "/free/today", "/free/dohwa", "/free/mbti", "/terms", "/privacy", "/refund",
+    ...products.map((report) => `/reports/${encodeURIComponent(report.slug)}`)];
+  return [...new Set(paths)].map((path) => ({ url: new URL(path, env.siteUrl).toString() }));
 }

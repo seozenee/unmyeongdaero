@@ -13,7 +13,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 // GET /api/readings/:id — 생성 상태 폴링용
-export async function GET(_request: Request, { params }: { params: { id: string } }) {
+export async function GET(_request: Request, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = await paramsPromise;
   const user = await getCurrentUser();
   if (!user) return jsonError(401, "LOGIN_REQUIRED", "로그인이 필요해요.");
 
@@ -35,7 +36,8 @@ export async function GET(_request: Request, { params }: { params: { id: string 
 const contactSchema = z.object({ notifyPhone: notifyPhoneSchema.refine(Boolean, "휴대전화 번호를 입력해 주세요."), consent: z.literal(true) });
 
 // 본인이 구매한 풀이의 알림 번호만 바꿀 수 있다. 결제·권한·사주 입력은 변경하지 않는다.
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = await paramsPromise;
   const user = await getCurrentUser();
   if (!user) return jsonError(401, "LOGIN_REQUIRED", "로그인이 필요해요.");
   try {

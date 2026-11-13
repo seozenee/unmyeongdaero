@@ -2,8 +2,6 @@ import { outlookSchema } from "@/lib/manse/outlook";
 import { notFound } from "next/navigation";
 import { ReadingExperience } from "@/components/story/ReadingExperience";
 import { productAccent, productThemeStyle } from "@/lib/reports/accents";
-import { getReport } from "@/lib/reports/catalog";
-import { buildManseTopics } from "@/lib/manse";
 import { buildBasisFacts } from "@/lib/saju/basis";
 import {
   findCurrentDecadeIndex,
@@ -15,60 +13,21 @@ import {
   resolveCurrentAge,
 } from "@/lib/saju/modules";
 import { mergedGlossary, mergedModules } from "@/lib/sazu/readings";
-import { buildTemplateReport } from "@/lib/story/report-template";
-import type { BirthProfile, Reading } from "@/lib/db";
+import { getReadingPreview } from "@/lib/story/reading-preview";
 import { readingCardWindows } from "@/lib/story/cards";
-import { storyReportSchema } from "@/lib/story/report";
-import factbombBookPreview from "@/lib/story/__fixtures__/factbomb-book-preview.json";
-import destinyBookPreview from "@/lib/story/__fixtures__/destiny-book-preview.json";
 
 // 개발 환경 전용: 완성된 풀이 화면을 템플릿 보고서로 확인한다. (?slug=... 로 상품을 바꾼다)
 export const dynamic = "force-dynamic";
 
-const DEFAULT_SUBJECT: BirthProfile = {
-  name: "서하",
-  birthYear: 1998,
-  birthMonth: 5,
-  birthDay: 19,
-  birthHour: 9,
-  birthMinute: 30,
-  isFemale: true,
-  isLunar: false,
-  birthCity: "서울",
-};
-
-export default function ReadingPreviewPage({ searchParams }: { searchParams: { slug?: string; reference?: string } }) {
+export default async function ReadingPreviewPage({ searchParams: searchParamsPromise }: { searchParams: Promise<{ slug?: string; reference?: string }> }) {
+  const searchParams = await searchParamsPromise;
   if (process.env.NODE_ENV === "production") notFound();
 
-  const report = getReport(searchParams.slug ?? "destiny-full");
-  if (!report || report.kind !== "report") notFound();
-
-  const sample = report.slug === "factbomb" ? factbombBookPreview : report.slug === "destiny-full" ? destinyBookPreview : null;
-  const subject: BirthProfile = searchParams.reference === "sarang" ? {
-    name: "김사랑", birthYear: 2015, birthMonth: 6, birthDay: 26, birthHour: 16, birthMinute: 10,
-    isFemale: true, isLunar: false, birthCity: "서울",
-  } : sample?.subject ?? DEFAULT_SUBJECT;
-  const now = sample ? new Date(sample.referenceDate) : new Date();
-  const sazu = buildManseTopics(report.topics, subject, null, now);
-  const reading = {
-    id: "preview",
-    userId: "preview",
-    reportSlug: report.slug,
-    subject,
-    partner: null,
-    answers: {},
-    status: "ready",
-    sazu,
-    script: null,
-    error: null,
-    createdAt: now.toISOString(),
-    updatedAt: now.toISOString(),
-    generatedAt: now.toISOString(),
-    notifyPhone: null,
-    notifyConsentAt: null,
-    notifiedKind: null,
-    pdfPath: null,
-  } as Reading;
+  const preview = getReadingPreview(searchParams.slug, searchParams.reference);
+  if (!preview) notFound();
+  const { report, subject, sazu, now, script, templateMode } = preview;
+  const pdfQuery = new URLSearchParams({ slug: report.slug });
+  if (searchParams.reference) pdfQuery.set("reference", searchParams.reference);
 
   const modules = mergedModules(sazu);
   const decade = parseDecadeFortune(modules);
@@ -92,7 +51,8 @@ export default function ReadingPreviewPage({ searchParams }: { searchParams: { s
       partnerName={null}
       issuedAt={new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long", day: "numeric" }).format(now)}
       initialStatus="ready"
-      initialReport={sample ? storyReportSchema.parse(sample.report) : buildTemplateReport(report, reading, sazu, now)}
+      initialReport={script}
+      pdfUrl={`/dev/reading-preview/pdf?${pdfQuery}`}
       initialError={null}
       timingWindows={readingCardWindows(modules, new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(now), report)}
       panels={{
@@ -108,7 +68,7 @@ export default function ReadingPreviewPage({ searchParams }: { searchParams: { s
       glossary={mergedGlossary(sazu)}
       disclaimer={report.disclaimer}
       sample={false}
-      templateMode={!sample}
+      templateMode={templateMode}
     /></div>
   );
 }

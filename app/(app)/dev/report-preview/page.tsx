@@ -10,7 +10,8 @@ import {
 import { getReport } from "@/lib/reports/catalog";
 
 // 개발 환경 전용: 결과 화면 컴포넌트를 샘플 데이터로 확인한다. (?locked=1 → 페이월 상태)
-export default function ReportPreviewPage({ searchParams }: { searchParams: { locked?: string } }) {
+export default async function ReportPreviewPage({ searchParams: searchParamsPromise }: { searchParams: Promise<{ locked?: string }> }) {
+  const searchParams = await searchParamsPromise;
   if (process.env.NODE_ENV === "production") notFound();
 
   const report = getReport("reunion-deep")!;

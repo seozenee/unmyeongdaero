@@ -14,7 +14,8 @@ import { productThemeStyle } from "@/lib/reports/accents";
 
 export const dynamic = "force-dynamic";
 
-export default async function MansePreview({ searchParams }: { searchParams: { slug?: string; minor?: string; form?: string } }) {
+export default async function MansePreview({ searchParams: searchParamsPromise }: { searchParams: Promise<{ slug?: string; minor?: string; form?: string }> }) {
+  const searchParams = await searchParamsPromise;
   if (process.env.NODE_ENV === "production") notFound();
   const product = getReport(searchParams.slug ?? "destiny-full") ?? getReport("destiny-full")!;
   if (searchParams.form === "1") return <div className="product-theme" style={productThemeStyle(product.slug)}><StoryFunnel report={product} rememberProfile={false} /></div>;

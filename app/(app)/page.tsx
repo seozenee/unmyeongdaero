@@ -1,3 +1,4 @@
+import { publicPageMetadata, SITE_TITLE, SITE_DESCRIPTION, websiteSchema, serializeJsonLd } from "@/lib/seo/metadata";
 import { CategoryTabs } from "@/components/home/CategoryTabs";
 import { FaqSection } from "@/components/home/FaqSection";
 import { FreeInsightSection } from "@/components/home/FreeInsightSection";
@@ -7,6 +8,8 @@ import { MyChart } from "@/components/home/MyChart";
 import { CategoryRails } from "@/components/home/CategoryRails";
 import { QuickNeeds } from "@/components/home/QuickNeeds";
 import { loadReports } from "@/lib/reports/store";
+
+export const metadata = publicPageMetadata(SITE_TITLE, SITE_DESCRIPTION, "/");
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +41,8 @@ export default async function HomePage() {
 
   return (
     <div className="flex w-full flex-col pb-8">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(websiteSchema()) }} />
+      <h1 className="sr-only">운명대로 — 나를 이해하는 사주 리포트</h1>
       <CategoryTabs />
       <HeroCarousel products={products} />
       {/* 생일을 적은 적이 있으면 목록 대신 자기 원국부터 펼친다 */}

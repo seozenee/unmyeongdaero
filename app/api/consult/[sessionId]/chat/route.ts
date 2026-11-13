@@ -26,7 +26,8 @@ function lastUserText(messages: UIMessage[] | undefined) {
 
 // POST /api/consult/:sessionId/chat — useChat(DefaultChatTransport) 호환 UI 메시지 스트림.
 // 대화 기록은 클라이언트가 보낸 목록이 아니라 DB 에 저장된 기록을 기준으로 삼는다.
-export async function POST(request: Request, { params }: { params: { sessionId: string } }) {
+export async function POST(request: Request, { params: paramsPromise }: { params: Promise<{ sessionId: string }> }) {
+  const params = await paramsPromise;
   const user = await getCurrentUser();
   if (!user) return jsonError(401, "LOGIN_REQUIRED", "로그인이 필요해요.");
 

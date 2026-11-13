@@ -1,12 +1,10 @@
+import { publicPageMetadata } from "@/lib/seo/metadata";
 import { SearchCatalog } from "@/components/home/SearchCatalog";
 import { loadReports } from "@/lib/reports/store";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "풀이 찾기 — 운명대로",
-  description: "재회·궁합·이직·건강. 궁금한 말로 찾으면 그 자리로 데려다 줘요.",
-};
+export const metadata = publicPageMetadata("사주 풀이 찾기 | 운명대로", "연애와 궁합, 재회, 재물, 직업과 자녀의 미래까지. 지금 궁금한 주제에 맞는 사주 리포트를 찾아보세요.", "/search");
 
 /**
  * 찾는 자리.

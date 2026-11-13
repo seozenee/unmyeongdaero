@@ -22,11 +22,11 @@ function adminEmails(): string[] {
 }
 
 export function isAdmin(user: AppUser | null): boolean {
-  if (!user?.email) return false;
-  const allowed = adminEmails();
-  // 목록이 비어 있으면 아무도 들어오지 못한다. 설정을 깜빡했을 때 전부 열리는 것보다 낫다.
-  if (allowed.length === 0) return false;
-  return allowed.includes(user.email.toLowerCase());
+  return isAdminEmail(user?.email);
+}
+
+export function isAdminEmail(email: string | null | undefined): boolean {
+  return Boolean(email && adminEmails().includes(email.toLowerCase()));
 }
 
 /** 운영자가 아니면 404. 로그인 화면으로 보내지 않는 건, 이 주소의 존재 자체를 알리지 않기 위해서다 */

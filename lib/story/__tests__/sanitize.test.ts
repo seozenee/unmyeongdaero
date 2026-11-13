@@ -37,6 +37,18 @@ describe("soften · 고객이 읽을 문장에서 걷어내야 하는 것", () =
     expect(cleaned.count).toBe(2);
     expect(readableSourceNames(cleaned)).toEqual(cleaned);
   });
+
+  it("타고난 기운·재물·해마다의 흐름을 한국어로 보여 주면서 타임라인 분류는 유지한다", () => {
+    const input = {
+      evidence: "sinStrength와 재물 carryCapacity를 보면, seun에서 2026년 병오가 good 톤, 2027년 정미가 neutral로 나타나요.",
+      timeline: [{ tone: "caution", note: "이 시기는 caution 톤이에요." }],
+    };
+    for (const clean of [readableSourceNames, softenDeep]) {
+      const report = clean(input);
+      expect(report.evidence).toBe("타고난 기운의 강약과 돈을 벌고 지켜 나가는 힘을 보면, 해마다 달라지는 흐름에서 2026년은 흐름이 받쳐 주는 때, 2027년은 흐름이 고른 때로 나타나요.");
+      expect(report.timeline).toEqual([{ tone: "caution", note: "이 시기는 한 번 더 살펴볼 때예요." }]);
+    }
+  });
 });
 
 describe("softenDeep · AI 가 만든 보고서 전체를 훑는다", () => {

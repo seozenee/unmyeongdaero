@@ -22,7 +22,7 @@ vi.mock("@/lib/ai/openai", () => ({ callOpenAi: vi.fn(() => new Promise(() => {}
 
 describe("결제 전 첫 화면", () => {
   it("AI를 호출하지 않고 완성된 미리보기와 구매 패널을 함께 돌려준다", async () => {
-    const page = await MansePage({ params: { id: "sample-reading" }, searchParams: {} });
+    const page = await MansePage({ params: Promise.resolve({ id: "sample-reading" }), searchParams: Promise.resolve({}) });
     const children = Children.toArray(page.props.children).filter(isValidElement);
     const preview = children.find(child => child.type === ReadingWebtoon);
     expect(preview).toBeTruthy();

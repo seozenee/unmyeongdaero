@@ -40,7 +40,7 @@ export async function getCurrentUser(): Promise<AppUser | null> {
   if (isLandingOnly) return null;
 
   if (modes.data() === "supabase") {
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -58,7 +58,7 @@ export async function getCurrentUser(): Promise<AppUser | null> {
     };
   }
 
-  const userId = readDevSession(cookies().get(DEV_SESSION_COOKIE)?.value);
+  const userId = readDevSession((await cookies()).get(DEV_SESSION_COOKIE)?.value);
   return userId
     ? { id: userId, displayName: "개발용 사용자", avatarUrl: null, provider: "dev", email: "dev@localhost" }
     : null;

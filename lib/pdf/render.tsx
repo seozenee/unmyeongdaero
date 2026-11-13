@@ -1,3 +1,4 @@
+/** @jsxImportSource @/lib/pdf/react-runtime */
 import { outlookSchema } from "@/lib/manse/outlook";
 import "server-only";
 
@@ -18,6 +19,7 @@ import type { ReportProduct } from "@/lib/reports/catalog";
 import { parseElementCounts, parseFourPillars } from "@/lib/saju/modules";
 import { mergedModules } from "@/lib/sazu/readings";
 import type { StoryReport } from "@/lib/story/report";
+import { readableSourceNames } from "@/lib/story/sanitize";
 import { registerFonts } from "./fonts";
 import { ReportDocument } from "./ReportDocument";
 import type { PillarCell } from "./parts";
@@ -146,6 +148,7 @@ export interface RenderReportPdfInput {
 export async function renderReportPdf(input: RenderReportPdfInput): Promise<Buffer> {
   registerFonts();
 
+  const report = readableSourceNames(input.report);
   const modules = mergedModules(input.sazu);
   const cells = pillarCells(modules);
   const parsed = parseFourPillars(modules);
@@ -156,14 +159,14 @@ export async function renderReportPdf(input: RenderReportPdfInput): Promise<Buff
   return renderToBuffer(
     <ReportDocument
       outlook={(["life", "destiny-full", "factbomb"].includes(input.product.slug) || input.product.bundle?.items.some(slug => ["life", "destiny-full", "factbomb"].includes(slug))) ? outlookSchema.safeParse(modules.actionableOutlook).data : undefined}
-      report={input.report}
+      report={report}
       productTitle={input.product.title}
       categoryLabel={input.product.categoryLabel}
       subject={input.subject}
       pillars={cells}
       chartLine={chartLine}
       elements={elementRows(modules)}
-      glossary={usedGlossary(input.report, chartTerms(cells))}
+      glossary={usedGlossary(report, chartTerms(cells))}
       issuedAt={ISSUED.format(input.issuedAt ?? new Date())}
       disclaimer={input.product.disclaimer}
     />,

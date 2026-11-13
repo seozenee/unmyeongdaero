@@ -80,10 +80,9 @@ function toProduct(row: Row): ReportProduct | null {
   });
 }
 
-async function dbRows(options: { includeHidden?: boolean } = {}): Promise<Row[]> {
+async function dbRows(): Promise<Row[]> {
   if (modes.data() !== "supabase") return [];
-  let query = getSupabaseAdmin().from("reports").select("*");
-  if (!options.includeHidden) query = query.eq("is_active", true);
+  const query = getSupabaseAdmin().from("reports").select("*");
   const { data, error } = await query;
   if (error) {
     // DB 가 흔들려도 가게는 열려 있어야 한다 — 코드 쪽 상품으로 돈다
@@ -101,13 +100,13 @@ export async function loadReports(
   const merged = new Map<string, ReportProduct>();
   for (const report of REPORTS as readonly ReportProduct[]) merged.set(report.slug, report);
 
-  const rows = await dbRows(options);
+  const rows = await dbRows();
   const hidden = new Set<string>();
   for (const row of rows) {
     const slug = str(row.slug);
     if (!slug) continue;
     // is_active=false 인 행은 코드에 있어도 내린다
-    if (row.is_active === false) {
+    if (row.is_active === false && !options.includeHidden) {
       hidden.add(slug);
       continue;
     }

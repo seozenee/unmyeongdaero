@@ -1,112 +1,75 @@
 import Link from "next/link";
-import { listProductSales, loadSummary } from "@/lib/admin/queries";
+import { AdminBadge, adminDate, AdminEmpty, AdminPageTitle } from "@/components/admin/AdminView";
+import { Icon } from "@/components/ui/Icon";
+import { requireAdmin } from "@/lib/admin/access";
+import { listPayments, listProductSales, loadSummary } from "@/lib/admin/queries";
 import { formatKRW } from "@/lib/format";
 
-export const dynamic = "force-dynamic";
+const number = new Intl.NumberFormat("ko-KR");
 
 export default async function AdminHome() {
-  const [summary, sales] = await Promise.all([loadSummary(), listProductSales()]);
+  await requireAdmin();
+  const [summary, sales, latest] = await Promise.all([
+    loadSummary(), listProductSales(), listPayments({ status: "paid", realOnly: true, limit: 5 }),
+  ]);
+  const stats = [
+    { label: "오늘 결제액", value: formatKRW(summary.today.revenue), note: `결제 ${summary.today.paidCount}건`, icon: "payments", href: "/admin/payments?status=paid" },
+    { label: "최근 7일 결제액", value: formatKRW(summary.week.revenue), note: `결제 ${summary.week.paidCount}건`, icon: "monitoring", href: "/admin/payments?status=paid" },
+    { label: "결제 진행 중", value: `${number.format(summary.pendingPayments)}건`, note: "주문 상태 확인", icon: "hourglass_top", href: "/admin/payments?status=pending" },
+    { label: "생성 실패", value: `${number.format(summary.readings.failed)}건`, note: "풀이 상태 확인", icon: "error", href: "/admin/readings?status=failed" },
+  ];
+  const maxRevenue = Math.max(1, ...summary.daily.map(({ revenue }) => revenue));
+  return <div className="admin-page">
+    <AdminPageTitle title="운영 현황" description="결제와 풀이 진행 상황을 한눈에 확인하세요.">
+      <Link className="admin-button" href="/admin/notifications"><Icon name="notifications" /> 결제 알림 설정</Link>
+    </AdminPageTitle>
+    {!summary.available && <p className="admin-notice">로컬 미리보기입니다. 운영 데이터베이스에 연결하면 실제 결제와 풀이 현황이 표시돼요.</p>}
 
-  if (!summary.available) {
-    return (
-      <p className="rounded-lg bg-surface-container p-space-lg font-body-md text-body-md text-on-surface-variant">
-        Supabase 가 연결되지 않아 집계를 읽을 수 없어요. 로컬 개발 환경에서는 운영 화면이 비어 있습니다.
-      </p>
-    );
-  }
+    <section className="admin-stat-grid" aria-label="운영 지표">
+      {stats.map((stat) => <Link key={stat.label} className="admin-stat" href={stat.href}>
+        <span className="admin-stat-top">{stat.label}<Icon name={stat.icon} /></span>
+        <strong>{summary.available ? stat.value : "—"}</strong>
+        <span>{summary.available ? stat.note : "미연결"}</span>
+      </Link>)}
+    </section>
 
-  return (
-    <div className="flex flex-col gap-space-xl">
-      <section>
-        <h1 className="mb-space-md font-headline-md text-headline-md">오늘</h1>
-        <div className="grid grid-cols-2 gap-space-md md:grid-cols-4">
-          <Stat label="오늘 매출" value={formatKRW(summary.today.revenue)} note={`${summary.today.paidCount}건`} />
-          <Stat label="최근 7일" value={formatKRW(summary.week.revenue)} note={`${summary.week.paidCount}건`} />
-          <Stat label="구매한 사람" value={`${summary.users}명`} note="누적" />
-          <Stat
-            label="결제 진행 중"
-            value={`${summary.pendingPayments}건`}
-            note={summary.pendingPayments > 0 ? "결제창에서 멈춘 건" : "없음"}
-            tone={summary.pendingPayments > 0 ? "warn" : undefined}
-          />
+    <div className="admin-dashboard-grid">
+      <section className="admin-panel">
+        <header className="admin-panel-heading"><div><h2>최근 7일 결제</h2><p>한국 시간 기준 · 실제 승인 금액</p></div><Icon name="monitoring" /></header>
+        {summary.available ? <ul className="admin-revenue-chart" aria-label="최근 7일 날짜별 결제액">
+          {summary.daily.map(({ date, count, revenue }) => <li key={date}>
+            <span className="sr-only">{date} {count}건 {formatKRW(revenue)}</span>
+            <span className="admin-chart-track" aria-hidden="true" title={`${date} · ${formatKRW(revenue)}`}>
+              <span style={{ height: `${revenue / maxRevenue * 100}%` }} />
+            </span>
+            <small aria-hidden="true">{date.slice(5).replace("-", "/")}</small>
+          </li>)}
+        </ul> : <AdminEmpty>결제 추이를 불러오려면 운영 데이터 연결이 필요해요.</AdminEmpty>}
+      </section>
+      <section className="admin-panel">
+        <header className="admin-panel-heading"><div><h2>풀이 상태</h2><p>최근 운영 내역 기준</p></div><Link className="admin-text-link" href="/admin/readings">전체 보기 <Icon name="arrow_forward" /></Link></header>
+        <div className="admin-reading-grid">
+          {([{ state: "ready", label: "완료", tone: "positive" }, { state: "generating", label: "생성 중", tone: "warning" }, { state: "failed", label: "실패", tone: "negative" }, { state: "draft", label: "결제 전", tone: "muted" }] as const)
+            .map(({ state, label, tone }) => <Link key={state} href={`/admin/readings?status=${state}`}>
+              <AdminBadge tone={tone}>{label}</AdminBadge><strong>{summary.available ? number.format(summary.readings[state]) : "—"}</strong>
+            </Link>)}
         </div>
       </section>
-
-      <section>
-        <h2 className="mb-space-md font-headline-md text-headline-md">풀이 상태</h2>
-        <div className="grid grid-cols-2 gap-space-md md:grid-cols-4">
-          <Stat label="완료" value={`${summary.readings.ready}`} />
-          <Stat
-            label="생성 중"
-            value={`${summary.readings.generating}`}
-            note={summary.readings.generating > 0 ? "오래 머물면 확인 필요" : undefined}
-          />
-          <Stat
-            label="실패"
-            value={`${summary.readings.failed}`}
-            tone={summary.readings.failed > 0 ? "error" : undefined}
-            href={summary.readings.failed > 0 ? "/admin/readings?status=failed" : undefined}
-          />
-          <Stat label="결제 전" value={`${summary.readings.draft}`} note="입력만 한 건" />
-        </div>
+      <section className="admin-panel">
+        <header className="admin-panel-heading"><div><h2>최근 승인 주문</h2><p>승인 시각이 최근인 순서</p></div><Link className="admin-text-link" href="/admin/payments">전체 보기 <Icon name="arrow_forward" /></Link></header>
+        {latest.length ? <ul className="admin-list">{latest.map((payment) => <li key={payment.paymentId}>
+          <Link href={`/admin/payments?${new URLSearchParams({ order: payment.paymentId })}`}>
+            <span><strong>{payment.reportTitle}</strong><small>{adminDate(payment.paidAt)}</small></span>
+            <b>{formatKRW(payment.amount)}</b>
+          </Link>
+        </li>)}</ul> : <AdminEmpty>표시할 승인 주문이 없어요.</AdminEmpty>}
       </section>
-
-      <section>
-        <h2 className="mb-space-md font-headline-md text-headline-md">무엇이 팔리나</h2>
-        {sales.length === 0 ? (
-          <p className="font-body-sm text-body-sm text-outline">아직 결제된 건이 없어요.</p>
-        ) : (
-          <table className="w-full border-collapse text-left">
-            <thead>
-              <tr className="border-b border-outline-variant/30 font-label-sm text-label-sm text-outline">
-                <th className="py-space-sm font-normal">상품</th>
-                <th className="py-space-sm text-right font-normal">건수</th>
-                <th className="py-space-sm text-right font-normal">매출</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sales.map((row) => (
-                <tr key={row.title} className="border-b border-outline-variant/15">
-                  <td className="py-space-sm font-body-sm text-body-sm">{row.title}</td>
-                  <td className="py-space-sm text-right font-body-sm text-body-sm text-on-surface-variant">{row.count}</td>
-                  <td className="py-space-sm text-right font-label-sm text-label-sm">{formatKRW(row.revenue)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      <section className="admin-panel">
+        <header className="admin-panel-heading"><div><h2>상품별 판매</h2><p>실제 결제액이 높은 상품</p></div><Link className="admin-text-link" href="/admin/products">상품 관리 <Icon name="arrow_forward" /></Link></header>
+        {sales.length ? <ul className="admin-list">{sales.slice(0, 5).map((sale) => <li key={sale.slug}>
+          <div><span><strong>{sale.title}</strong><small>{number.format(sale.count)}건</small></span><b>{formatKRW(sale.revenue)}</b></div>
+        </li>)}</ul> : <AdminEmpty>표시할 판매 내역이 없어요.</AdminEmpty>}
       </section>
     </div>
-  );
-}
-
-function Stat({
-  label, value, note, tone, href,
-}: {
-  label: string;
-  value: string;
-  note?: string;
-  tone?: "warn" | "error";
-  href?: string;
-}) {
-  const body = (
-    <div className="flex flex-col gap-1 rounded-lg bg-surface-container p-space-md">
-      <span className="font-label-sm text-label-sm text-outline">{label}</span>
-      <span
-        className={`font-headline-md text-headline-md ${
-          tone === "error" ? "text-error" : tone === "warn" ? "text-tertiary" : "text-on-surface"
-        }`}
-      >
-        {value}
-      </span>
-      {note && <span className="font-label-sm text-label-sm text-on-surface-variant">{note}</span>}
-    </div>
-  );
-  return href ? (
-    <Link href={href} className="transition-opacity hover:opacity-80">
-      {body}
-    </Link>
-  ) : (
-    body
-  );
+  </div>;
 }

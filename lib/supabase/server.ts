@@ -5,11 +5,11 @@ import { cookies } from "next/headers";
 import { env, ServiceNotConfiguredError } from "@/lib/env";
 
 /** 사용자 세션(쿠키) 기반 클라이언트 — 로그인·세션 조회용 */
-export function createSupabaseServerClient() {
+export async function createSupabaseServerClient() {
   if (!env.supabaseUrl || !env.supabaseAnonKey) {
     throw new ServiceNotConfiguredError("Supabase", ["SUPABASE_URL", "SUPABASE_ANON_KEY"]);
   }
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
 
   return createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
     cookies: {

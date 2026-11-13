@@ -13,12 +13,14 @@ import type { ReadingStatus } from "@/lib/db/types";
 import type { BasisFact } from "@/lib/saju/basis";
 import { getGuide, type GuideId } from "@/lib/story/guides";
 import { isCompleteReport, storyReportSchema, type PartialStoryReport, type StoryReport } from "@/lib/story/report";
+import { readableSourceNames } from "@/lib/story/sanitize";
 import { josa } from "@/lib/text/josa";
 import { ReadingNotificationForm } from "./ReadingNotificationForm";
 import type { ReadingCardWindows } from "@/lib/story/cards";
 
 interface ReadingExperienceProps {
   readingId: string;
+  pdfUrl?: string;
   /** 이 상품의 색 ("R G B"). 결과 화면의 라벨·선·근거 테두리가 모두 이 색을 쓴다 */
   accent: string;
   guideId: GuideId;
@@ -75,7 +77,7 @@ export function ReadingExperience(props: ReadingExperienceProps) {
   const stripAsset = getWebtoonAsset(guide.id, "intro-4");
   const coverAsset = getWebtoonAsset(guide.id, "report-cover");
   const [finalReport, setFinalReport] = useState<StoryReport | null>(props.initialReport);
-  const [failure, setFailure] = useState<string | null>(props.initialStatus === "failed" ? props.initialError : null);
+  const [failure, setFailure] = useState<string | null>(!props.initialReport && props.initialStatus === "failed" ? props.initialError : null);
   // 다시 눌러서 풀릴 실패인지. 모르면 지금까지처럼 재시도를 보여 준다.
   const [canRetry, setCanRetry] = useState(true);
   const [polling, setPolling] = useState(false);
@@ -93,22 +95,25 @@ export function ReadingExperience(props: ReadingExperienceProps) {
    * 표가 반으로 잘리고, 모바일 카카오톡 브라우저에서는 아예 인쇄창이 뜨지 않는다.
    */
   const [downloading, setDownloading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const pdfUrl = props.pdfUrl ?? `/api/readings/${encodeURIComponent(props.readingId)}/pdf`;
   const downloadPdf = useCallback(async () => {
     setDownloading(true);
+    setPdfError(null);
     try {
-      const response = await fetch(`/api/readings/${props.readingId}/pdf`, { cache: "no-store" });
+      const response = await fetch(pdfUrl, { cache: "no-store" });
 
       // 서버가 왜 안 됐는지 말해 주면 그대로 보여 준다.
       //
       // 전에는 응답을 보지 않고 한 문장으로 덮었다. "문제가 생겼어요"만 남으니 손님은
       // 다시 눌러 볼 수밖에 없고, 우리도 로그인이 풀린 것인지 풀이가 덜 된 것인지
       // 서버가 터진 것인지 알 수 없었다. 같은 신고를 세 번 받고도 원인을 못 찾은 이유다.
-      if (!response.ok) {
+      if (!response.ok || !response.headers.get("content-type")?.startsWith("application/pdf")) {
         const body = (await response.json().catch(() => null)) as
           | { error?: { code?: string; message?: string } }
           | null;
         const code = body?.error?.code;
-        setFailure(
+        setPdfError(
           body?.error?.message ??
             (code ? `PDF 를 만들지 못했어요. (${code})` : `PDF 를 만들지 못했어요. (${response.status})`),
         );
@@ -120,17 +125,19 @@ export function ReadingExperience(props: ReadingExperienceProps) {
       const link = document.createElement("a");
       link.href = url;
       link.download = `${props.title}.pdf`;
+      document.body.append(link);
       link.click();
+      link.remove();
       // 곧바로 지우면 내려받기가 시작되기 전에 취소되는 브라우저가 있다
       setTimeout(() => URL.revokeObjectURL(url), 10_000);
     } catch (error) {
       // 여기까지 오는 것은 네트워크가 끊긴 경우다 — 서버는 아무 말도 하지 않았다
       console.error("[pdf] 내려받기 실패", error);
-      setFailure("연결이 끊겼어요. 잠시 뒤 다시 시도해 주세요.");
+      setPdfError("PDF를 받는 중 연결이 끊겼어요. 잠시 뒤 다시 시도해 주세요.");
     } finally {
       setDownloading(false);
     }
-  }, [props.readingId, props.title]);
+  }, [pdfUrl, props.title]);
 
   const refreshStatus = useCallback(async () => {
     const response = await fetch(`/api/readings/${props.readingId}`, { cache: "no-store" });
@@ -143,6 +150,7 @@ export function ReadingExperience(props: ReadingExperienceProps) {
     };
     if (body.status === "ready" && isCompleteReport(body.script)) {
       setFinalReport(body.script);
+      setFailure(null);
       setPolling(false);
     } else if (body.status === "failed") {
       setFailure(body.error ?? "풀이를 쓰는 중 문제가 생겼어요.");
@@ -245,6 +253,9 @@ export function ReadingExperience(props: ReadingExperienceProps) {
             </Link>
           </div>
         </div>
+        {pdfError && <p role="status" className="my-space-sm rounded-lg bg-surface-container p-space-md text-sm">
+          {pdfError} <a href={pdfUrl} target="_blank" rel="noreferrer" className="underline">PDF 주소 열기</a>
+        </p>}
         {(props.sample || props.templateMode) && <DevNotice sample={props.sample} templateMode={props.templateMode} />}
         {props.calendarRepair && <CalendarRepairNotice done />}
         {props.scopeRepair && <ScopeRepairNotice done />}
@@ -332,7 +343,7 @@ export function ReadingExperience(props: ReadingExperienceProps) {
             return (
               <NarrationLine
                 key={index}
-                text={beat.text}
+                text={readableSourceNames(beat.text)}
                 animate={animate}
                 streaming={streaming}
                 onTyped={animate ? (streaming ? advance : onBeatTyped) : undefined}
@@ -344,7 +355,7 @@ export function ReadingExperience(props: ReadingExperienceProps) {
             <GuideBubble
               key={index}
               guide={guide}
-              text={beat.text}
+              text={readableSourceNames(beat.text)}
               showName={index === 0 || beats[index - 1]?.speaker === "narration"}
               animate={animate}
               streaming={streaming}

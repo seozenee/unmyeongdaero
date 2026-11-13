@@ -7,7 +7,7 @@ import { getCurrentUser, safeNextPath } from "@/lib/auth/session";
 import { modes } from "@/lib/env";
 import { getGuide } from "@/lib/story/guides";
 
-export const metadata: Metadata = { title: "로그인" };
+export const metadata: Metadata = { title: "로그인", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -21,7 +21,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   unavailable: "지금은 이메일 로그인을 쓸 수 없어요.",
 };
 
-export default async function LoginPage({ searchParams }: { searchParams: { next?: string; error?: string } }) {
+export default async function LoginPage({ searchParams: searchParamsPromise }: { searchParams: Promise<{ next?: string; error?: string }> }) {
+  const searchParams = await searchParamsPromise;
   const next = safeNextPath(searchParams.next);
   if (await getCurrentUser()) redirect(next);
 
@@ -35,9 +36,9 @@ export default async function LoginPage({ searchParams }: { searchParams: { next
       <div className="flex flex-col gap-space-xs">
         <h1 className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">운명대로에 오신 걸 환영해요</h1>
         <p className="font-body-md text-body-md text-on-surface-variant">
-          구매한 리포트와 상담 기록은 계정 보관함에
+          나를 위한 풀이와 상담 기록을
           <br />
-          12개월 동안 안전하게 남아요.
+          보관함에서 다시 만나보세요.
         </p>
       </div>
 

@@ -13,7 +13,8 @@ const STREAM_HEADERS = {
 };
 
 // POST /api/readings/:id/generate — 이야기 대본 JSON 을 텍스트 스트림으로 흘려보낸다(useObject 가 부분 파싱)
-export async function POST(_request: Request, { params }: { params: { id: string } }) {
+export async function POST(_request: Request, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = await paramsPromise;
   const user = await getCurrentUser();
   if (!user) return jsonError(401, "LOGIN_REQUIRED", "로그인이 필요해요.");
 

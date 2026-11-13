@@ -20,17 +20,9 @@ import type { ReportProduct } from "@/lib/reports/catalog";
 import { describeBirth, fillName } from "@/lib/story/format";
 import { buildFunnel, type FunnelStep } from "@/lib/story/funnel";
 import { getGuide } from "@/lib/story/guides";
+import { clearPendingIntake, readPendingIntake, savePendingIntake, type PendingIntake } from "@/lib/story/pending-intake";
 import { josa } from "@/lib/text/josa";
 import type { Camera, FigurePose, Place } from "@/lib/story/webtoon";
-
-interface SavedState {
-  cursor: number;
-  subject: BirthProfile | null;
-  partner: BirthProfile | null;
-  answers: Record<string, string>;
-  notifyPhone?: string;
-  offerSlug?: string;
-}
 
 interface Scene {
   place: Place;
@@ -40,7 +32,6 @@ interface Scene {
   sfx?: string;
 }
 
-const storageKey = (slug: string) => `sazudaero:funnel2:${slug}`;
 const BASE_SCENE: Scene = { place: "room", camera: "close", figure: "close", asset: "intro-5" };
 
 /** 양식이 누구의 생일을 묻는지 — 묻는 문장과 안내가 여기서 갈린다 */
@@ -131,6 +122,8 @@ export function StoryFunnel({
   initialReading = null,
   customerName = null,
   freeIssue = false,
+  signedIn = false,
+  resumeToken,
 }: {
   report: ReportProduct;
   related?: ReportProduct[];
@@ -141,7 +134,9 @@ export function StoryFunnel({
   /** 로컬 검토 화면에서는 기존 내 프로필을 바꾸지 않는다. */
   rememberProfile?: boolean;
   customerName?: string | null;
-  initialReading?: Pick<Reading, "id" | "reportSlug" | "subject" | "partner" | "answers"> | null;
+  initialReading?: Pick<Reading, "id" | "reportSlug" | "subject" | "partner" | "answers" | "notifyPhone"> | null;
+  signedIn?: boolean;
+  resumeToken?: string;
 }) {
   const report = useMemo(() => normalizeReportIdentity(incomingReport), [incomingReport]);
   const router = useRouter();
@@ -151,11 +146,12 @@ export function StoryFunnel({
   }, [report.title, incomingReport.title]);
   const guide = getGuide(report.guide);
   const steps = useMemo(() => buildFunnel(report), [report]);
-  const sound = useAmbientSound();
-
-  // 처음 열면 상품 소개. 손님이 무엇을 받는지 보고 들어가게 한다.
-  const [phase, setPhase] = useState<"story" | "chat" | "closed">("story");
-  const [cursor, setCursor] = useState(0);
+  const detailIndex = steps.findIndex(item => item.kind === "detail");
+  const [phase, setPhase] = useState<"story" | "chat" | "resuming" | "closed">(
+    initialReading ? "closed" : signedIn && resumeToken ? "resuming" : "story",
+  );
+  const sound = useAmbientSound(phase === "story" || phase === "chat");
+  const [cursor, setCursor] = useState(initialReading ? Math.max(0, detailIndex) : 0);
   const [scene, setScene] = useState<Scene>(BASE_SCENE);
   const [echo, setEcho] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -163,10 +159,10 @@ export function StoryFunnel({
   const [skipSignal, setSkipSignal] = useState(0);
   const [subject, setSubject] = useState<BirthProfile | null>(initialReading?.subject ?? null);
   const [partner, setPartner] = useState<BirthProfile | null>(initialReading?.partner ?? null);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [detail, setDetail] = useState("");
+  const [answers, setAnswers] = useState<Record<string, string>>(initialReading?.answers ?? {});
+  const [detail, setDetail] = useState(initialReading?.answers.detail ?? "");
   // 알림톡 받을 번호. 적지 않아도 되고, 적으면 다 쓴 뒤 카톡으로 알려 준다.
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(initialReading?.notifyPhone ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [offerSlug, setOfferSlug] = useState(initialReading?.reportSlug ?? report.slug);
@@ -174,47 +170,23 @@ export function StoryFunnel({
   const [preparedSlug, setPreparedSlug] = useState<string | null>(initialReading?.reportSlug ?? null);
   const [birthStep, setBirthStep] = useState(0);
   const checkoutIntent = useRef(false);
-  const detailEndReached = useRef(false);
+  const restoring = useRef(false);
+  const requestInFlight = useRef(false);
 
   const step: FunnelStep | undefined = steps[cursor];
   const name = subject?.name;
 
-  // 저장된 입력만 복원한다. 로그인 복귀·재방문도 반드시 상세페이지에서 시작한다.
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(storageKey(report.slug));
-      if (!raw) return;
-      const saved = JSON.parse(raw) as SavedState;
-      // 로그인 전에 제출을 마친 상태다. 질문 추가로 순서가 바뀌어도 마지막 확인 칸을 복원한다.
-      const detailIndex = steps.findIndex(item => item.kind === "detail");
-      setCursor(saved.subject && detailIndex >= 0 ? detailIndex : saved.cursor);
-      setSubject(saved.subject);
-      setPartner(saved.partner);
-      setAnswers(saved.answers);
-      setDetail(saved.answers.detail ?? "");
-      setPhone(saved.notifyPhone ?? "");
-      setOfferSlug(saved.offerSlug ?? report.slug);
-      setPhase("story");
-      setCheckoutOpen(false);
-    } catch {
-      // 저장소 접근 불가 → 처음부터
-    }
-  }, [report.slug, steps]);
-
-  useEffect(() => {
-    // 뒤로 가기에서 브라우저가 결제 직전 DOM을 그대로 복구한 경우에도 자동 노출하지 않는다.
-    const returnToDetail = () => {
+    // 결제창을 닫되, 뒤로 가기로 돌아온 맞춤 상세 화면과 읽던 위치는 유지한다.
+    const closeCheckout = () => {
       checkoutIntent.current = false;
-      detailEndReached.current = false;
-      setCheckoutOpen(false); setPhase("story");
-      window.scrollTo(0,0);
+      setCheckoutOpen(false);
     };
-    returnToDetail();
-    window.addEventListener("pageshow", returnToDetail);
-    window.addEventListener("pagehide", returnToDetail);
+    window.addEventListener("pageshow", closeCheckout);
+    window.addEventListener("pagehide", closeCheckout);
     return () => {
-      window.removeEventListener("pageshow", returnToDetail);
-      window.removeEventListener("pagehide", returnToDetail);
+      window.removeEventListener("pageshow", closeCheckout);
+      window.removeEventListener("pagehide", closeCheckout);
     };
   }, []);
 
@@ -292,22 +264,24 @@ export function StoryFunnel({
       }
     : undefined;
 
-  const jumpToBirth = (target: "subject" | "partner", message: string) => {
+  const jumpToBirth = useCallback((target: "subject" | "partner", message: string) => {
     const index = steps.findIndex((item) => item.kind === "birth" && item.target === target);
     setNotice(message);
     if (index >= 0) setCursor(index);
-  };
+  }, [steps]);
 
-  const submit = async (selectedSlug = offerSlug, reopenCheckout = false) => {
-    if (!subject || submitting) return;
+  const submit = useCallback(async (intake: PendingIntake, reopenCheckout = false) => {
+    if (requestInFlight.current) return;
+    requestInFlight.current = true;
     setSubmitting(true);
     setNotice(null);
+    const selectedSlug = intake.offerSlug ?? report.slug;
     const payload = {
       slug: selectedSlug,
-      subject,
-      partner,
-      answers: { ...answers, ...(detail.trim() ? { detail: detail.trim() } : {}) },
-      notifyPhone: phone.trim() || null,
+      subject: intake.subject,
+      partner: intake.partner,
+      answers: intake.answers,
+      notifyPhone: intake.notifyPhone?.trim() || null,
     };
 
     try {
@@ -319,12 +293,19 @@ export function StoryFunnel({
       const body = await response.json();
 
       if (response.status === 401 && body.error?.loginUrl) {
-        const saved: SavedState = { cursor, subject, partner, answers: payload.answers, notifyPhone: phone, offerSlug: selectedSlug };
-        sessionStorage.setItem(storageKey(report.slug), JSON.stringify(saved));
-        window.location.href = body.error.loginUrl;
+        const token = resumeToken ?? crypto.randomUUID();
+        if (!savePendingIntake(report.slug, token, intake)) {
+          setNotice("입력 내용을 임시 저장하지 못했어요. 브라우저 저장 설정을 확인해 주세요.");
+          setPhase("chat");
+          return;
+        }
+        const next = `/reports/${report.slug}?${new URLSearchParams({ resume: token })}`;
+        window.location.href = `/login?next=${encodeURIComponent(next)}`;
         return;
       }
       if (!response.ok) {
+        setCheckoutOpen(false);
+        setPhase("chat");
         const message: string = body.error?.message ?? "잠시 문제가 생겼어요. 다시 시도해 주세요.";
         if (body.error?.target === "subject" || body.error?.target === "partner") {
           jumpToBirth(body.error.target, message);
@@ -334,35 +315,76 @@ export function StoryFunnel({
         return;
       }
 
-      sessionStorage.removeItem(storageKey(report.slug));
-      setCheckoutReadingId(body.readingId); setPreparedSlug(selectedSlug);
-      setPhase("closed"); setCheckoutOpen(reopenCheckout && checkoutIntent.current && detailEndReached.current);
-      if (!reopenCheckout) window.scrollTo(0,0);
+      if (typeof body.readingId !== "string" || !body.readingId) throw new Error("Missing reading ID");
+      clearPendingIntake(report.slug, resumeToken);
+      const detailUrl = `/reports/${report.slug}?${new URLSearchParams({ reading: body.readingId })}`;
+      window.history.replaceState(null, "", detailUrl);
+      setCheckoutReadingId(body.readingId);
+      setPreparedSlug(selectedSlug);
+      setPhase("closed");
+      setCheckoutOpen(reopenCheckout && checkoutIntent.current);
+      if (!reopenCheckout) window.scrollTo(0, 0);
     } catch {
       setNotice("네트워크가 불안정해요. 다시 시도해 주세요.");
+      setCheckoutOpen(false);
+      setPhase("chat");
     } finally {
+      requestInFlight.current = false;
       setSubmitting(false);
     }
+  }, [jumpToBirth, report.slug, resumeToken]);
+
+  useEffect(() => {
+    if (initialReading || restoring.current) return;
+    restoring.current = true;
+    const saved = readPendingIntake(report.slug, resumeToken);
+    if (!saved) {
+      if (signedIn && resumeToken) setPhase("story");
+      return;
+    }
+
+    // 로그인 전에 제출한 입력을 그대로 사용한다. 실패해도 마지막 입력 칸에서 고칠 수 있다.
+    if (detailIndex >= 0) setCursor(detailIndex);
+    setSubject(saved.subject);
+    setPartner(saved.partner);
+    setAnswers(saved.answers);
+    setDetail(saved.answers.detail ?? "");
+    setPhone(saved.notifyPhone ?? "");
+    setOfferSlug(saved.offerSlug ?? report.slug);
+    if (signedIn) {
+      setPhase("resuming");
+      void submit(saved);
+    }
+  }, [detailIndex, initialReading, report.slug, resumeToken, signedIn, submit]);
+
+  const submitCurrent = (selectedSlug = offerSlug, reopenCheckout = false) => {
+    if (!subject) return;
+    const currentAnswers = { ...answers };
+    if (detail.trim()) currentAnswers.detail = detail.trim();
+    else delete currentAnswers.detail;
+    void submit({ subject, partner, answers: currentAnswers, notifyPhone: phone, offerSlug: selectedSlug }, reopenCheckout);
   };
 
-  if (phase === "story") return <WebtoonIntro report={report} owned={owned}
+  if (phase === "resuming") return <p className="py-20 text-center" role="status">입력하신 사주를 펼치고 있어요.</p>;
+
+  if (phase === "story") return <WebtoonIntro report={report} owned={owned} sound={sound}
     onClose={() => router.push("/")} onStart={() => {
-      checkoutIntent.current = false; detailEndReached.current = false; setCheckoutOpen(false);
+      checkoutIntent.current = false;
+      setCheckoutOpen(false);
       if (checkoutReadingId) setPhase("closed"); else startInput();
     }} />;
 
   const detailPage = phase === "closed" && checkoutReadingId ? <PersonalizedSales
     readingId={checkoutReadingId} report={report} onPurchase={() => {
-      detailEndReached.current = true;
       checkoutIntent.current = true;
       setCheckoutOpen(true);
     }} /> : null;
 
-  if (phase === "closed") return <>{detailPage}{checkoutOpen && detailEndReached.current && checkoutIntent.current && <PurchaseSheet
+  if (phase === "closed") return <>{detailPage}{checkoutOpen && <PurchaseSheet
     baseSlug={report.slug} selectedSlug={offerSlug} name={subject?.name ?? (customerName?.includes("@") ? undefined : customerName ?? undefined)}
     readingId={checkoutReadingId} preparedSlug={preparedSlug} busy={submitting} freeIssue={freeIssue}
     onSelect={setOfferSlug} onClose={() => { checkoutIntent.current = false; setCheckoutOpen(false); }}
-    onPrepare={slug => { setOfferSlug(slug); if (subject) void submit(slug, true); else { setCheckoutOpen(false); startInput(); } }}
+    onPrepare={slug => { setOfferSlug(slug); if (subject) submitCurrent(slug, true); else { setCheckoutOpen(false); startInput(); } }}
   />}</>;
 
   // ─ 대화 스테이지 ─
@@ -441,7 +463,7 @@ export function StoryFunnel({
           </div>
         </div>
             <div className="shrink-0 bg-[#050403] pt-2">
-            <StageAction tone="confirm" disabled={submitting} onClick={() => void submit()}>
+            <StageAction tone="confirm" disabled={submitting} onClick={() => submitCurrent()}>
               {submitting ? "구매 정보를 준비하는 중…" : "내 사주 확인하기"}
               {!submitting && <Icon name="arrow_forward" className="text-[18px]" />}
             </StageAction>
@@ -455,7 +477,7 @@ export function StoryFunnel({
       return (
         <div className="flex flex-col gap-space-sm rounded-xl bg-surface-container-lowest/92 p-space-md shadow-2xl ring-1 ring-outline-variant/40 backdrop-blur-xl motion-safe:animate-fade-up">
           {notificationField}
-          <StageAction tone="confirm" disabled={submitting} onClick={() => void submit()}>
+          <StageAction tone="confirm" disabled={submitting} onClick={() => submitCurrent()}>
             {submitting ? "명식을 확인하고 있어요…" : step.label}
             {!submitting && <Icon name="arrow_forward" className="text-[18px]" />}
           </StageAction>

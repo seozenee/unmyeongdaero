@@ -39,12 +39,14 @@ const str = (value: Json) => (typeof value === "string" && value.trim() ? value.
  * 생년월일을 잘못 넣고 결제까지 가 버리는 일을 막는다.
  */
 export default async function MansePage({
-  params,
-  searchParams,
+  params: paramsPromise,
+  searchParams: searchParamsPromise,
 }: {
-  params: { id: string };
-  searchParams: { error?: string };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
+  const params = await paramsPromise;
+  const searchParams = await searchParamsPromise;
   const self = `/readings/${params.id}/manse`;
   const user = await getCurrentUser();
   if (!user) redirect(loginUrl(self));

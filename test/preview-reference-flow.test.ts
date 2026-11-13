@@ -46,6 +46,7 @@ describe("참고 파일을 옮긴 개인 미리보기", () => {
     expect(html).toContain("남겨 주신 그 질문도");
     expect(html).toContain("&lt;script&gt;질문&lt;/script&gt;");
     expect(html).toContain("계산한 앞으로의 월별 흐름");
+    expect(html).toMatch(/class="ds-sticky-cta"><a[^>]*>전체 풀이 구매하기/);
     expect(html).not.toMatch(/\d+억|20\d{2}년 \d+월 \d+일에/);
   });
 });

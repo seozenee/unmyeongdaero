@@ -141,8 +141,11 @@ export async function getOwnedPurchasedReading(user: AppUser, readingId: string)
   if (!reading || reading.userId !== user.id) throw new AppError(404, "READING_NOT_FOUND", "풀이를 찾을 수 없어요.");
   const report = getReport(reading.reportSlug);
   if (!report || report.kind !== "report") throw new AppError(404, "REPORT_NOT_FOUND", "찾을 수 없는 상품이에요.");
-  const purchase = await repo.getPurchase(user.id, report.slug);
-  if (!purchase || purchase.readingId !== reading.id) {
+  const latest = await repo.getPurchase(user.id, report.slug);
+  const purchase = latest?.readingId === reading.id
+    ? latest
+    : (await repo.listPurchases(user.id)).find((item) => item.readingId === reading.id);
+  if (!purchase) {
     throw new AppError(402, "PAYMENT_REQUIRED", "열람권 구매 후 확인할 수 있어요.", {
       checkoutUrl: `/reports/${report.slug}?reading=${reading.id}`,
     });

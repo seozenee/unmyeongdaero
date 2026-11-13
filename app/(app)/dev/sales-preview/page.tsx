@@ -29,7 +29,8 @@ const ADULT: BirthProfile = {
 };
 const CHILD: BirthProfile = { ...ADULT, name: "하린", birthYear: 2015, birthMonth: 6, birthDay: 26, birthHour: 16, birthMinute: 10 };
 
-export default function SalesPreviewPage({ searchParams }: { searchParams: { slug?: string; child?: string } }) {
+export default async function SalesPreviewPage({ searchParams: searchParamsPromise }: { searchParams: Promise<{ slug?: string; child?: string }> }) {
+  const searchParams = await searchParamsPromise;
   if (process.env.NODE_ENV === "production") notFound();
 
   const report = getReport(searchParams.slug ?? "destiny-full");

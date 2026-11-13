@@ -1,6 +1,7 @@
+import { publicPageMetadata } from "@/lib/seo/metadata";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "환불규정 및 서비스 제공 안내" };
+export const metadata: Metadata = publicPageMetadata("환불규정 및 서비스 제공 안내 | 운명대로", "운명대로 사주 리포트의 제공 방식과 결제 취소, 환불 기준을 확인하세요.", "/refund");
 
 /**
  * 환불규정.

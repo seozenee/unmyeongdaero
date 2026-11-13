@@ -20,7 +20,7 @@ const require = createRequire(import.meta.url);
 const ROUTES = [
   "api/readings/[id]/pdf",
   "api/readings/[id]/generate",
-  "r/[token]",
+  "dev/reading-preview/pdf",
 ];
 
 /** exports 에서 조건을 따라 내려가 파일 하나를 고른다 */
@@ -74,12 +74,14 @@ const EXTERNAL = ["pdfkit", "fontkit", "@react-pdf/renderer"];
 const EXTRA = [
   { label: "pdfkit 표준 14서체", match: /pdfkit\/js\/standard-fonts\/Helvetica\.cjs$/ },
   { label: "한글 글꼴", match: /assets\/fonts\/Pretendard-Regular\.ttf$/ },
+  { label: "PDF용 React JSX 실행 파일", match: /node_modules\/react\/cjs\/react-jsx-runtime\.production(?:\.min)?\.js$/ },
 ];
 
 const problems = [];
 
 for (const route of ROUTES) {
-  const trace = path.join(".next/server/app", route, "route.js.nft.json");
+  const appPath = route.startsWith("dev/") ? "(app)" : "";
+  const trace = path.join(".next/server/app", appPath, route, "route.js.nft.json");
   if (!existsSync(trace)) {
     problems.push(`${route}: 추적 파일이 없다 (${trace}) — 길 이름이 바뀌었는가?`);
     continue;

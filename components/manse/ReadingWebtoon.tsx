@@ -1,6 +1,4 @@
 "use client";
-import { ScrollPurchaseCta } from "@/components/story/ScrollPurchaseCta";
-
 import { ProductSalesFocus } from "./ProductSalesFocus";
 import { salesFocusFor } from "@/lib/reports/sales-focus";
 import { Icon } from "@/components/ui/Icon";
@@ -206,16 +204,6 @@ function CinematicReadingWebtoon({ name, guide, poster, narrative, context, chap
     </SalesCard>}
 
     <SalesLockedCount count={topics.reduce((sum, topic) => sum + topic.rows.length, 0)} label={say("아직 가려 둔 풀이예요. 전체 풀이에서 하나씩 열려요.", "아직 가려 둔 풀이야. 전체 풀이에서 하나씩 열어줄게.")} />
-    {/* 여기까지 내려온 사람은 이미 사기로 마음이 기운 쪽이다. 끝까지 더 내려가게 하지 않는다. */}
-    <ScrollPurchaseCta>
-      <div className="ds-sticky-cta">
-        {onPurchase
-          ? <button type="button" onClick={onPurchase} className="ds-main-cta">{say("가려진 풀이 열어 보기", "가려진 풀이 열어 보자")}<Icon name="arrow_forward" className="text-[20px]" /></button>
-          : <a href={purchaseHref} className="ds-main-cta">{say("가려진 풀이 열어 보기", "가려진 풀이 열어 보자")}<Icon name="arrow_forward" className="text-[20px]" /></a>}
-        <p className="ds-footnote">한 번 결제 · 12개월 열람 · PDF 소장</p>
-      </div>
-    </ScrollPurchaseCta>
-
     {chapters.some(title => /귀인|사람|인간관계/.test(title)) && <>
       <SalesSay>{say("그리고 꼭 짚고 싶은 건", "그리고 꼭 짚고 싶은 건")}<br /><em>{say("내 편이 되어 주는 사람이에요", "네 편이 되어 주는 사람이야")}</em></SalesSay>
       <SalesCard seal="貴人" title={<>{say("도움의 실마리가 열리는", "도움의 실마리가 열리는")}<br /><em>{say("귀인의 시기와 모습", "귀인의 때와 모습")}</em></>}>
@@ -263,5 +251,10 @@ function CinematicReadingWebtoon({ name, guide, poster, narrative, context, chap
       <p className="ds-footnote">한 번 결제로 보관함에서 12개월 열람 · PDF 내려받기</p>
     </section>
     <p className="ds-font-credit">이 화면은 가평군의 가평한석봉 큰붓B 서체를 사용합니다.</p>
+    <div className="ds-sticky-cta">
+      {onPurchase
+        ? <button type="button" onClick={onPurchase} className="ds-main-cta">전체 풀이 구매하기<Icon name="arrow_forward" className="text-[20px]" /></button>
+        : <a href={purchaseHref} className="ds-main-cta">전체 풀이 구매하기<Icon name="arrow_forward" className="text-[20px]" /></a>}
+    </div>
   </section>;
 }

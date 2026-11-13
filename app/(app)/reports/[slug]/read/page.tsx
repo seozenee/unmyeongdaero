@@ -28,7 +28,8 @@ export const metadata: Metadata = { robots: { index: false } };
 
 const dateFormat = new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long", day: "numeric" });
 
-export default async function ReportReadPage({ params }: { params: { slug: string } }) {
+export default async function ReportReadPage({ params: paramsPromise }: { params: Promise<{ slug: string }> }) {
+  const params = await paramsPromise;
   const report = await loadReport(params.slug);
   if (!report || report.kind !== "report") notFound();
 

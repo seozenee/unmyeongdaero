@@ -3,6 +3,7 @@ import { COMMERCE_RESET_AT } from "@/lib/commerce-reset";
 
 import { randomUUID } from "node:crypto";
 import { isAdmin } from "@/lib/admin/access";
+import { scheduleAdminPaymentPush } from "@/lib/admin/push";
 import type { AppUser } from "@/lib/auth/session";
 import { getRepository, type Payment } from "@/lib/db";
 import { env, isFreeAccess, isProduction, modes } from "@/lib/env";
@@ -171,7 +172,10 @@ export async function confirmPayment(
   const report = getReport(payment.reportSlug)!;
   const retryUrl = `/reports/${report.slug}${payment.readingId ? `?reading=${payment.readingId}` : ""}`;
 
-  if (payment.status === "paid") return { status: "paid", redirect: await fulfill(payment, report) };
+  if (payment.status === "paid") {
+    scheduleAdminPaymentPush(payment, report.title);
+    return { status: "paid", redirect: await fulfill(payment, report) };
+  }
   if (payment.status === "failed" || payment.status === "cancelled") {
     return { status: payment.status, reason: payment.failureReason ?? "결제가 완료되지 않았어요.", retryUrl };
   }
@@ -194,13 +198,16 @@ export async function confirmPayment(
       await repo.updatePayment(paymentId, { status: "failed", failureReason: "결제 금액이 주문과 달라 자동 취소되었어요." });
       return { status: "failed", reason: "결제 금액이 주문과 달라 자동 취소되었어요.", retryUrl };
     }
-    await repo.updatePayment(paymentId, {
-      status: "paid",
+    const confirmed = {
+      status: "paid" as const,
       pgTransactionId: state.transactionId,
       paidAt: state.paidAt ?? new Date().toISOString(),
       failureReason: null,
-    });
-    return { status: "paid", redirect: await fulfill({ ...payment, status: "paid" }, report) };
+    };
+    await repo.updatePayment(paymentId, confirmed);
+    const paidPayment = { ...payment, ...confirmed };
+    scheduleAdminPaymentPush(paidPayment, report.title, true);
+    return { status: "paid", redirect: await fulfill(paidPayment, report) };
   }
   if (state.status === "failed" || state.status === "cancelled") {
     await repo.updatePayment(paymentId, { status: state.status, failureReason: state.reason });

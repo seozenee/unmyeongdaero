@@ -50,21 +50,21 @@ describe("PDF 보관", () => {
   });
 
   it("한 번 구운 풀이는 다시 굽지 않는다", async () => {
-    const stored = reading({ pdfToken: "tok", pdfPath: "u-1/r-1.v2.pdf" } as Partial<Reading>);
+    const stored = reading({ pdfToken: "tok", pdfPath: "u-1/r-1.v3.pdf" } as Partial<Reading>);
     const result = await ensureReadingPdf(stored);
 
-    expect(result).toEqual({ token: "tok", path: "u-1/r-1.v2.pdf" });
+    expect(result).toEqual({ token: "tok", path: "u-1/r-1.v3.pdf" });
     expect(render).not.toHaveBeenCalled();
     expect(upload).not.toHaveBeenCalled();
   });
 
   it("손에 든 사본이 낡았어도 저장된 행에 있으면 그대로 쓴다", async () => {
     // 완성 직후에 굽고 곧이어 알림이 또 부르는 길 — 두 번 구우면 카톡에 넣은 코드가 바뀐다
-    getReading.mockResolvedValue(reading({ pdfToken: "tok", pdfPath: "u-1/r-1.v2.pdf" } as Partial<Reading>));
+    getReading.mockResolvedValue(reading({ pdfToken: "tok", pdfPath: "u-1/r-1.v3.pdf" } as Partial<Reading>));
 
     const result = await ensureReadingPdf(reading());
 
-    expect(result).toEqual({ token: "tok", path: "u-1/r-1.v2.pdf" });
+    expect(result).toEqual({ token: "tok", path: "u-1/r-1.v3.pdf" });
     expect(render).not.toHaveBeenCalled();
     expect(upload).not.toHaveBeenCalled();
   });
@@ -74,11 +74,11 @@ describe("PDF 보관", () => {
 
     expect(render).toHaveBeenCalledTimes(1);
     expect(upload).toHaveBeenCalledTimes(1);
-    expect(upload.mock.calls[0]?.[0]).toBe("u-1/r-1.v2.pdf");
-    expect(result?.path).toBe("u-1/r-1.v2.pdf");
+    expect(upload.mock.calls[0]?.[0]).toBe("u-1/r-1.v3.pdf");
+    expect(result?.path).toBe("u-1/r-1.v3.pdf");
     expect(updateReading).toHaveBeenCalledWith(
       "r-1",
-      expect.objectContaining({ pdfPath: "u-1/r-1.v2.pdf", pdfToken: result?.token }),
+      expect.objectContaining({ pdfPath: "u-1/r-1.v3.pdf", pdfToken: result?.token }),
     );
   });
 
@@ -87,7 +87,16 @@ describe("PDF 보관", () => {
     getReading.mockResolvedValue(old);
     const result = await ensureReadingPdf(old);
     expect(render).toHaveBeenCalledTimes(1);
-    expect(result).toEqual({ token: "existing-link", path: "u-1/r-1.v2.pdf" });
+    expect(result).toEqual({ token: "existing-link", path: "u-1/r-1.v3.pdf" });
+  });
+
+  it("요청에서 이미 생성한 파일로 보관본을 복구한다", async () => {
+    const missing = reading({ pdfToken: "tok", pdfPath: "u-1/r-1.v3.pdf" });
+    getReading.mockResolvedValue(missing);
+    const rendered = Buffer.from("%PDF-replacement");
+    await expect(ensureReadingPdf(missing, rendered)).resolves.toEqual({ token: "tok", path: "u-1/r-1.v3.pdf" });
+    expect(render).not.toHaveBeenCalled();
+    expect(upload).toHaveBeenCalledWith("u-1/r-1.v3.pdf", rendered, expect.anything());
   });
 
   it("스토리지가 없는 환경에서는 굽지 않는다", async () => {

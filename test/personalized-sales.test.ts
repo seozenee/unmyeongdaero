@@ -9,7 +9,7 @@ describe("입력한 사주에 따른 구입 유도",()=>{
  it("다른 생일은 다른 원국·개인화 자료를 반환하며 귀인 계산을 포함한다",async()=>{
   const read=async(birthYear:number)=>{
    mock.reading.mockResolvedValue({userId:"buyer",reportSlug:"factbomb",subject:{...profile,birthYear},partner:null,answers:{}});
-   const response=await GET(new Request("https://example.test"),{params:{id:"input"}});
+   const response=await GET(new Request("https://example.test"),{params:Promise.resolve({id:"input"})});
    expect(response.status).toBe(200);return response.json();
   };
   const a=await read(1990),b=await read(1991);
@@ -20,6 +20,6 @@ describe("입력한 사주에 따른 구입 유도",()=>{
  });
  it("다른 고객의 사주는 반환하지 않는다",async()=>{
   mock.reading.mockResolvedValue({userId:"other"});
-  expect((await GET(new Request("https://example.test"),{params:{id:"input"}})).status).toBe(404);
+  expect((await GET(new Request("https://example.test"),{params:Promise.resolve({id:"input"})})).status).toBe(404);
  });
 });

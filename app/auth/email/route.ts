@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { safeNextPath } from "@/lib/auth/session";
-import { modes } from "@/lib/env";
+import { env, modes } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -30,10 +30,12 @@ export async function POST(request: Request) {
   if (password.length < 8) return back("weak");
   if (modes.data() !== "supabase") return back("unavailable");
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
 
   if (intent === "signup") {
-    const { error } = await supabase.auth.signUp({ email, password });
+    const callback = new URL("/auth/callback", env.siteUrl);
+    callback.searchParams.set("next", next);
+    const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: callback.toString() } });
     if (error) {
       console.error("[auth] 이메일 가입 실패", error.message);
       // 이미 있는 계정이면 그냥 로그인해 준다 — 사용자에게 둘의 차이는 중요하지 않다

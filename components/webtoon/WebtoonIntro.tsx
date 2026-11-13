@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { SpeechBalloon, WhisperLines } from "@/components/webtoon/ComicText";
 import { Stage, StageAction } from "@/components/webtoon/Stage";
-import { useAmbientSound } from "@/components/webtoon/useAmbientSound";
+import type { useAmbientSound } from "@/components/webtoon/useAmbientSound";
 import type { ReportProduct } from "@/lib/reports/catalog";
 import { getGuide } from "@/lib/story/guides";
 import { buildIntroShots } from "@/lib/story/webtoon";
@@ -13,13 +13,16 @@ import { buildIntroShots } from "@/lib/story/webtoon";
  * 구매 전 웹툰 인트로. 한 컷이 화면을 가득 채우고, 아래 버튼을 누를 때만 다음 컷으로 간다.
  * 마지막 컷의 버튼이 곧 대화 시작이다.
  */
-export function WebtoonIntro({ report, onStart, onClose, owned = false, active = true }: { report: ReportProduct; onStart: () => void; onClose: () => void; owned?: boolean; active?: boolean }) {
+export function WebtoonIntro({ report, onStart, onClose, sound, owned = false }: {
+  report: ReportProduct;
+  onStart: () => void;
+  onClose: () => void;
+  sound: ReturnType<typeof useAmbientSound>;
+  owned?: boolean;
+}) {
   const guide = getGuide(report.guide);
   const shots = useMemo(() => buildIntroShots(report), [report]);
   const [index, setIndex] = useState(0);
-  const sound = useAmbientSound();
-  const stopSound = sound.stop;
-  useEffect(() => { if (!active) stopSound(); }, [active, stopSound]);
   useEffect(() => {
     const reset = () => setIndex(0);
     window.addEventListener("pageshow", reset);
@@ -41,7 +44,6 @@ export function WebtoonIntro({ report, onStart, onClose, owned = false, active =
 
   return (
     <Stage
-      active={active}
       guide={guide}
       place={shot.place}
       camera={shot.camera}

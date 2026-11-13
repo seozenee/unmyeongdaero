@@ -7,7 +7,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // POST /api/checkout/:slug — 결제 요청 준비(서버가 금액·결제 ID 확정). 이미 소장한 리포트면 결제창 없이 결과로.
-export async function POST(request: Request, { params }: { params: { slug: string } }) {
+export async function POST(request: Request, { params: paramsPromise }: { params: Promise<{ slug: string }> }) {
+  const params = await paramsPromise;
   const body = (await request.json().catch(() => ({}))) as { readingId?: string };
   const user = await getCurrentUser();
   if (!user) {

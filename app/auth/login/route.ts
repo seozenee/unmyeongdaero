@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const next = safeNextPath(url.searchParams.get("next"));
 
   if (modes.data() === "supabase") {
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
     const callback = new URL("/auth/callback", env.siteUrl);
     callback.searchParams.set("next", next);
     const { data, error } = await supabase.auth.signInWithOAuth({

@@ -7,6 +7,7 @@ import { Stage, StageAction } from "@/components/webtoon/Stage";
 import { buildIntroShots } from "@/lib/story/webtoon";
 import { PurchaseSheet } from "@/components/checkout/PurchaseSheet";
 import { getReport } from "@/lib/reports/catalog";
+import { savePendingIntake } from "@/lib/story/pending-intake";
 
 const hooks = vi.hoisted(() => ({
   cursor: 0, values: [] as unknown[], effects: [] as (() => unknown)[], mounted: false,
@@ -32,7 +33,8 @@ vi.mock("react", async importOriginal => ({
 vi.mock("next/navigation", () => ({useRouter:()=>({push:vi.fn()})}));
 vi.mock("@/components/story/PersonalizedSales", () => ({ PersonalizedSales: () => null }));
 vi.mock("@/components/checkout/PurchaseSheet", () => ({ PurchaseSheet: () => null }));
-vi.mock("@/components/webtoon/useAmbientSound", () => ({ useAmbientSound: () => ({on:false, toggle:vi.fn(), chime:vi.fn(), stop:vi.fn()}) }));
+const sound = { on: true, toggle: vi.fn(), chime: vi.fn() };
+vi.mock("@/components/webtoon/useAmbientSound", () => ({ useAmbientSound: () => sound }));
 
 function find(node: ReactNode, type: unknown): ReactElement<Record<string, unknown>> | undefined {
   if (!node || typeof node !== "object" || !("props" in node)) return;
@@ -48,12 +50,27 @@ const subject = { name:"가상검증", isFemale:true, birthCity:"서울", birthY
 describe("상세페이지 진입 시 구매창 자동 노출 방지", () => {
   let fetchMock: ReturnType<typeof vi.fn>;
   let pageShow: (() => void) | undefined;
+  const createStorage = () => {
+    const data = new Map<string, string>();
+    return {
+      getItem: vi.fn((key: string) => data.get(key) ?? null),
+      setItem: vi.fn((key: string, value: string) => data.set(key, value)),
+      removeItem: vi.fn((key: string) => data.delete(key)),
+    };
+  };
   beforeEach(() => {
     hooks.cursor = 0; hooks.values = []; hooks.effects = []; hooks.mounted = false;
     fetchMock = vi.fn(); pageShow = undefined;
     vi.stubGlobal("fetch", fetchMock);
-    vi.stubGlobal("sessionStorage", {getItem:vi.fn(() => null), removeItem:vi.fn(), setItem:vi.fn()});
-    vi.stubGlobal("window", {scrollTo:vi.fn(), addEventListener:vi.fn((name, fn) => {if(name === "pageshow") pageShow = fn;}), removeEventListener:vi.fn()});
+    vi.stubGlobal("window", {
+      sessionStorage: createStorage(),
+      localStorage: createStorage(),
+      location: { href: "" },
+      history: { replaceState: vi.fn() },
+      scrollTo: vi.fn(),
+      addEventListener: vi.fn((name, fn) => { if (name === "pageshow") pageShow = fn; }),
+      removeEventListener: vi.fn(),
+    });
   });
   afterEach(() => vi.unstubAllGlobals());
   const render = (props: Partial<Parameters<typeof StoryFunnel>[0]> = {}) => {
@@ -61,9 +78,14 @@ describe("상세페이지 진입 시 구매창 자동 노출 방지", () => {
     return StoryFunnel({report, ...props});
   };
   const mountEffects = () => { hooks.mounted = true; hooks.effects.forEach(effect => effect()); };
+  const seedLegacyIntake = () => {
+    window.sessionStorage.setItem(`sazudaero:funnel2:${report.slug}`, JSON.stringify({
+      cursor: 4, subject, partner: null, answers: { detail: "가상 질문" }, offerSlug: report.slug,
+    }));
+  };
 
-  it("저장된 입력을 복원해도 이야기 첫 장면부터 표시한다", () => {
-    vi.mocked(sessionStorage.getItem).mockReturnValue(JSON.stringify({cursor:4,subject,partner:null,answers:{detail:"가상 질문"},offerSlug:report.slug}));
+  it("인증 전에는 저장된 입력을 자동 제출하지 않는다", () => {
+    seedLegacyIntake();
     render(); mountEffects();
     const page = render();
     expect(find(page, WebtoonIntro)).toBeDefined();
@@ -72,7 +94,7 @@ describe("상세페이지 진입 시 구매창 자동 노출 방지", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
   it("스토리 다음은 입력이며 제출 후 유도페이지만 표시하고 구입 버튼을 눌러야 선택창을 연다", async () => {
-    vi.mocked(sessionStorage.getItem).mockReturnValue(JSON.stringify({cursor:4,subject,partner:null,answers:{detail:"가상 질문"},offerSlug:report.slug}));
+    seedLegacyIntake();
     fetchMock.mockResolvedValue({ok:true,status:200,json:async()=>({readingId:"new-input"})});
     render(); mountEffects();
     (find(render(),WebtoonIntro)!.props.onStart as () => void)();
@@ -88,12 +110,42 @@ describe("상세페이지 진입 시 구매창 자동 노출 방지", () => {
     (find(sales,ProductIntro)!.props.onPurchase as () => void)();
     expect(find(render(),PurchaseSheet)).toBeDefined();
     pageShow!();
+    expect(find(render(),ProductIntro)).toBeDefined();
     expect(find(render(),PurchaseSheet)).toBeUndefined();
+  });
+  it("로그인 복귀 시 질문과 연락처를 한 번 제출해 상세페이지로 바로 이동한다", async () => {
+    const resumeToken = "resume-after-auth";
+    const answers = { detail: "가상 질문", occupation: "employee" };
+    savePendingIntake(report.slug, resumeToken, { subject, partner: null, answers, notifyPhone: "010-0000-0000" });
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => ({ readingId: "resumed-reading" }) });
+    const props = { signedIn: true, resumeToken };
+
+    render(props);
+    mountEffects();
+    mountEffects();
+    await vi.waitFor(() => expect(find(render(props), ProductIntro)?.props.readingId).toBe("resumed-reading"));
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(JSON.parse(fetchMock.mock.calls[0]![1].body)).toEqual({
+      slug: report.slug, subject, partner: null, answers, notifyPhone: "010-0000-0000",
+    });
+    expect(window.history.replaceState).toHaveBeenCalledWith(null, "", "/reports/factbomb?reading=resumed-reading");
+    expect(find(render(props), WebtoonIntro)).toBeUndefined();
+    expect(find(render(props), PurchaseSheet)).toBeUndefined();
+  });
+  it("기존 상세 주소로 접속하면 새 입력이나 이야기 없이 바로 이어진다", () => {
+    const initialReading = { id: "existing-reading", reportSlug: report.slug, subject, partner: null, answers: {}, notifyPhone: null };
+    const props = { initialReading, signedIn: true };
+    render(props);
+    mountEffects();
+    expect(find(render(props), ProductIntro)?.props.readingId).toBe(initialReading.id);
+    expect(find(render(props), PurchaseSheet)).toBeUndefined();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
   it("이야기 마지막 장면에서만 상세 보기 버튼이 나오고 그 전에는 다음 장면으로만 이동한다", () => {
     const onStart = vi.fn();
     const shots = buildIntroShots(report);
-    const story = () => { hooks.cursor = 0; return WebtoonIntro({report,onStart,onClose:vi.fn()}); };
+    const story = () => { hooks.cursor = 0; return WebtoonIntro({report,onStart,onClose:vi.fn(),sound}); };
     for (let i=0; i<shots.length-1; i++) {
       const page = story();
       const footer = find(page, Stage)!.props.footer as ReactNode;

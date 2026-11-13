@@ -8,7 +8,8 @@ import { modes } from "@/lib/env";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "AI 상담", robots: { index: false } };
 
-export default async function ConsultSessionPage({ params }: { params: { sessionId: string } }) {
+export default async function ConsultSessionPage({ params: paramsPromise }: { params: Promise<{ sessionId: string }> }) {
+  const params = await paramsPromise;
   const user = await getCurrentUser();
   if (!user) redirect(loginUrl(`/consult/${params.sessionId}`));
 

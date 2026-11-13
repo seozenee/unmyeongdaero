@@ -6,11 +6,17 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(env.siteUrl),
   title: {
-    default: "운명대로 — 현대인을 위한 가장 명쾌하고 솔직한 운명 리포트",
+    default: "운명대로 | 나를 이해하는 사주 리포트",
     template: "%s | 운명대로",
   },
   description:
-    "정통 명리 계산 엔진 위에 서사형 해석을 얹은 사주 리포트. 구독 없이 단건 결제, 구매한 리포트는 보관함에서 12개월 열람.",
+    "타고난 성향부터 연애, 일, 재물의 흐름까지. 지금의 고민을 나만의 사주 리포트로 풀어보세요.",
+  openGraph: {
+    type: "website", locale: "ko_KR", siteName: "운명대로",
+    title: "운명대로 | 나를 이해하는 사주 리포트",
+    description: "타고난 성향부터 연애, 일, 재물의 흐름까지. 지금의 고민을 나만의 사주 리포트로 풀어보세요.",
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {

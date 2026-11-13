@@ -4,7 +4,7 @@ import { GuideAvatar } from "@/components/story/GuideAvatar";
 import { Icon } from "@/components/ui/Icon";
 import { getGuide } from "@/lib/story/guides";
 
-export const metadata: Metadata = { title: "정식 오픈 준비 중" };
+export const metadata: Metadata = { title: "정식 오픈 준비 중", robots: { index: false, follow: false } };
 
 // LANDING_ONLY=1 임시 배포에서 결제·로그인·보관함 경로가 여기로 온다.
 export default function ComingSoonPage() {

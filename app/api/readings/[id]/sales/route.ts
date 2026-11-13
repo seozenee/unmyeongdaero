@@ -10,7 +10,8 @@ import { buildInstantPreview, buildPreviewContext } from "@/lib/manse/preview";
 import { buildHomeChart } from "@/lib/manse/home-chart";
 
 export const dynamic = "force-dynamic";
-export async function GET(_request:Request,{params}:{params:{id:string}}) {
+export async function GET(_request:Request,{params: paramsPromise}:{params:Promise<{id:string}>}) {
+  const params = await paramsPromise;
   const user=await getCurrentUser();
   if(!user) return jsonError(401,"LOGIN_REQUIRED","로그인이 필요해요.");
   try {

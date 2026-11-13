@@ -1,6 +1,7 @@
+import { publicPageMetadata } from "@/lib/seo/metadata";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "개인정보처리방침" };
+export const metadata: Metadata = publicPageMetadata("개인정보처리방침 | 운명대로", "운명대로가 수집하는 개인정보 항목과 이용 목적, 보관 및 파기 절차를 확인하세요.", "/privacy");
 
 // ⚠️ 초안: 실제 수탁사·보관기간·책임자 정보를 채우고 법률 검토 후 확정한다.
 export default function PrivacyPage() {

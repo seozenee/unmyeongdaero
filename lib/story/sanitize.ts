@@ -271,6 +271,13 @@ function swap(text: string, pattern: RegExp, replacement: string) {
 const JOSA_TAILS = new Set(JOSA_PAIRS.flat());
 
 const SOURCE_LABELS: Array<[RegExp, string]> = [
+  [new RegExp(`(\\d{4}년)\\s+${GANJI_CHAR}(?:이|가|은|는)?\\s+(?=[“‘"']?(?:good|neutral|caution)\\b)`, "g"), "$1은 "],
+  [/\b(?:sinStrength(?:\.\w+)?|sin_strength)\b/g, "타고난 기운의 강약"],
+  [/(?:재물\s+|\bwealth\.)?\bcarryCapacity(?:\.\w+)?\b/g, "돈을 벌고 지켜 나가는 힘"],
+  [/\bseun(?:\.\w+)?\b/g, "해마다 달라지는 흐름"],
+  [/\bgood\b(?:\s*톤)?/g, "흐름이 받쳐 주는 때"],
+  [/\bneutral\b(?:\s*톤)?/g, "흐름이 고른 때"],
+  [/\bcaution\b(?:\s*톤)?/g, "한 번 더 살펴볼 때"],
   [/\breadingFocus\.benefactor\b/g, "귀인 시기 분석"],
   [/\breadingFocus\.partnership\b/g, "인연 시기 분석"],
   [/\breadingFocus\.business\b/g, "일과 사업 분석"],
@@ -285,11 +292,13 @@ const SOURCE_LABELS: Array<[RegExp, string]> = [
   [/\breadingFocus\b/g, "분야별 분석"],
 ];
 
+const isTone = (key: string, value: unknown) => key === "tone" && (value === "good" || value === "neutral" || value === "caution");
+
 /** 이미 저장된 풀이도 원자료의 코드 이름 대신 읽을 수 있는 명칭으로 보여 준다. */
 export function readableSourceNames<T>(value: T): T {
   if (typeof value === "string") return SOURCE_LABELS.reduce<string>((text, [pattern, name]) => swap(text, pattern, name), value) as T;
   if (Array.isArray(value)) return value.map(item => readableSourceNames(item)) as T;
-  if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, readableSourceNames(item)])) as T;
+  if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, isTone(key, item) ? item : readableSourceNames(item)])) as T;
   return value;
 }
 
@@ -387,7 +396,7 @@ export function softenDeep<T>(value: T): T {
     for (const [key, item] of Object.entries(value)) {
       // 근거 제목에는 원자료의 명칭이 필요하다. "정미 세운"을 본문의 간지 꼬리처럼
       // 지우면 빈 label이 되어, 완성된 풀이 전체가 저장 전 검증에서 실패한다.
-      result[key] = key === "label" && typeof item === "string" ? softenValue(item, true) : softenDeep(item);
+      result[key] = isTone(key, item) ? item : key === "label" && typeof item === "string" ? softenValue(item, true) : softenDeep(item);
     }
     return result as T;
   }

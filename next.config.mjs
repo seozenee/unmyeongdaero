@@ -1,3 +1,6 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 // pdfkit 에서 람다에 함께 실어야 하는 파일. pnpm 은 실제 파일을 .pnpm 아래 버전 폴더에
 // 두므로 glob 으로 집는다.
 //
@@ -17,11 +20,16 @@ const PDFKIT_FILES = [
   "./node_modules/.pnpm/pdfkit@*/node_modules/pdfkit/js/output.cjs",
   "./node_modules/.pnpm/pdfkit@*/node_modules/pdfkit/js/data/**",
   "./node_modules/.pnpm/pdfkit@*/node_modules/pdfkit/js/standard-fonts/**",
+  "./node_modules/.pnpm/react@*/node_modules/react/jsx-runtime.js",
+  "./node_modules/.pnpm/react@*/node_modules/react/cjs/react-jsx-runtime.*.js",
 ];
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Keep product metadata in <head> for search and messaging crawlers without JS.
+  htmlLimitedBots: /.*/,
+  outputFileTracingRoot: path.dirname(fileURLToPath(import.meta.url)),
   poweredByHeader: false,
 
   // PDF 는 @react-pdf/renderer → pdfkit 으로 그린다. pdfkit 은 표준 14서체(Helvetica 등)를
@@ -51,22 +59,34 @@ const nextConfig = {
     // 그래서 아예 번들에서 빼낸다. 런타임에 node_modules 에서 그대로 require 되면
     // 상대경로가 원래대로 풀린다. 아래 추적 목록은 그 node_modules 가 람다에
     // 실려 가도록 보장하는 쪽이다 — 둘은 한 짝이다.
-    serverComponentsExternalPackages: ["@react-pdf/renderer", "pdfkit", "fontkit"],
+  },
+    serverExternalPackages: ["@react-pdf/renderer", "pdfkit", "fontkit"],
 
     outputFileTracingIncludes: {
       // PDF 를 굽는 모든 길. 한 곳이라도 빠지면 그 길에서만 터진다.
       // (/v/[token] 은 보고서 화면으로 되돌려 보내기만 하므로 넣지 않는다)
       "/api/readings/[id]/pdf": PDFKIT_FILES,
       "/api/readings/[id]/generate": PDFKIT_FILES,
-      "/r/[token]": PDFKIT_FILES,
+      "/dev/reading-preview/pdf": PDFKIT_FILES,
     },
-  },
+
   async headers() {
     return [
+      {
+        source: "/admin/push-sw.js",
+        headers: [
+          { key: "Service-Worker-Allowed", value: "/admin" },
+          { key: "Cache-Control", value: "no-cache" },
+        ],
+      },
       {
         source: "/:path*",
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Strict-Transport-Security", value: "max-age=31536000" },
+          { key: "Content-Security-Policy", value: "object-src 'none'; base-uri 'self'; frame-ancestors 'none'; upgrade-insecure-requests" },
+          { key: "X-DNS-Prefetch-Control", value: "off" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],

@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   const response = NextResponse.redirect(new URL("/", request.url), { status: 303 });
 
   if (modes.data() === "supabase") {
-    await createSupabaseServerClient().auth.signOut();
+    await (await createSupabaseServerClient()).auth.signOut();
   } else {
     response.cookies.delete(DEV_SESSION_COOKIE);
   }

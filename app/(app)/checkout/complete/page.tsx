@@ -9,11 +9,12 @@ export const metadata: Metadata = { title: "결제 확인", robots: { index: fal
  * 토스는 성공하면 ?paymentType&amount&orderId&paymentKey 를,
  * 실패하면 ?code&message&orderId 를 붙여 보낸다. orderId 가 우리 주문번호다.
  */
-export default function CheckoutCompletePage({
-  searchParams,
+export default async function CheckoutCompletePage({
+  searchParams: searchParamsPromise,
 }: {
-  searchParams: { orderId?: string; paymentKey?: string; amount?: string; code?: string; message?: string };
+  searchParams: Promise<{ orderId?: string; paymentKey?: string; amount?: string; code?: string; message?: string }>;
 }) {
+  const searchParams = await searchParamsPromise;
   return (
     <PaymentRedirectHandler
       paymentId={searchParams.orderId ?? null}

@@ -13,7 +13,7 @@ describe("모든 사주 상품의 개인화 유도",()=>{
   const subject=product.roles?.subject==="child"?{...adult,birthYear:2012}:adult;
   const partner=product.partner==="required"?{...adult,name:"가상상대",birthYear:product.slug==="parent-child"?2012:1989}:null;
   repo.reading.mockResolvedValue({userId:"buyer",reportSlug:product.slug,subject,partner,answers:{}});
-  const response=await GET(new Request("https://example.test"),{params:{id:"test"}});
+  const response=await GET(new Request("https://example.test"),{params:Promise.resolve({id:"test"})});
   expect(response.status).toBe(200);
   const data=await response.json();
   const focus=salesFocusFor(data.context,data.narrative);
@@ -30,7 +30,7 @@ describe("모든 사주 상품의 개인화 유도",()=>{
  it("미성년자의 신년·재물·건강 상품도 상품 고유의 질문을 유지한다",async()=>{
   for(const slug of ["yearly","money","health"]){
    repo.reading.mockResolvedValue({userId:"buyer",reportSlug:slug,subject:{...adult,birthYear:2012},partner:null,answers:{}});
-   const data=await (await GET(new Request("https://example.test"),{params:{id:"test"}})).json();
+   const data=await (await GET(new Request("https://example.test"),{params:Promise.resolve({id:"test"})})).json();
    expect(lockedTopicsFor(data.context)[0]!.title).toBe(slug==="yearly"?"앞으로의 시기와 선택":slug==="money"?"돈이 들어오는 길과 남는 조건":"몸과 마음을 덜 소모하는 생활");
   }
  });

@@ -1,8 +1,10 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { jsonError, toErrorResponse } from "@/lib/errors";
 import { isCompleteReport } from "@/lib/story/report";
+import { after } from "next/server";
+import { pdfDownloadResponse } from "@/lib/pdf/download";
 import { renderReportPdf, reportPdfFilename } from "@/lib/pdf/render";
-import { ensureReadingPdf, readStoredPdf } from "@/lib/pdf/store";
+import { ensureReadingPdf, isCurrentReadingPdf, readStoredPdf } from "@/lib/pdf/store";
 import { getOwnedPurchasedReading } from "@/lib/readings/service";
 import { needsReadingRepair } from "@/lib/readings/calculation";
 
@@ -22,7 +24,8 @@ export const maxDuration = 60;
  * 간다. 스토리지가 없는 환경(로컬 개발)과 보관본을 읽지 못한 경우에는 예전처럼 그
  * 자리에서 굽는다 — 내려받기가 실패하는 것보다 느린 편이 낫다.
  */
-export async function GET(_request: Request, { params }: { params: { id: string } }) {
+export async function GET(_request: Request, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = await paramsPromise;
   const user = await getCurrentUser();
   if (!user) return jsonError(401, "LOGIN_REQUIRED", "로그인이 필요해요.");
 
@@ -35,33 +38,21 @@ export async function GET(_request: Request, { params }: { params: { id: string 
 
     const filename = reportPdfFilename(report, reading.subject);
 
-    const stored = await ensureReadingPdf(reading).catch((error) => {
-      // 보관에 실패해도 내려받기는 되어야 한다
-      console.error(`[pdf] 보관 실패 (reading ${reading.id})`, error);
-      return null;
-    });
-    const kept = stored ? await readStoredPdf(stored.path) : null;
+    const kept = isCurrentReadingPdf(reading.pdfPath) ? await readStoredPdf(reading.pdfPath).catch(() => null) : null;
+    if (kept) return pdfDownloadResponse(kept, filename);
 
-    const pdf =
-      kept ??
-      (await renderReportPdf({
-        product: report,
-        report: reading.script,
-        subject: reading.subject,
-        sazu: reading.sazu ?? {},
-        issuedAt: reading.generatedAt ? new Date(reading.generatedAt) : undefined,
-      }));
-
-    return new Response(new Uint8Array(pdf), {
-      headers: {
-        "content-type": "application/pdf",
-        // 한글 파일명은 RFC 5987 로 적어야 브라우저가 깨뜨리지 않는다
-        "content-disposition": `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`,
-        "content-length": String(pdf.length),
-        // 본인만 받는 개인 문서다. 중간 캐시에 남지 않게 한다.
-        "cache-control": "private, no-store",
-      },
+    const pdf = await renderReportPdf({
+      product: report,
+      report: reading.script,
+      subject: reading.subject,
+      sazu: reading.sazu ?? {},
+      issuedAt: reading.generatedAt ? new Date(reading.generatedAt) : undefined,
     });
+
+    after(async () => {
+      await ensureReadingPdf(reading, pdf).catch((error) => console.error(`[pdf] 보관 실패 (reading ${reading.id})`, error));
+    });
+    return pdfDownloadResponse(pdf, filename);
   } catch (error) {
     return toErrorResponse(error);
   }

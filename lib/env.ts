@@ -76,7 +76,7 @@ export const isLandingOnly = process.env.LANDING_ONLY === "1";
  * 실제 결제창 대신 모의 승인으로 소장 권한을 준다 — 즉 상품이 공짜가 된다.
  * 실고객을 받기 전에 반드시 꺼야 한다. 화면에도 시험 모드 띠를 띄워 눈에 띄게 한다.
  */
-export const isFreeAccess = process.env.FREE_ACCESS === "1";
+export const isFreeAccess = !isProduction && process.env.FREE_ACCESS === "1";
 
 const supabaseReady = Boolean(env.supabaseUrl && env.supabaseAnonKey && env.supabaseServiceRoleKey);
 const tossReady = Boolean(env.tossClientKey && env.tossSecretKey);

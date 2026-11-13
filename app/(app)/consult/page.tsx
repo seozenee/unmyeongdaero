@@ -1,3 +1,4 @@
+import { publicPageMetadata } from "@/lib/seo/metadata";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ConsultIntro } from "@/components/consult/ConsultIntro";
@@ -9,7 +10,7 @@ import { getRepository } from "@/lib/db";
 import { CONSULT_TURN_LIMIT, getReport } from "@/lib/reports/catalog";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "1:1 사주 상담" };
+export const metadata: Metadata = publicPageMetadata("1:1 사주 상담 | 운명대로", "내 사주를 바탕으로 연애, 일, 인간관계의 고민을 나누는 1:1 대화형 상담. 궁금한 점을 이어 물으며 나에게 맞는 방향을 찾아보세요.", "/consult");
 
 /**
  * 채팅 진입 화면.

@@ -2,26 +2,24 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-// 음원 파일 없이 Web Audio 로 합성하는 잔잔한 배경음 + 컷 전환 풍경 소리. 기본값은 꺼짐(사용자 조작으로만 켬).
-export function useAmbientSound() {
+// 음원 파일 없이 Web Audio 로 합성하는 잔잔한 배경음과 컷 전환 소리.
+export function useAmbientSound(active: boolean) {
   const contextRef = useRef<AudioContext | null>(null);
-  const masterRef = useRef<GainNode | null>(null);
-  const onRef = useRef(false);
-  const [on, setOn] = useState(false);
+  const [on, setOn] = useState(true);
 
   const stop = useCallback(() => {
     const context = contextRef.current;
-    if (context && masterRef.current) {
-      masterRef.current.gain.linearRampToValueAtTime(0, context.currentTime + 0.6);
-      window.setTimeout(() => void context.close(), 700);
-    }
     contextRef.current = null;
-    masterRef.current = null;
-    onRef.current = false;
-    setOn(false);
+    if (context) void context.close().catch(() => undefined);
   }, []);
 
   const start = useCallback(() => {
+    const current = contextRef.current;
+    if (current) {
+      if (current.state !== "running") void current.resume().catch(() => undefined);
+      return;
+    }
+
     const AudioContextClass = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AudioContextClass) return;
     const context = new AudioContextClass();
@@ -55,16 +53,18 @@ export function useAmbientSound() {
 
     master.gain.linearRampToValueAtTime(0.045, context.currentTime + 1.8);
     contextRef.current = context;
-    masterRef.current = master;
-    onRef.current = true;
-    setOn(true);
+    if (context.state !== "running") void context.resume().catch(() => undefined);
   }, []);
 
-  const toggle = useCallback(() => (onRef.current ? stop() : start()), [start, stop]);
+  const toggle = useCallback(() => {
+    if (on) stop();
+    else if (active) start();
+    setOn(!on);
+  }, [active, on, start, stop]);
 
   const chime = useCallback(() => {
     const context = contextRef.current;
-    if (!context || !onRef.current) return;
+    if (context?.state !== "running") return;
     const now = context.currentTime;
     [1318.5, 1975.5].forEach((frequency, index) => {
       const oscillator = context.createOscillator();
@@ -80,7 +80,21 @@ export function useAmbientSound() {
     });
   }, []);
 
-  useEffect(() => () => void contextRef.current?.close(), []);
+  useEffect(() => {
+    if (!active || !on) return;
+    // 브라우저가 소리 자동 재생을 막으면 첫 탭이나 키 입력으로 재생을 시작한다.
+    if (navigator.userActivation?.hasBeenActive !== false) start();
+    document.addEventListener("pointerup", start);
+    document.addEventListener("keydown", start);
+    return () => {
+      document.removeEventListener("pointerup", start);
+      document.removeEventListener("keydown", start);
+    };
+  }, [active, on, start]);
 
-  return { on, toggle, chime, stop };
+  useEffect(() => {
+    if (active) return stop;
+  }, [active, stop]);
+
+  return { on, toggle, chime };
 }

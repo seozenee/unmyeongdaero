@@ -8,7 +8,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // POST /api/free/:kind — 로그인·결제 없는 무료 콘텐츠
-export async function POST(request: Request, { params }: { params: { kind: string } }) {
+export async function POST(request: Request, { params: paramsPromise }: { params: Promise<{ kind: string }> }) {
+  const params = await paramsPromise;
   if (!(FREE_KINDS as readonly string[]).includes(params.kind)) return jsonError(404, "NOT_FOUND", "찾을 수 없는 콘텐츠예요.");
   const kind = params.kind as FreeKind;
 

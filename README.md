@@ -130,3 +130,10 @@ lib/story          안내자·퍼널·프롬프트·보고서 스키마·템플�
 lib/db             저장소 인터페이스 (Supabase / 로컬 파일)
 supabase/migrations 스키마·시드
 ```
+
+
+### 운영 앱과 결제 알림
+
+- 운영 데이터베이스에 `admin_payment_push` 변경을 적용하고, `pnpm exec web-push generate-vapid-keys`로 만든 키를 `ADMIN_PUSH_PUBLIC_KEY`와 `ADMIN_PUSH_PRIVATE_KEY`에 넣습니다. 비공개 키는 서버 설정에만 보관합니다.
+- `ADMIN_EMAILS`에 등록된 계정으로 HTTPS의 `/admin/notifications`를 엽니다. 브라우저에서 운영 앱을 설치한 뒤 **이 기기에서 알림 켜기**와 **테스트 알림 보내기**를 누릅니다. iPhone과 iPad에서는 Safari의 **홈 화면에 추가**로 설치한 운영 앱에서 알림을 켭니다.
+- 토스에서 실제 승인된 결제만 전송합니다. 알림에서 해당 주문을 열 수 있고, 앱 설정에서 기기별 수신을 끌 수 있습니다. 결제 완료 화면과 토스 웹훅 모두 같은 주문의 알림을 처리합니다.

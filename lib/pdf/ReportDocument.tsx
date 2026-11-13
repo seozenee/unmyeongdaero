@@ -1,3 +1,4 @@
+/** @jsxImportSource @/lib/pdf/react-runtime */
 // 보고서 PDF.
 //
 // 화면 컴포넌트를 종이로 옮긴 게 아니라, 지면을 위해 따로 짠 문서다. 브라우저 인쇄는
@@ -5,7 +6,7 @@
 // 여기서는 wrap={false} 로 "잘리면 곤란한 덩어리"를 직접 지정한다.
 //
 // 순서: 표지 → 결론 → 명식 한 벌 → 각 장 → 시기 → 실천 → 맺음 → 용어.
-import React from "react";
+import { Fragment } from "./react-runtime/jsx-runtime";
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { BirthProfile } from "@/lib/db/types";
 import type { StoryReport } from "@/lib/story/report";
@@ -210,7 +211,7 @@ export function ReportDocument(input: ReportPdfInput) {
 
       {/* 장마다 표제지 한 쪽, 본문 한 쪽(넘치면 이어서) */}
       {report.sections.map((section, index) => (
-        <React.Fragment key={section.title}>
+        <Fragment key={section.title}>
           <Page size="A5" style={styles.page}>
             <View style={styles.chapterCover}>
               <Text style={styles.chapterCategory}>{categoryLabel}</Text>
@@ -236,7 +237,7 @@ export function ReportDocument(input: ReportPdfInput) {
             </View>
             <PageNumber />
           </Page>
-        </React.Fragment>
+        </Fragment>
       ))}
 
       {input.outlook && [...input.outlook.lifetime, ...input.outlook.pastAnnual, ...input.outlook.annual].map((row, index) => <Page key={`outlook-${index}`} size="A5" style={styles.page}>

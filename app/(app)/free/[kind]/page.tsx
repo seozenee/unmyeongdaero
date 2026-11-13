@@ -1,3 +1,4 @@
+import { publicPageMetadata } from "@/lib/seo/metadata";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { FreeInsightFlow } from "@/components/free/FreeInsightFlow";
@@ -8,12 +9,15 @@ const CONTENT: Record<string, { title: string; description: string }> = {
   mbti: { title: "사주로 보는 성격 유형", description: "음양오행과 신강약으로 읽어내는 내 본원 성향을, 재미로 보는 성향 유형으로 옮겨 드려요." },
 };
 
-export function generateMetadata({ params }: { params: { kind: string } }): Metadata {
+export async function generateMetadata({ params: paramsPromise }: { params: Promise<{ kind: string }> }): Promise<Metadata> {
+  const params = await paramsPromise;
   const content = CONTENT[params.kind];
-  return content ? { title: content.title, description: content.description } : {};
+  if (!content) notFound();
+  return publicPageMetadata(`${content.title} | 운명대로`, content.description, `/free/${params.kind}`);
 }
 
-export default function FreeInsightPage({ params }: { params: { kind: string } }) {
+export default async function FreeInsightPage({ params: paramsPromise }: { params: Promise<{ kind: string }> }) {
+  const params = await paramsPromise;
   const content = CONTENT[params.kind];
   if (!content) notFound();
   return <FreeInsightFlow kind={params.kind} title={content.title} description={content.description} />;

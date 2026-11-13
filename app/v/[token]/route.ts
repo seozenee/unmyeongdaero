@@ -14,7 +14,8 @@ export const dynamic = "force-dynamic";
  * 토큰은 "어느 풀이인가"만 가리킨다. "열 자격이 있는가"는 세션으로 판단하므로,
  * 링크가 남에게 전달돼도 남의 풀이는 열리지 않는다.
  */
-export async function GET(_request: Request, { params }: { params: { token: string } }) {
+export async function GET(_request: Request, { params: paramsPromise }: { params: Promise<{ token: string }> }) {
+  const params = await paramsPromise;
   const reading = await getRepository().getReadingByPdfToken(params.token);
   if (!reading) redirect("/library");
 

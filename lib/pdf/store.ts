@@ -6,11 +6,12 @@ import { env, modes } from "@/lib/env";
 import { getReport } from "@/lib/reports/catalog";
 import { isCompleteReport } from "@/lib/story/report";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-import { renderReportPdf, reportPdfFilename } from "./render";
+import { renderReportPdf } from "./render";
 
 const BUCKET = "reports";
-export const PDF_LAYOUT_VERSION = "v2";
-const currentLayout = (path: string | null | undefined) => Boolean(path?.endsWith(`.${PDF_LAYOUT_VERSION}.pdf`));
+export const PDF_LAYOUT_VERSION = "v3";
+export const isCurrentReadingPdf = (path: string | null | undefined): path is string =>
+  Boolean(path?.endsWith(`.${PDF_LAYOUT_VERSION}.pdf`));
 
 /**
  * 구운 PDF 를 스토리지에 올리고, 카톡 버튼이 열 짧은 주소를 만든다.
@@ -20,9 +21,9 @@ const currentLayout = (path: string | null | undefined) => Boolean(path?.endsWit
  * 템플릿에 고정할 수 없다. 그래서 만료되지 않는 /r/{token} 을 템플릿에 넣고,
  * 열릴 때마다 서버가 새 서명 주소로 넘긴다.
  */
-export async function ensureReadingPdf(reading: Reading): Promise<{ token: string; path: string } | null> {
+export async function ensureReadingPdf(reading: Reading, rendered?: Buffer): Promise<{ token: string; path: string } | null> {
   if (!isCompleteReport(reading.script)) return null;
-  if (reading.pdfToken && reading.pdfPath && currentLayout(reading.pdfPath)) return { token: reading.pdfToken, path: reading.pdfPath };
+  if (!rendered && reading.pdfToken && isCurrentReadingPdf(reading.pdfPath)) return { token: reading.pdfToken, path: reading.pdfPath };
 
   const report = getReport(reading.reportSlug);
   if (!report || report.kind !== "report") return null;
@@ -31,7 +32,9 @@ export async function ensureReadingPdf(reading: Reading): Promise<{ token: strin
   // 부르는 길이 있어서다. 저장된 행을 한 번 더 보고 이미 구워져 있으면 그대로 쓴다 —
   // 그러지 않으면 같은 풀이를 두 번 굽고, 카톡에 넣은 코드가 두 번째 것으로 바뀐다.
   const current = await getRepository().getReading(reading.id);
-  if (current?.pdfToken && current.pdfPath && currentLayout(current.pdfPath)) return { token: current.pdfToken, path: current.pdfPath };
+  if (current?.pdfToken && isCurrentReadingPdf(current.pdfPath) && (!rendered || current.pdfPath !== reading.pdfPath)) {
+    return { token: current.pdfToken, path: current.pdfPath };
+  }
 
   // 로컬 개발(스토리지 없음)에서는 굽지 않는다. 알림도 어차피 모의 발송이다.
   if (modes.data() !== "supabase") {
@@ -39,7 +42,7 @@ export async function ensureReadingPdf(reading: Reading): Promise<{ token: strin
     return null;
   }
 
-  const pdf = await renderReportPdf({
+  const pdf = rendered ?? await renderReportPdf({
     product: report,
     report: reading.script,
     subject: reading.subject,
@@ -76,22 +79,6 @@ export async function readStoredPdf(path: string): Promise<Buffer | null> {
     return null;
   }
   return Buffer.from(await data.arrayBuffer());
-}
-
-/** 짧은 주소가 가리킬 실제 내려받기 주소. 잠깐만 살아 있다 */
-export async function signedPdfUrl(reading: Reading, seconds = 60 * 10): Promise<string | null> {
-  if (!reading.pdfPath) return null;
-  const report = getReport(reading.reportSlug);
-  const filename = report ? reportPdfFilename(report, reading.subject) : "운명대로.pdf";
-
-  const { data, error } = await getSupabaseAdmin()
-    .storage.from(BUCKET)
-    .createSignedUrl(reading.pdfPath, seconds, { download: filename });
-  if (error) {
-    console.error(`[pdf] 서명 주소 생성 실패 (reading ${reading.id})`, error);
-    return null;
-  }
-  return data?.signedUrl ?? null;
 }
 
 /** 카톡 「PDF 받기」 버튼이 여는 주소. 만료되지 않는다 */

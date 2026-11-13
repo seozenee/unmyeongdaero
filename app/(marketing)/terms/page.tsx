@@ -1,6 +1,7 @@
+import { publicPageMetadata } from "@/lib/seo/metadata";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "이용약관" };
+export const metadata: Metadata = publicPageMetadata("이용약관 | 운명대로", "운명대로의 회원 가입, 사주 리포트 구매와 이용에 관한 약관을 확인하세요.", "/terms");
 
 // ⚠️ 초안: 실제 사업자 정보와 법률 검토를 거쳐 확정해야 한다.
 export default function TermsPage() {
